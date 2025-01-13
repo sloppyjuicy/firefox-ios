@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fxapom = "*"
+mozdownload = "*"
+mozinstall = "*"
+mozprofile = "*"
+mozrunner = "*"
+mozversion = "*"
+pytest = "*"
+pytest-fxa-mte = "1.6.0"
+pytest-html = "*"
+pytest-metadata = "*"
+requests = "*"
+
+[dev-packages]

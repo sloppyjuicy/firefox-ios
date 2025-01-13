@@ -1,0 +1,654 @@
+/* Button on About screen */
+"About.learnMoreButton" = "Tìm hiểu thêm";
+
+/* Label on About screen */
+"About.missionLabel" = "%@ được sáng lập bởi Mozilla. Nhiệm vụ của chúng tôi là thúc đẩy một Internet lành mạnh, cởi mở.";
+
+/* Label on About screen */
+"About.privateBullet1" = "Tìm kiếm và duyệt ngay trong ứng dụng";
+
+/* Label on About screen */
+"About.privateBullet2" = "Chặn trình theo dõi (hoặc cập nhật cài đặt để cho phép trình theo dõi)";
+
+/* Label on About screen */
+"About.privateBullet3" = "Xóa cookie cũng như lịch sử tìm kiếm và duyệt web khi xong phiên làm việc";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "Sử dụng nó như trình duyệt riêng tư:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "Trợ giúp";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Chính sách riêng tư";
+
+/* Label for row in About screen */
+"About.rowRights" = "Quyền lợi của bạn";
+
+/* Label on About screen */
+"About.safariBullet1" = "Chặn trình theo dõi để cải thiện sự riêng tư";
+
+/* Label on About screen */
+"About.safariBullet2" = "Chặn phông chữ Web để giảm kích thước trang";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Sử dụng nó như phần mở rộng của Safari:";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, takes the user to a page with information about the product. Also displayed as a header for the About page. */
+"About.title" = "Giới thiệu %@";
+
+/* Label on About screen */
+"About.topLabel" = "%@ giúp bạn kiểm soát.";
+
+/* Title for action sheet item to open the current page in another application. Placeholder is the name of the application to open the current page. */
+"actionSheet.openIn" = "Mở trong %@";
+
+/* Button to dismiss the 'Add Pass Failed' alert. */
+"AddPass.Error.Dismiss" = "Ok";
+
+/* Message of the 'Add Pass Failed' alert. */
+"AddPass.Error.Message" = "Đã xảy ra lỗi trong khi thêm thẻ vào Wallet. Vui lòng thử lại sau.";
+
+/* Title of the 'Add Pass Failed' alert. */
+"AddPass.Error.Title" = "Thất bại khi thêm thẻ";
+
+/* %@ is app name. Prompt shown to ask the user to use Touch ID, Face ID, or passcode to continue browsing after returning to the app. */
+"Authentication.reason" = "Xác thực để quay lại %@";
+
+/* Label for button to add a custom URL */
+"Autocomplete.addCustomUrl" = "Thêm URL tùy chỉnh";
+
+/* Label for error state when entering an invalid URL */
+"Autocomplete.addCustomUrlError" = "Kiểm tra lại URL mà bạn đã nhập.";
+
+/* A label displaying an example URL */
+"Autocomplete.addCustomUrlExample" = "Ví dụ: example.com";
+
+/* Label for the input to add a custom URL */
+"Autocomplete.addCustomUrlLabel" = "URL muốn thêm";
+
+/* Placeholder for the input field to add a custom URL */
+"Autocomplete.addCustomUrlPlaceholder" = "Dán hoặc nhập URL";
+
+/* Label for button to add a custom URL with the + prefix */
+"Autocomplete.addCustomUrlWithPlus" = "+ Thêm URL tùy chỉnh";
+
+/* Label for toast alerting a custom URL has been added */
+"Autocomplete.customUrlAdded" = "URL tùy chỉnh mới đã được thêm vào.";
+
+/* Description for enabling or disabling the default list. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.defaultDescriptoin" = "Cho phép tự đồng điền %@ trên 450 URL phổ biến trên thanh địa chỉ.";
+
+/* label describing URL Autocomplete as disabled */
+"Autocomplete.disabled" = "Đã tắt";
+
+/* Label for toast alerting that the custom URL being added is a duplicate */
+"Autocomplete.duplicateUrl" = "URL đã tồn tại";
+
+/* Label for button to add a custom URL */
+"Autocomplete.emptyState" = "Không có URL tùy chỉnh nào được hiển thị";
+
+/* label describing URL Autocomplete as enabled */
+"Autocomplete.enabled" = "Đã bật";
+
+/* Label for button taking you to your custom Autocomplete URL list */
+"Autocomplete.manageSites" = "Quản lý trang web";
+
+/* Label for enabling or disabling autocomplete */
+"Autocomplete.mySites" = "Các trang web của tôi";
+
+/* Description for adding and managing custom autocomplete URLs. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.mySitesDesc" = "Bật để %@ tự động hoàn thành các URL yêu thích của bạn.";
+
+/* Label for enabling or disabling top sites */
+"Autocomplete.topSites" = "Các trang web hàng đầu";
+
+/* Title for the action button shown on the Splash Screen which gives the user the ability to log in with biometrics. */
+"BiometricAuthentication.UnlockButton.Title" = "Mở khóa";
+
+/* Create a new session after failing a biometric check */
+"BiometricPrompt.newSession" = "Phiên mới";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "Quay lại";
+
+/* Toast displayed after a URL has been copied to the clipboard */
+"browser.copyAddressToast" = "URL đã được sao chép vào clipboard";
+
+/* Copy URL button in URL long press menu */
+"Browser.copyMenuLabel" = "Sao chép";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "Tiếp theo";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "Tải lại";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "Thiết lập";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "Dừng";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "Chọn thanh địa chỉ";
+
+/* Label on button to complete edits */
+"Done" = "Xong";
+
+/* Label on button to allow edits */
+"Edit" = "Chỉnh sửa";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "Thử lại";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Hủy bỏ";
+
+/* Dialog title used for opening an external app from Focus. The placeholder string is the app name of either Focus or Klar. */
+"ExternalAppLink.messageTitle" = "%@ muốn mở Ứng dụng khác";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Mở";
+
+/* Dialog title used for opening an external app from Focus. First placeholder string is the app name of either Focus or Klar and the second placeholder string specifies the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "%1$@ muốn mở %2$@";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "Hủy bỏ";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "Thư điện tử";
+
+/* Accessibility label for done button in Find in Page Toolbar. */
+"FindInPage.Done" = "Hoàn thành tìm kiếm";
+
+/* Accessibility label for next result button in Find in Page Toolbar. */
+"FindInPage.NextResult" = "Kết quả tiếp theo trong trang";
+
+/* Accessibility label for previous result button in Find in Page Toolbar. */
+"FindInPage.PreviousResult" = "Kết quả trước trong trang";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.lastSlide.buttonLabel" = "OK, được rồi!";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "Duyệt như không ai xem.";
+
+/* Button label used to close a menu that displays as a popup. */
+"Menu.Close" = "Đóng";
+
+/* Text for a label that indicates the title of button from onboarding screen version 2. */
+"NewOnboarding.Button.Title.V2" = "Bắt đầu";
+
+/* Text for a label that indicates the subtitle for the onboarding screen version 2. */
+"NewOnboarding.Subtitle.V2" = "Nhanh. Riêng tư. Không có phiền nhiễu.";
+
+/* Text for a label that indicates the title of button from onboarding screen */
+"Onboarding.Button.Title" = "Bắt đầu duyệt web";
+
+/* Text for a label that indicates the title of the bottom button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.BottomButtonTitle.V2" = "Bỏ qua";
+
+/* Text for a label that indicates the first subtitle for the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.FirstSubtitle.V2" = "Để tôn trọng quyền riêng tư của bạn, lịch sử truy cập sẽ xóa mỗi khi đóng ứng dụng.";
+
+/* Text for a label that indicates the second subtitle for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.SecondSubtitle.V2" = "Đặt %@ làm mặc định giúp đảm bảo sự riêng tư của bạn trên Internet.";
+
+/* Text for a label that indicates the title for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.Title.V2" = "%@ không giống như các trình duyệt khác";
+
+/* Text for a label that indicates the title of the top button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.TopButtonTitle.V2" = "Đặt làm trình duyệt mặc định";
+
+/* Text for a label that indicates the description of history section from onboarding screen. */
+"Onboarding.History.Description" = "Xóa lịch sử duyệt web, mật khẩu, cookie và ngăn các quảng cáo không mong muốn theo dõi bạn chỉ bằng một lần nhấn đơn giản!";
+
+/* Text for a label that indicates the title of history section from onboarding screen. */
+"Onboarding.History.Title" = "Lịch sử của bạn không theo dõi bạn";
+
+/* Text for a label that indicates the description of incognito section from onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Incognito.Description" = "%@ là một trình duyệt riêng tư chuyên dụng với tính năng chống theo dõi và chặn nội dung.";
+
+/* Text for a label that indicates the title of incognito section from onboarding screen. */
+"Onboarding.Incognito.Title" = "Không chỉ là ẩn danh";
+
+/* Text for a label that indicates the description of protection section from onboarding screen. */
+"Onboarding.Protection.Description" = "Định cấu hình cài đặt để bạn có thể quyết định lượng chia sẻ nhiều hay ít.";
+
+/* Text for a label that indicates the title of protection section from onboarding screen. */
+"Onboarding.Protection.Title" = "Bảo vệ theo quyết định của riêng bạn";
+
+/* Text for a label that indicates the subtitle for onboarding screen. */
+"Onboarding.Subtitle" = "Đưa trình duyệt riêng tư của bạn lên cấp độ cao hơn.";
+
+/* Text for a label that indicates the title for onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Title" = "Chào mừng đến với Firefox %@!";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Chạm Safari, rồi chọn Chặn nội dung";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsEnable" = "Bật %@";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsExtentions" = "Chọn Safari, sau đó chọn Tiện ích mở rộng";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled */
+"Safari.instructionsNotEnabled" = "%@ không được bật.";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "Mở Cài đặt";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.openInstruction" = "Mở cài đặt thiết bị";
+
+/* Save button label */
+"Save" = "Lưu";
+
+/* Label for error state when entering an invalid search engine URL. %s is a search term in a URL. */
+"SearchEngine.addEngineError" = "Điều đó không hoạt động. Hãy thử thay thế cụm từ tìm kiếm bằng cái này: %s.";
+
+/* Label for disable option on search suggestions prompt */
+"SearchSuggestions.promptDisable" = "Không";
+
+/* Label for enable option on search suggestions prompt */
+"SearchSuggestions.promptEnable" = "Có";
+
+/* %@ is the name of the app (Focus / Klar). Label for search suggestions prompt message */
+"SearchSuggestions.promptMessage" = "Để nhận đề xuất, %@ cần gửi những gì bạn nhập vào thanh địa chỉ cho công cụ tìm kiếm.";
+
+/* Title for search suggestions prompt */
+"SearchSuggestions.promptTitle" = "Hiển thị đề xuất tìm kiếm?";
+
+/* Title for the URL Autocomplete row */
+"Settings.autocompleteSection" = "Tự động điền URL";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "Chặn các trình theo dõi nội dung khác có thể dẫn đến việc không xem được một vài video và trang web.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo2" = "Hủy bỏ";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes2" = "Chặn trình theo dõi nội dung";
+
+/* Dark theme option in settings menu */
+"Settings.darkTheme" = "Tối";
+
+/* Description associated with the Crash Reports toggle on settings screen */
+"Settings.detailTextCrashReports" = "Báo cáo sự cố giúp chúng tôi chẩn đoán và khắc phục sự cố của trình duyệt.";
+
+/* Description associated to the Search Suggestions toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSearchSuggestion" = "%@ sẽ gửi nội dung bạn nhập vào thanh địa chỉ đến công cụ tìm kiếm của bạn.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSendUsageData" = "Mozilla chỉ thu thập những gì chúng tôi cần cung cấp và cải tiến %@ cho tất cả mọi người.";
+
+/* Description associated to the Studies toggle on the settings screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextStudies" = "%@ có thể cài đặt và chạy các nghiên cứu theo thời gian.";
+
+/* Title for section in settings menu */
+"Settings.general" = "Tổng quát";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Tìm hiểu thêm.";
+
+/* Lincese option in settings menu. Tapping the cell will take the user to a list of licences for the 3rd parties used in the app. */
+"Settings.licenses" = "Giấy phép";
+
+/* Light theme option in settings menu */
+"Settings.lightTheme" = "Sáng";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, allows the user to leave a review for the app on the app store. */
+"Settings.rate" = "Đánh giá %@";
+
+/* Label for Safari integration section */
+"Settings.safariTitle" = "SAFARI INTEGRATION";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "Cài đặt";
+
+/* Text for button to add another search engine in settings */
+"Settings.Search.AddSearchEngineButton" = "Thêm công cụ tìm kiếm khác";
+
+/* Title on add search engine settings screen */
+"Settings.Search.AddSearchEngineTitle" = "Thêm công cụ tìm kiếm";
+
+/* Header for rows of installed search engines */
+"Settings.Search.InstalledSearchEngines" = "CÔNG CỤ TÌM KIẾM ĐÃ CÀI ĐẶT";
+
+/* Label for input field for the name of the search engine to be added */
+"Settings.Search.NameToDisplay" = "Tên hiển thị";
+
+/* Toast displayed after adding a search engine */
+"Settings.Search.NewSearchEngineAdded" = "Đã thêm công cụ tìm kiếm mới.";
+
+/* Label for button to bring deleted default engines back */
+"Settings.Search.RestoreEngine" = "Phục hồi các công cụ tìm kiếm mặc định";
+
+/* Placeholder text for input of new search engine name */
+"Settings.Search.SearchEngineName" = "Tên công cụ tìm kiếm";
+
+/* Label for input of search engine template */
+"Settings.Search.SearchTemplate" = "Chuỗi tìm kiếm sử dụng";
+
+/* Text displayed as an example of the template to add a search engine. */
+"settings.Search.SearchTemplateExample" = "Ví dụ: searchengineexample.com/search/?q=%s";
+
+/* Placeholder text for input of new search engine template */
+"Settings.Search.SearchTemplatePlaceholder" = "Dán hoặc nhập chuỗi tìm kiếm. Nếu cần, hãy thay thế cụm từ tìm kiếm bằng: %s.";
+
+/* Label for the search engine in the search screen */
+"Settings.searchLabel" = "Công cụ tìm kiếm";
+
+/* Label for the Search Suggestions toggle row */
+"Settings.searchSuggestions" = "Nhận đề xuất tìm kiếm";
+
+/* Title for the search selection screen */
+"Settings.searchTitle2" = "TÌM KIẾM";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "RIÊNG TƯ";
+
+/* Label title for set as default browser row */
+"Settings.setAsDefaultBrowser" = "Đặt làm trình duyệt mặc định";
+
+/* %@ is the name of the app. Description for set as default browser option */
+"Settings.setAsDefaultBrowserDescription" = "Đặt các liên kết từ trang web, email và tin nhắn để tự động mở trong %@.";
+
+/* System value for theme section in settings menu */
+"Settings.systemTheme" = "Chủ đề hệ thống";
+
+/* Theme section in settings menu */
+"Settings.theme" = "Chủ đề";
+
+/* Header for manual theme section in settings menu */
+"Settings.themePicker" = "Bộ chọn chủ đề";
+
+/* Label for the checkbox to toggle Advertising trackers */
+"Settings.toggleBlockAds2" = "Quảng cáo";
+
+/* Label for the checkbox to toggle Analytics trackers */
+"Settings.toggleBlockAnalytics2" = "Phân tích";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "Chặn phông chữ trang Web";
+
+/* Label for the checkbox to toggle Other trackers */
+"Settings.toggleBlockOther2" = "Nội dung";
+
+/* Label for the checkbox to toggle Social trackers */
+"Settings.toggleBlockSocial2" = "Xã hội";
+
+/* Label for Crash Reports toggle on settings screen */
+"Settings.toggleCrashReports" = "Tự động gửi báo cáo sự cố";
+
+/* Label for toggle on settings screen */
+"Settings.toggleFaceID" = "Sử dụng nhận dạng khuôn mặt để mở ứng dụng";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Face ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleFaceIDDescription" = "Face ID có thể mở khóa %@ nếu một URL đã được mở trong ứng dụng";
+
+/* Show home screen tips toggle label on settings screen */
+"Settings.toggleHomeScreenTips" = "Hiện mẹo trên màn hình chính";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Gửi dữ liệu sử dụng";
+
+/* Label for Studies toggle on the settings screen */
+"Settings.toggleStudies" = "Nghiên cứu";
+
+/* Label for toggle on settings screen */
+"Settings.toggleTouchID" = "Sử dụng Touch ID để mở ứng dụng";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Touch ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleTouchIDDescription" = "Touch ID có thể mở khóa %@ nếu một URL đã được mở trong ứng dụng";
+
+/* Status off for tracking protection in settings screen */
+"Settings.trackingProtectionOff" = "Tắt";
+
+/* Status on for tracking protection in settings screen */
+"Settings.trackingProtectionOn" = "Bật";
+
+/* Value for theme toggle in settings menu */
+"Settings.useSystemTheme" = "Sử dụng chế độ sáng/tối của hệ thống";
+
+/* Title for settings section to enable different Siri Shortcuts. */
+"Settinsg.siriShortcutsTitle" = "SIRI SHORTCUTS";
+
+/* Text for a share button */
+"share" = "Chia sẻ";
+
+/* Text for the share menu option when a user wants to add the site to Shortcuts */
+"ShareMenu.AddToShortcuts" = "Thêm vào lối tắt";
+
+/* Toast displayed to the user after adding the item to the Shortcuts. */
+"ShareMenu.AddToShortcuts.Confirm" = "Đã thêm vào lối tắt";
+
+/* Text for the share menu when a user wants to copy a URL. */
+"shareMenu.copyAddress" = "Sao chép địa chỉ liên kết";
+
+/* Text for the share menu option when a user wants to open the find in page menu */
+"ShareMenu.FindInPage" = "Tìm trong trang";
+
+/* Text for the share menu option when a user wants to remove the site from Shortcuts */
+"ShareMenu.RemoveFromShortcuts" = "Xóa khỏi lối tắt";
+
+/* Toast displayed to the user after removing the item from the Shortcuts. */
+"ShareMenu.RemoveShortcut.Confirm" = "Đã xóa lối tắt";
+
+/* Text for the share menu option when a user wants to reload the site as a desktop */
+"ShareMenu.RequestDesktop" = "Yêu cầu trang web cho máy tính";
+
+/* Text for the share menu option when a user wants to reload the site as a mobile device */
+"ShareMenu.RequestMobile" = "Yêu cầu trang web di động";
+
+/* Text for the share menu option when a user wants to open the current website in the Chrome app. */
+"ShareMenu.ShareOpenChrome" = "Mở trong Chrome";
+
+/* Text for the share menu option when a user wants to open the current website in the default browser. */
+"ShareMenu.ShareOpenDefaultBrowser" = "Mở bằng trình duyệt mặc định";
+
+/* Text for the share menu option when a user wants to open the current website in the Firefox app. */
+"ShareMenu.ShareOpenFirefox" = "Mở trong Firefox";
+
+/* Text for the share menu option when a user wants to open the current website inside the app. */
+"ShareMenu.ShareOpenLink" = "Mở liên kết";
+
+/* Text for the share menu option when a user wants to share the current website they are on through another app. */
+"ShareMenu.SharePage" = "Chia sẻ trang với…";
+
+/* Text for the long press on a shortcut option in context menu. */
+"ShortcutView.RemoveFromShortcuts" = "Xóa khỏi lối tắt";
+
+/* Text for the long press on a shortcut rename option in context menu. */
+"ShortcutView.Rename" = "Đổi tên lối tắt";
+
+/* Text for the placeholder textfield on rename shortcut alert. */
+"ShortcutView.RenameShortcutAlertPlaceholder" = "Tên lối tắt";
+
+/* Text for the rename shortcut alert primary action. */
+"ShortcutView.RenameShortcutAlertPrimaryAction" = "Lưu";
+
+/* Text for the rename shortcut alert secondary action. */
+"ShortcutView.RenameShortcutAlertSecondaryAction" = "Hủy bỏ";
+
+/* This is the button text that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.ButtonText.V2" = "Xong";
+
+/* This is the subtitle text for step one that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepOne.V2" = "Nhấn và giữ biểu tượng ứng dụng đến khi nó rung rinh.";
+
+/* This is the subtitle text for step three that is displayed in the Show Me How onboarding screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.SubtitleStepThree.V2" = "Tìm kiếm %@. Sau đó chọn tiện ích hiển thị.";
+
+/* This is the subtitle text for step two that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepTwo.V2" = "Nhấn vào nút dấu cộng.";
+
+/* This is the title text that is displayed in the Show Me How Onboarding Screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.Title.V2" = "Hiển thị thêm %@";
+
+/* Button to add a favorite URL to Siri. */
+"Siri.add" = "Thêm";
+
+/* Button to add a specified shortcut option to Siri. */
+"Siri.addTo" = "Thêm vào Siri";
+
+/* Label for button to edit the Siri phrase or delete the Siri functionality. */
+"Siri.editOpenUrl" = "Ghi lại hoặc xóa phím tắt";
+
+/* Title of option in settings to set up Siri to erase */
+"Siri.erase" = "Xóa";
+
+/* Title of option in settings to set up Siri to erase and then open the app. */
+"Siri.eraseAndOpen" = "Xóa & mở";
+
+/* Title for screen to add a favorite URL to Siri. */
+"Siri.favoriteUrl" = "Mở trang yêu thích";
+
+/* Title of option in settings to set up Siri to open a specified URL in Focus/Klar. */
+"Siri.openURL" = "Mở trang yêu thích";
+
+/* Label for input to set a favorite URL to be opened by Siri. */
+"Siri.urlToOpen" = "URL để mở";
+
+/* Text for a label that indicates the title for biometric tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.Biometric.Title" = "Khóa %@ khi một trang web đang mở:";
+
+/* Text for a label that indicates the description for biometric Face ID tip. */
+"Tip.BiometricFaceId.Description" = "Bật Face ID";
+
+/* Text for a label that indicates the description for biometric Touch ID tip. */
+"Tip.BiometricTouchId.Description" = "Bật Touch ID";
+
+/* Text for a label that indicates the description for request desktop tip. */
+"Tip.RequestDesktop.Description" = "Hành động trang > Yêu cầu trang web cho máy tính";
+
+/* Text for a label that indicates the title for request desktop tip. */
+"Tip.RequestDesktop.Title" = "Bạn muốn xem phiên bản cho máy tính của một trang web?";
+
+/* Text for a label that indicates the description for share trackers tip. The placeholder is the number of trackers blocked. Only shown when there are more than 10 trackers blocked. For locales where we would need plural support, please feel free to translate this string as `Trackers blocked so far: %@` instead. */
+"Tip.ShareTrackers.Description" = "%@ trình theo dõi đã bị chặn cho đến nay";
+
+/* Text for a label that indicates the title for share trackers tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.ShareTrackers.Title" = "Bạn duyệt. %@ chặn.";
+
+/* Text for a label that indicates the description for shortcuts tip. The placeholder is replaced with the short product name (Focus or Klar). */
+"Tip.Shortcuts.Description" = "Chọn Thêm vào lối tắt từ menu %@";
+
+/* Text for a label that indicates the title for shortcuts tip. */
+"Tip.Shortcuts.Title" = "Tạo lối tắt đến các trang web bạn truy cập nhiều nhất:";
+
+/* Text for a label that indicates the description for siri erase tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriErase.Description" = "Thêm lối tắt Siri";
+
+/* Text for a label that indicates the title for siri erase tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.SiriErase.Title" = "“Siri, xóa phiên %@ của tôi.”";
+
+/* Text for a label that indicates the description for siri favorite tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriFavorite.Description" = "Thêm lối tắt Siri";
+
+/* Text for a label that indicates the title for siri favorite tip. */
+"Tip.SiriFavorite.Title" = "“Siri, mở trang web yêu thích của tôi.”";
+
+/* Text for a label that indicates the description for sites not working tip. */
+"Tip.SitesNotWorking.Description" = "Thử tắt tính năng Trình chống theo dõi";
+
+/* Text for a label that indicates the title for sites not working tip. */
+"Tip.SitesNotWorking.Title" = "Trang web thiếu nội dung hoặc hoạt động không đúng?";
+
+/* Text shown on quick action widget inviting the user to browse in the app. %@ is the name of the app (Focus/Klar). */
+"TodayWidget.SearchInApp.Instruction" = "Tìm kiếm trong %@";
+
+/* This is the body text that is displayed for the Context Menu icon tooltip */
+"TooltipBodyText.ContextMenu" = "Đi đến Cài đặt để quản lý các tùy chọn quyền riêng tư và bảo mật cụ thể.";
+
+/* This is the body text that is displayed for the Privacy tooltip */
+"TooltipBodyText.Privacy" = "Các cài đặt mặc định này cung cấp khả năng bảo vệ mạnh mẽ. Tuy nhiên, thật dễ dàng để điều chỉnh cài đặt để đáp ứng các nhu cầu cụ thể của bạn.";
+
+/* This is the body text that is displayed for the Search Bar tooltip */
+"TooltipBodyText.SearchBar" = "Bắt đầu phiên duyệt web riêng tư của bạn và chúng tôi sẽ chặn trình theo dõi và các nội dung xấu khác khi bạn di chuyển.";
+
+/* This is the body text that is displayed for the Shield icon tooltip. Where placeholder can be (Focus or Klar). */
+"TooltipBodyText.ShieldIcon" = "%@ đã ngăn trang web này theo dõi bạn. Nhấn vào tấm khiên để biết thông tin về những gì chúng tôi đã chặn.";
+
+/* This is the body text that is displayed for the Shield icon tooltip when we block trackers for the first time on a website */
+"TooltipBodyText.ShieldIconTrackerBlocked.V2" = "Bắt được rồi! Chúng tôi đã ngăn trang web này theo dõi bạn. Nhấn vào tấm khiên bất kỳ lúc nào để xem những gì chúng tôi đang chặn.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon" = "Nhấn vào thùng rác bất cứ lúc nào để xóa tất cả dấu vết của phiên hiện tại của bạn.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon.V2" = "Nhấn vào đây để xóa tất cả — lịch sử, cookie, mọi thứ — và bắt đầu làm mới trên một thẻ mới.";
+
+/* This is the title text that is displayed for the Privacy tooltip */
+"TooltipTitleText.Privacy" = "Bạn đã được bảo vệ!";
+
+/* Text for tracking protection screen showing the connection is not secure */
+"trackingProtection.connectionNotSecureLabel" = "Kết nối không an toàn";
+
+/* Text for tracking protection screen showing the connection is secure */
+"trackingProtection.connectionSecureLabel" = "Kết nối an toàn";
+
+/* Title for the tracking settings page to change what trackers are blocked. */
+"trackingProtection.label" = "Trình chống theo dõi";
+
+/* Text for the status off from Tracking Protection. */
+"trackingProtection.statusOff" = "Bảo vệ đã TẮT cho phiên này";
+
+/* Text for the status on from Tracking Protection. */
+"trackingProtection.statusOn" = "Bảo vệ đã BẬT cho phiên này";
+
+/* Text for the toggle that enables/disables tracking protection. */
+"trackingProtection.toggleLabel2" = "Trình chống theo dõi nâng cao";
+
+/* Text for tracking protection screen showing the number of trackers blocked since the app install. The placeholder is replaced with the install date of the application. */
+"trackingProtection.trackersBlockedLabel" = "Trình theo dõi bị chặn kể từ %@";
+
+/* Text for the header of trackers section from Tracking Protection. */
+"trackingProtection.trackersHeader" = "Trình theo dõi và script để chặn";
+
+/* Label displayed for button used as a shortcut to add a link to the list of URLs to autocomplete. */
+"URL.addToAutocompleteLabel" = "Thêm liên kết vào tự động điền";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Dán & mở";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "XÓA";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel2" = "Đã xóa lịch sử duyệt web";
+
+/* Label displayed for find in page button when typing in the URL Bar. %@ is any text the user has typed into the URL bar that they want to find on the current page. */
+"URL.findOnPageLabel" = "Tìm trong trang: %@";
+
+/* Text for a menu displayed from the bottom of the screen when a user long presses on the URL bar with clipboard contents. */
+"URL.paste" = "Dán";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "Tìm kiếm hoặc nhập địa chỉ";
+
+/* Label displayed for search button when typing in the URL bar */
+"URL.searchLabel" = "Tìm kiếm cho %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Theo dõi bị chặn";
+
+/* Title for the action button shown on card view that will take the user to a tutorial explaining the user how to add an widget */
+"WidgetOnboardingCard.ActionButton" = "Hướng dẫn tôi";
+
+/* Subtitle shown on card view explaining the app has a widget option. %@ is the name of the app (Focus/Klar). */
+"WidgetOnboardingCard.Subtitle" = "Chúng tôi sẽ để bạn ở chế độ duyệt web riêng tư, nhưng hãy bắt đầu nhanh hơn vào lần sau với tiện ích %@ trên màn hình chính của bạn.";
+
+/* Title shown on card view explaining the app has a widget option */
+"WidgetOnboardingCard.Title" = "Đã xóa lịch sử duyệt web! 🎉";
+

@@ -1,0 +1,654 @@
+/* Button on About screen */
+"About.learnMoreButton" = "상세정보";
+
+/* Label on About screen */
+"About.missionLabel" = "%@는 Mozilla가 만듭니다. 우리의 사명은 건전하고 개방적인 인터넷을 육성하는 것입니다.";
+
+/* Label on About screen */
+"About.privateBullet1" = "앱에서 검색 및 브라우징하기";
+
+/* Label on About screen */
+"About.privateBullet2" = "추적 차단 (또는 설정 변경으로 추적 허용)";
+
+/* Label on About screen */
+"About.privateBullet3" = "검색 기록이나 페이지 표시 내용 및 쿠키 삭제";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "사생활 보호 브라우저로 사용:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "도움말";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "개인정보 보호정책";
+
+/* Label for row in About screen */
+"About.rowRights" = "사용자 권리";
+
+/* Label on About screen */
+"About.safariBullet1" = "추적 차단 및 개인 정보 보호";
+
+/* Label on About screen */
+"About.safariBullet2" = "데이터 전송량 절감을 위해 웹 폰트 차단";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Safari 확장 기능 사용:";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, takes the user to a page with information about the product. Also displayed as a header for the About page. */
+"About.title" = "%@ 정보";
+
+/* Label on About screen */
+"About.topLabel" = "%@로 데이터 제어가 가능합니다.";
+
+/* Title for action sheet item to open the current page in another application. Placeholder is the name of the application to open the current page. */
+"actionSheet.openIn" = "%@에서 열기";
+
+/* Button to dismiss the 'Add Pass Failed' alert. */
+"AddPass.Error.Dismiss" = "확인";
+
+/* Message of the 'Add Pass Failed' alert. */
+"AddPass.Error.Message" = "지갑에 패스를 추가하는데 오류가 발생했습니다. 잠시 후에 다시 시도해 주세요.";
+
+/* Title of the 'Add Pass Failed' alert. */
+"AddPass.Error.Title" = "패스 추가 실패";
+
+/* %@ is app name. Prompt shown to ask the user to use Touch ID, Face ID, or passcode to continue browsing after returning to the app. */
+"Authentication.reason" = "%@로 돌아올 때 인증함";
+
+/* Label for button to add a custom URL */
+"Autocomplete.addCustomUrl" = "사용자 정의 URL 추가";
+
+/* Label for error state when entering an invalid URL */
+"Autocomplete.addCustomUrlError" = "입력한 URL을 다시 확인하세요.";
+
+/* A label displaying an example URL */
+"Autocomplete.addCustomUrlExample" = "예: example.com";
+
+/* Label for the input to add a custom URL */
+"Autocomplete.addCustomUrlLabel" = "추가할 URL";
+
+/* Placeholder for the input field to add a custom URL */
+"Autocomplete.addCustomUrlPlaceholder" = "URL 입력 또는 붙여넣기";
+
+/* Label for button to add a custom URL with the + prefix */
+"Autocomplete.addCustomUrlWithPlus" = "+ 사용자 정의 URL 추가";
+
+/* Label for toast alerting a custom URL has been added */
+"Autocomplete.customUrlAdded" = "새 사용자 정의 URL이 추가되었습니다.";
+
+/* Description for enabling or disabling the default list. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.defaultDescriptoin" = "%@ 자동 완성 기능을 활성화해서 450개가 넘는 자주 찾는 URL을 주소창에서 사용해 보세요.";
+
+/* label describing URL Autocomplete as disabled */
+"Autocomplete.disabled" = "사용 안 함";
+
+/* Label for toast alerting that the custom URL being added is a duplicate */
+"Autocomplete.duplicateUrl" = "URL이 이미 존재함";
+
+/* Label for button to add a custom URL */
+"Autocomplete.emptyState" = "표시할 사용자 정의 URL 없음";
+
+/* label describing URL Autocomplete as enabled */
+"Autocomplete.enabled" = "사용함";
+
+/* Label for button taking you to your custom Autocomplete URL list */
+"Autocomplete.manageSites" = "사이트 관리";
+
+/* Label for enabling or disabling autocomplete */
+"Autocomplete.mySites" = "내 사이트";
+
+/* Description for adding and managing custom autocomplete URLs. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.mySitesDesc" = "%@가 내 즐겨찾기 URL을 자동 완성 할 수 있게 합니다.";
+
+/* Label for enabling or disabling top sites */
+"Autocomplete.topSites" = "상위 사이트";
+
+/* Title for the action button shown on the Splash Screen which gives the user the ability to log in with biometrics. */
+"BiometricAuthentication.UnlockButton.Title" = "잠금 해제";
+
+/* Create a new session after failing a biometric check */
+"BiometricPrompt.newSession" = "새 세션";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "뒤로";
+
+/* Toast displayed after a URL has been copied to the clipboard */
+"browser.copyAddressToast" = "클립보드에 URL 복사됨";
+
+/* Copy URL button in URL long press menu */
+"Browser.copyMenuLabel" = "복사";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "앞으로";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "새로고침";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "설정";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "중지";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "주소창 선택";
+
+/* Label on button to complete edits */
+"Done" = "완료";
+
+/* Label on button to allow edits */
+"Edit" = "수정";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "재시도";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "취소";
+
+/* Dialog title used for opening an external app from Focus. The placeholder string is the app name of either Focus or Klar. */
+"ExternalAppLink.messageTitle" = "%@가 다른 앱을 열려고 합니다";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "열기";
+
+/* Dialog title used for opening an external app from Focus. First placeholder string is the app name of either Focus or Klar and the second placeholder string specifies the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "%1$@가 %2$@를 열려고 합니다";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "취소";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "메일";
+
+/* Accessibility label for done button in Find in Page Toolbar. */
+"FindInPage.Done" = "페이지내 검색 완료";
+
+/* Accessibility label for next result button in Find in Page Toolbar. */
+"FindInPage.NextResult" = "페이지내 다음 찾기";
+
+/* Accessibility label for previous result button in Find in Page Toolbar. */
+"FindInPage.PreviousResult" = "페이지내 이전 찾기";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.lastSlide.buttonLabel" = "네, 알겠습니다!";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "누구도 감시하지 않는 자유로운 웹 여행";
+
+/* Button label used to close a menu that displays as a popup. */
+"Menu.Close" = "닫기";
+
+/* Text for a label that indicates the title of button from onboarding screen version 2. */
+"NewOnboarding.Button.Title.V2" = "시작하기";
+
+/* Text for a label that indicates the subtitle for the onboarding screen version 2. */
+"NewOnboarding.Subtitle.V2" = "빠르고. 사생활 보호되고. 방해 없는.";
+
+/* Text for a label that indicates the title of button from onboarding screen */
+"Onboarding.Button.Title" = "브라우징 시작";
+
+/* Text for a label that indicates the title of the bottom button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.BottomButtonTitle.V2" = "건너뛰기";
+
+/* Text for a label that indicates the first subtitle for the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.FirstSubtitle.V2" = "추가적인 개인 정보 보호를 위해 앱을 닫으면 방문 기록이 삭제됩니다.";
+
+/* Text for a label that indicates the second subtitle for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.SecondSubtitle.V2" = "링크를 열 때마다 내 데이터를 보호하려면 %@를 기본 브라우저로 설정하세요.";
+
+/* Text for a label that indicates the title for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.Title.V2" = "%@, 다른 브라우저와 다릅니다.";
+
+/* Text for a label that indicates the title of the top button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.TopButtonTitle.V2" = "기본 브라우저로 설정하기";
+
+/* Text for a label that indicates the description of history section from onboarding screen. */
+"Onboarding.History.Description" = "클릭 한 번으로 인터넷 사용 기록, 비밀번호, 쿠키를 지우고 원치 않는 광고가 나를 따라오는 것을 방지할 수 있습니다!";
+
+/* Text for a label that indicates the title of history section from onboarding screen. */
+"Onboarding.History.Title" = "내 탐색 기록이 나를 따라다니지 않습니다.";
+
+/* Text for a label that indicates the description of incognito section from onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Incognito.Description" = "%@는 추적 보호 및 콘텐츠 차단 기능을 갖춘 전용 개인 정보 보호 브라우저입니다.";
+
+/* Text for a label that indicates the title of incognito section from onboarding screen. */
+"Onboarding.Incognito.Title" = "시크릿 그 이상";
+
+/* Text for a label that indicates the description of protection section from onboarding screen. */
+"Onboarding.Protection.Description" = "설정을 통해 얼마나 많이 또는 적게 공유할지 결정할 수 있습니다.";
+
+/* Text for a label that indicates the title of protection section from onboarding screen. */
+"Onboarding.Protection.Title" = "내가 정하는 보호 기능";
+
+/* Text for a label that indicates the subtitle for onboarding screen. */
+"Onboarding.Subtitle" = "개인 브라우징을 한 단계 업그레이드하세요.";
+
+/* Text for a label that indicates the title for onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Title" = "Firefox %@에 오신 것을 환영합니다!";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Safari에서 콘텐츠 차단";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsEnable" = "%@ 사용";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsExtentions" = "Safari를 선택한 다음 Extensions을 선택하세요.";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled */
+"Safari.instructionsNotEnabled" = "%@ 사용 안함";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "앱 설정 열기";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.openInstruction" = "기기 설정 열기";
+
+/* Save button label */
+"Save" = "저장";
+
+/* Label for error state when entering an invalid search engine URL. %s is a search term in a URL. */
+"SearchEngine.addEngineError" = "찾을 수 없습니다. 검색어를 이것으로 바꿔 보세요: %s.";
+
+/* Label for disable option on search suggestions prompt */
+"SearchSuggestions.promptDisable" = "아니오";
+
+/* Label for enable option on search suggestions prompt */
+"SearchSuggestions.promptEnable" = "예";
+
+/* %@ is the name of the app (Focus / Klar). Label for search suggestions prompt message */
+"SearchSuggestions.promptMessage" = "추천 검색을 사용하려면 %@가 주소창에 입력한 내용을 검색 엔진에 보내야 합니다.";
+
+/* Title for search suggestions prompt */
+"SearchSuggestions.promptTitle" = "추천 검색을 사용할까요?";
+
+/* Title for the URL Autocomplete row */
+"Settings.autocompleteSection" = "URL 자동 완성";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "기타 콘텐츠 추적기를 차단하면, 동영상이나 웹 페이지가 제대로 표시되지 않을 수 있습니다.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo2" = "취소";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes2" = "콘텐츠 추적기 차단";
+
+/* Dark theme option in settings menu */
+"Settings.darkTheme" = "어두운";
+
+/* Description associated with the Crash Reports toggle on settings screen */
+"Settings.detailTextCrashReports" = "충돌 보고서를 통해 브라우저 문제를 진단하고 해결할 수 있습니다.";
+
+/* Description associated to the Search Suggestions toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSearchSuggestion" = "%@가 주소창에 입력한 내용을 검색엔진에 전송합니다.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSendUsageData" = "Mozilla는 %@ 이용에 더 나은 서비스를 제공하고 향상시키는 데 오직 필요한 정보만을 수집합니다.";
+
+/* Description associated to the Studies toggle on the settings screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextStudies" = "%@가 때때로 연구를 설치하고 실행할 수 있습니다.";
+
+/* Title for section in settings menu */
+"Settings.general" = "일반";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "더 알아보기.";
+
+/* Lincese option in settings menu. Tapping the cell will take the user to a list of licences for the 3rd parties used in the app. */
+"Settings.licenses" = "라이선스";
+
+/* Light theme option in settings menu */
+"Settings.lightTheme" = "밝은";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, allows the user to leave a review for the app on the app store. */
+"Settings.rate" = "%@ 평가하기";
+
+/* Label for Safari integration section */
+"Settings.safariTitle" = "SAFARI 연동";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "설정";
+
+/* Text for button to add another search engine in settings */
+"Settings.Search.AddSearchEngineButton" = "다른 검색 엔진 추가";
+
+/* Title on add search engine settings screen */
+"Settings.Search.AddSearchEngineTitle" = "검색 엔진 추가";
+
+/* Header for rows of installed search engines */
+"Settings.Search.InstalledSearchEngines" = "설치된 검색 엔진";
+
+/* Label for input field for the name of the search engine to be added */
+"Settings.Search.NameToDisplay" = "표시할 이름";
+
+/* Toast displayed after adding a search engine */
+"Settings.Search.NewSearchEngineAdded" = "새 검색 엔진이 추가되었습니다.";
+
+/* Label for button to bring deleted default engines back */
+"Settings.Search.RestoreEngine" = "기본 검색 엔진 되돌리기";
+
+/* Placeholder text for input of new search engine name */
+"Settings.Search.SearchEngineName" = "검색 엔진 이름";
+
+/* Label for input of search engine template */
+"Settings.Search.SearchTemplate" = "사용할 검색 문구";
+
+/* Text displayed as an example of the template to add a search engine. */
+"settings.Search.SearchTemplateExample" = "예: searchengine.example.com/search/?q=%s";
+
+/* Placeholder text for input of new search engine template */
+"Settings.Search.SearchTemplatePlaceholder" = "검색 문구를 붙여넣거나 입력하세요. 필요한 경우, 검색 용어를 %s로 바꾸실 수 있습니다.";
+
+/* Label for the search engine in the search screen */
+"Settings.searchLabel" = "검색 엔진";
+
+/* Label for the Search Suggestions toggle row */
+"Settings.searchSuggestions" = "추천 검색어 켜기";
+
+/* Title for the search selection screen */
+"Settings.searchTitle2" = "검색";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "개인 정보";
+
+/* Label title for set as default browser row */
+"Settings.setAsDefaultBrowser" = "기본 브라우저로 설정";
+
+/* %@ is the name of the app. Description for set as default browser option */
+"Settings.setAsDefaultBrowserDescription" = "%@에서 자동으로 열리도록 웹 사이트, 이메일 및 메시지의 링크를 설정합니다.";
+
+/* System value for theme section in settings menu */
+"Settings.systemTheme" = "시스템 테마";
+
+/* Theme section in settings menu */
+"Settings.theme" = "테마";
+
+/* Header for manual theme section in settings menu */
+"Settings.themePicker" = "테마 피커";
+
+/* Label for the checkbox to toggle Advertising trackers */
+"Settings.toggleBlockAds2" = "광고";
+
+/* Label for the checkbox to toggle Analytics trackers */
+"Settings.toggleBlockAnalytics2" = "분석";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "웹 폰트 차단";
+
+/* Label for the checkbox to toggle Other trackers */
+"Settings.toggleBlockOther2" = "콘텐츠";
+
+/* Label for the checkbox to toggle Social trackers */
+"Settings.toggleBlockSocial2" = "소셜";
+
+/* Label for Crash Reports toggle on settings screen */
+"Settings.toggleCrashReports" = "자동으로 충돌 보고서 보내기";
+
+/* Label for toggle on settings screen */
+"Settings.toggleFaceID" = "Face ID를 사용해서 앱 잠금 해제";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Face ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleFaceIDDescription" = "앱에서 URL이 이미 열렸다면 Face ID를 사용해서 %@ 잠금을 해제할 수 있습니다.";
+
+/* Show home screen tips toggle label on settings screen */
+"Settings.toggleHomeScreenTips" = "홈 스크린 팁 표시";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "사용현황 데이터 보내기";
+
+/* Label for Studies toggle on the settings screen */
+"Settings.toggleStudies" = "연구";
+
+/* Label for toggle on settings screen */
+"Settings.toggleTouchID" = "Touch ID를 사용해서 앱 잠금 해제";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Touch ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleTouchIDDescription" = "앱에서 URL이 이미 열렸다면 Touch ID를 사용해서 %@ 잠금을 해제할 수 있습니다.";
+
+/* Status off for tracking protection in settings screen */
+"Settings.trackingProtectionOff" = "끄기";
+
+/* Status on for tracking protection in settings screen */
+"Settings.trackingProtectionOn" = "켜기";
+
+/* Value for theme toggle in settings menu */
+"Settings.useSystemTheme" = "시스템 밝음/어두움 모드 사용";
+
+/* Title for settings section to enable different Siri Shortcuts. */
+"Settinsg.siriShortcutsTitle" = "SIRI 단축키";
+
+/* Text for a share button */
+"share" = "공유";
+
+/* Text for the share menu option when a user wants to add the site to Shortcuts */
+"ShareMenu.AddToShortcuts" = "바로가기 추가";
+
+/* Toast displayed to the user after adding the item to the Shortcuts. */
+"ShareMenu.AddToShortcuts.Confirm" = "바로가기에 추가됨";
+
+/* Text for the share menu when a user wants to copy a URL. */
+"shareMenu.copyAddress" = "주소 복사";
+
+/* Text for the share menu option when a user wants to open the find in page menu */
+"ShareMenu.FindInPage" = "페이지내 검색";
+
+/* Text for the share menu option when a user wants to remove the site from Shortcuts */
+"ShareMenu.RemoveFromShortcuts" = "바로가기에서 제거";
+
+/* Toast displayed to the user after removing the item from the Shortcuts. */
+"ShareMenu.RemoveShortcut.Confirm" = "바로가기 삭제됨";
+
+/* Text for the share menu option when a user wants to reload the site as a desktop */
+"ShareMenu.RequestDesktop" = "데스크톱 사이트 요청";
+
+/* Text for the share menu option when a user wants to reload the site as a mobile device */
+"ShareMenu.RequestMobile" = "모바일 사이트 보기";
+
+/* Text for the share menu option when a user wants to open the current website in the Chrome app. */
+"ShareMenu.ShareOpenChrome" = "Chrome에서 열기";
+
+/* Text for the share menu option when a user wants to open the current website in the default browser. */
+"ShareMenu.ShareOpenDefaultBrowser" = "기본 브라우저에서 열기";
+
+/* Text for the share menu option when a user wants to open the current website in the Firefox app. */
+"ShareMenu.ShareOpenFirefox" = "Firefox에서 열기";
+
+/* Text for the share menu option when a user wants to open the current website inside the app. */
+"ShareMenu.ShareOpenLink" = "링크 열기";
+
+/* Text for the share menu option when a user wants to share the current website they are on through another app. */
+"ShareMenu.SharePage" = "페이지 공유…";
+
+/* Text for the long press on a shortcut option in context menu. */
+"ShortcutView.RemoveFromShortcuts" = "바로가기에서 제거";
+
+/* Text for the long press on a shortcut rename option in context menu. */
+"ShortcutView.Rename" = "바로가기 이름 바꾸기";
+
+/* Text for the placeholder textfield on rename shortcut alert. */
+"ShortcutView.RenameShortcutAlertPlaceholder" = "바로가기 이름";
+
+/* Text for the rename shortcut alert primary action. */
+"ShortcutView.RenameShortcutAlertPrimaryAction" = "저장";
+
+/* Text for the rename shortcut alert secondary action. */
+"ShortcutView.RenameShortcutAlertSecondaryAction" = "취소";
+
+/* This is the button text that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.ButtonText.V2" = "완료";
+
+/* This is the subtitle text for step one that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepOne.V2" = "아이콘이 흔들리기 시작할 때까지 홈 화면을 길게 누릅니다.";
+
+/* This is the subtitle text for step three that is displayed in the Show Me How onboarding screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.SubtitleStepThree.V2" = "%@로 검색하고 위젯을 선택하세요.";
+
+/* This is the subtitle text for step two that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepTwo.V2" = "플러스 아이콘을 누릅니다.";
+
+/* This is the title text that is displayed in the Show Me How Onboarding Screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.Title.V2" = "%@ 위젯 추가";
+
+/* Button to add a favorite URL to Siri. */
+"Siri.add" = "추가";
+
+/* Button to add a specified shortcut option to Siri. */
+"Siri.addTo" = "Siri에 추가";
+
+/* Label for button to edit the Siri phrase or delete the Siri functionality. */
+"Siri.editOpenUrl" = "바로 가기 다시 기록 또는 삭제";
+
+/* Title of option in settings to set up Siri to erase */
+"Siri.erase" = "삭제";
+
+/* Title of option in settings to set up Siri to erase and then open the app. */
+"Siri.eraseAndOpen" = "지우고 열기";
+
+/* Title for screen to add a favorite URL to Siri. */
+"Siri.favoriteUrl" = "즐겨 찾는 사이트 열기";
+
+/* Title of option in settings to set up Siri to open a specified URL in Focus/Klar. */
+"Siri.openURL" = "즐겨 찾는 사이트 열기";
+
+/* Label for input to set a favorite URL to be opened by Siri. */
+"Siri.urlToOpen" = "열 URL";
+
+/* Text for a label that indicates the title for biometric tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.Biometric.Title" = "사이트가 열려 있을 때 %@ 잠금:";
+
+/* Text for a label that indicates the description for biometric Face ID tip. */
+"Tip.BiometricFaceId.Description" = "Face ID 켜기";
+
+/* Text for a label that indicates the description for biometric Touch ID tip. */
+"Tip.BiometricTouchId.Description" = "Touch ID 켜기";
+
+/* Text for a label that indicates the description for request desktop tip. */
+"Tip.RequestDesktop.Description" = "페이지 작업 > 데스크톱 사이트 요청";
+
+/* Text for a label that indicates the title for request desktop tip. */
+"Tip.RequestDesktop.Title" = "사이트의 전체 데스크톱 버전을 보고 싶으십니까?";
+
+/* Text for a label that indicates the description for share trackers tip. The placeholder is the number of trackers blocked. Only shown when there are more than 10 trackers blocked. For locales where we would need plural support, please feel free to translate this string as `Trackers blocked so far: %@` instead. */
+"Tip.ShareTrackers.Description" = "지금까지 차단된 추적기 %@";
+
+/* Text for a label that indicates the title for share trackers tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.ShareTrackers.Title" = "사용자는 탐색하고 %@는 차단합니다.";
+
+/* Text for a label that indicates the description for shortcuts tip. The placeholder is replaced with the short product name (Focus or Klar). */
+"Tip.Shortcuts.Description" = "%@ 메뉴에서 바로 가기에 추가를 선택합니다.";
+
+/* Text for a label that indicates the title for shortcuts tip. */
+"Tip.Shortcuts.Title" = "가장 많이 방문하는 사이트에 대한 바로 가기 만들기:";
+
+/* Text for a label that indicates the description for siri erase tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriErase.Description" = "Siri 바로 가기 추가";
+
+/* Text for a label that indicates the title for siri erase tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.SiriErase.Title" = "\"Siri, 내 %@ 세션을 지워줘.\"";
+
+/* Text for a label that indicates the description for siri favorite tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriFavorite.Description" = "Siri 바로 가기 추가";
+
+/* Text for a label that indicates the title for siri favorite tip. */
+"Tip.SiriFavorite.Title" = "\"Siri, 내가 자주 방문하는 사이트를 열어줘.\"";
+
+/* Text for a label that indicates the description for sites not working tip. */
+"Tip.SitesNotWorking.Description" = "추적 방지 기능을 해제해 보세요.";
+
+/* Text for a label that indicates the title for sites not working tip. */
+"Tip.SitesNotWorking.Title" = "사이트에 콘텐츠가 없거나 이상하게 작동합니까?";
+
+/* Text shown on quick action widget inviting the user to browse in the app. %@ is the name of the app (Focus/Klar). */
+"TodayWidget.SearchInApp.Instruction" = "%@에서 검색";
+
+/* This is the body text that is displayed for the Context Menu icon tooltip */
+"TooltipBodyText.ContextMenu" = "특정 개인 정보 및 보안 옵션을 관리하려면 설정으로 이동하세요.";
+
+/* This is the body text that is displayed for the Privacy tooltip */
+"TooltipBodyText.Privacy" = "이러한 기본 설정은 강력한 보호 기능을 제공합니다. 하지만 특정 요구 사항에 맞게 설정을 쉽게 수정할 수도 있습니다.";
+
+/* This is the body text that is displayed for the Search Bar tooltip */
+"TooltipBodyText.SearchBar" = "개인 브라우징 세션을 시작하면 추적기 및 기타 나쁜 것들을 차단합니다.";
+
+/* This is the body text that is displayed for the Shield icon tooltip. Where placeholder can be (Focus or Klar). */
+"TooltipBodyText.ShieldIcon" = "%@가 사용자를 감시하는 이 사이트를 중지했습니다. 차단된 항목에 대한 정보를 보려면 방패를 탭하세요.";
+
+/* This is the body text that is displayed for the Shield icon tooltip when we block trackers for the first time on a website */
+"TooltipBodyText.ShieldIconTrackerBlocked.V2" = "잡았다! 사용자를 감시하는 이 사이트를 중지했습니다. 차단된 항목에 대한 정보를 보려면 방패를 탭하세요.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon" = "현재 세션의 모든 흔적을 제거하려면 언제든지 휴지통을 탭하세요.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon.V2" = "여기를 클릭하여 방문 기록, 쿠키를 포함한 모든 것을 삭제하고 새 탭을 시작하세요.";
+
+/* This is the title text that is displayed for the Privacy tooltip */
+"TooltipTitleText.Privacy" = "보호되고 있습니다!";
+
+/* Text for tracking protection screen showing the connection is not secure */
+"trackingProtection.connectionNotSecureLabel" = "연결이 안전하지 않음";
+
+/* Text for tracking protection screen showing the connection is secure */
+"trackingProtection.connectionSecureLabel" = "연결이 안전함";
+
+/* Title for the tracking settings page to change what trackers are blocked. */
+"trackingProtection.label" = "추적 방지";
+
+/* Text for the status off from Tracking Protection. */
+"trackingProtection.statusOff" = "이 세션에서 보호 꺼짐";
+
+/* Text for the status on from Tracking Protection. */
+"trackingProtection.statusOn" = "이 세션에서 보호 켜짐";
+
+/* Text for the toggle that enables/disables tracking protection. */
+"trackingProtection.toggleLabel2" = "향상된 추적 방지 기능";
+
+/* Text for tracking protection screen showing the number of trackers blocked since the app install. The placeholder is replaced with the install date of the application. */
+"trackingProtection.trackersBlockedLabel" = "%@ 이후에 차단된 추적기";
+
+/* Text for the header of trackers section from Tracking Protection. */
+"trackingProtection.trackersHeader" = "차단할 추적기 및 스크립트";
+
+/* Label displayed for button used as a shortcut to add a link to the list of URLs to autocomplete. */
+"URL.addToAutocompleteLabel" = "자동 완성에 링크 추가";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "붙여넣어서 가기";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "삭제";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel2" = "방문 기록 삭제";
+
+/* Label displayed for find in page button when typing in the URL Bar. %@ is any text the user has typed into the URL bar that they want to find on the current page. */
+"URL.findOnPageLabel" = "페이지내 검색: %@";
+
+/* Text for a menu displayed from the bottom of the screen when a user long presses on the URL bar with clipboard contents. */
+"URL.paste" = "붙여넣기";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "검색어 또는 주소 입력";
+
+/* Label displayed for search button when typing in the URL bar */
+"URL.searchLabel" = "%@ 검색";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "차단된 추적기";
+
+/* Title for the action button shown on card view that will take the user to a tutorial explaining the user how to add an widget */
+"WidgetOnboardingCard.ActionButton" = "사용 방법 보기";
+
+/* Subtitle shown on card view explaining the app has a widget option. %@ is the name of the app (Focus/Klar). */
+"WidgetOnboardingCard.Subtitle" = "개인 정보 보호 브라우저를 쓸 수 있지만, 홈 화면의 %@ 위젯을 사용하면 다음에 브라우저를 더욱 빠르게 시작하실 수 있습니다.";
+
+/* Title shown on card view explaining the app has a widget option */
+"WidgetOnboardingCard.Title" = "방문 기록이 삭제되었습니다! 🎉";
+

@@ -1,0 +1,654 @@
+/* Button on About screen */
+"About.learnMoreButton" = "Докладніше";
+
+/* Label on About screen */
+"About.missionLabel" = "%@ створено в Mozilla. Наша місія — сприяння розвитку здорового й відкритого Інтернету.";
+
+/* Label on About screen */
+"About.privateBullet1" = "Шукайте й переглядайте просто з програми";
+
+/* Label on About screen */
+"About.privateBullet2" = "Блокуйте стеження (або оновіть налаштування, щоб дозволити стеження)";
+
+/* Label on About screen */
+"About.privateBullet3" = "Видаліть файли cookie, а також історію пошуку й перегляду";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "Використовуйте як приватний браузер:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "Довідка";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Положення про приватність";
+
+/* Label for row in About screen */
+"About.rowRights" = "Ваші права";
+
+/* Label on About screen */
+"About.safariBullet1" = "Блокуйте стеження для посилення приватності";
+
+/* Label on About screen */
+"About.safariBullet2" = "Блокуйте вебшрифти для зменшення розміру сторінок";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Використовуйте як розширення для Safari:";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, takes the user to a page with information about the product. Also displayed as a header for the About page. */
+"About.title" = "Про %@";
+
+/* Label on About screen */
+"About.topLabel" = "%@ надає вам контроль.";
+
+/* Title for action sheet item to open the current page in another application. Placeholder is the name of the application to open the current page. */
+"actionSheet.openIn" = "Відкрити в %@";
+
+/* Button to dismiss the 'Add Pass Failed' alert. */
+"AddPass.Error.Dismiss" = "OK";
+
+/* Message of the 'Add Pass Failed' alert. */
+"AddPass.Error.Message" = "При додаванні картки до Wallet сталася помилка. Спробуйте знову пізніше.";
+
+/* Title of the 'Add Pass Failed' alert. */
+"AddPass.Error.Title" = "Не вдалося додати картку";
+
+/* %@ is app name. Prompt shown to ask the user to use Touch ID, Face ID, or passcode to continue browsing after returning to the app. */
+"Authentication.reason" = "Автентифікуйтеся для повернення до %@";
+
+/* Label for button to add a custom URL */
+"Autocomplete.addCustomUrl" = "Додати власну URL-адресу";
+
+/* Label for error state when entering an invalid URL */
+"Autocomplete.addCustomUrlError" = "Уважно перевірте введену URL-адресу.";
+
+/* A label displaying an example URL */
+"Autocomplete.addCustomUrlExample" = "Зразок: example.com";
+
+/* Label for the input to add a custom URL */
+"Autocomplete.addCustomUrlLabel" = "URL для додавання";
+
+/* Placeholder for the input field to add a custom URL */
+"Autocomplete.addCustomUrlPlaceholder" = "Вставте чи введіть URL-адресу";
+
+/* Label for button to add a custom URL with the + prefix */
+"Autocomplete.addCustomUrlWithPlus" = "+ Додати власну URL-адресу";
+
+/* Label for toast alerting a custom URL has been added */
+"Autocomplete.customUrlAdded" = "Нову власну URL-адресу додано.";
+
+/* Description for enabling or disabling the default list. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.defaultDescriptoin" = "Увімкніть автозавершення в %@ для понад 450 популярних сайтів у панелі адреси.";
+
+/* label describing URL Autocomplete as disabled */
+"Autocomplete.disabled" = "Вимкнено";
+
+/* Label for toast alerting that the custom URL being added is a duplicate */
+"Autocomplete.duplicateUrl" = "URL вже наявний";
+
+/* Label for button to add a custom URL */
+"Autocomplete.emptyState" = "Немає власних URL-адрес для показу";
+
+/* label describing URL Autocomplete as enabled */
+"Autocomplete.enabled" = "Увімкнено";
+
+/* Label for button taking you to your custom Autocomplete URL list */
+"Autocomplete.manageSites" = "Керувати сайтами";
+
+/* Label for enabling or disabling autocomplete */
+"Autocomplete.mySites" = "Мої сайти";
+
+/* Description for adding and managing custom autocomplete URLs. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.mySitesDesc" = "Увімкніть, щоб %@ автоматично завершував URL-адреси ваших улюблених сайтів.";
+
+/* Label for enabling or disabling top sites */
+"Autocomplete.topSites" = "Популярні сайти";
+
+/* Title for the action button shown on the Splash Screen which gives the user the ability to log in with biometrics. */
+"BiometricAuthentication.UnlockButton.Title" = "Розблокувати";
+
+/* Create a new session after failing a biometric check */
+"BiometricPrompt.newSession" = "Новий сеанс";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "Назад";
+
+/* Toast displayed after a URL has been copied to the clipboard */
+"browser.copyAddressToast" = "URL скопійовано в буфер обміну";
+
+/* Copy URL button in URL long press menu */
+"Browser.copyMenuLabel" = "Копіювати";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "Вперед";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "Перезавантажити";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "Параметри";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "Стоп";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "Вибрати панель адреси";
+
+/* Label on button to complete edits */
+"Done" = "Готово";
+
+/* Label on button to allow edits */
+"Edit" = "Змінити";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "Спробувати знову";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Скасувати";
+
+/* Dialog title used for opening an external app from Focus. The placeholder string is the app name of either Focus or Klar. */
+"ExternalAppLink.messageTitle" = "%@ хоче відкрити іншу програму";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Відкрити";
+
+/* Dialog title used for opening an external app from Focus. First placeholder string is the app name of either Focus or Klar and the second placeholder string specifies the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "%1$@ хоче відкрити %2$@";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "Скасувати";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "Е-пошта";
+
+/* Accessibility label for done button in Find in Page Toolbar. */
+"FindInPage.Done" = "Пошук на сторінці завершено";
+
+/* Accessibility label for next result button in Find in Page Toolbar. */
+"FindInPage.NextResult" = "Знайти далі";
+
+/* Accessibility label for previous result button in Find in Page Toolbar. */
+"FindInPage.PreviousResult" = "Знайти попереднє";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.lastSlide.buttonLabel" = "Гаразд, зрозуміло!";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "Переглядайте без думки, що за вами хтось спостерігає.";
+
+/* Button label used to close a menu that displays as a popup. */
+"Menu.Close" = "Закрити";
+
+/* Text for a label that indicates the title of button from onboarding screen version 2. */
+"NewOnboarding.Button.Title.V2" = "Розпочати";
+
+/* Text for a label that indicates the subtitle for the onboarding screen version 2. */
+"NewOnboarding.Subtitle.V2" = "Швидкий. Приватний. Зосереджений.";
+
+/* Text for a label that indicates the title of button from onboarding screen */
+"Onboarding.Button.Title" = "Почати перегляд";
+
+/* Text for a label that indicates the title of the bottom button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.BottomButtonTitle.V2" = "Пропустити";
+
+/* Text for a label that indicates the first subtitle for the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.FirstSubtitle.V2" = "Для кращої приватності ми очищаємо вашу історію, коли ви закриваєте програму.";
+
+/* Text for a label that indicates the second subtitle for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.SecondSubtitle.V2" = "Зробіть %@ типовим, щоб захистити ваші дані під час відкриття кожного посилання.";
+
+/* Text for a label that indicates the title for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.Title.V2" = "%@ не схожий на інші браузери";
+
+/* Text for a label that indicates the title of the top button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.TopButtonTitle.V2" = "Установити типовим браузером";
+
+/* Text for a label that indicates the description of history section from onboarding screen. */
+"Onboarding.History.Description" = "Зітріть історію перегляду, паролі, файли cookie, щоб запобігти стеженню за вами небажаною рекламою, одним дотиком!";
+
+/* Text for a label that indicates the title of history section from onboarding screen. */
+"Onboarding.History.Title" = "Ваша історія не стежить за вами";
+
+/* Text for a label that indicates the description of incognito section from onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Incognito.Description" = "%@ зосереджений на вашій приватності та з захистом від стеження й блокуванням вмісту.";
+
+/* Text for a label that indicates the title of incognito section from onboarding screen. */
+"Onboarding.Incognito.Title" = "Більше, ніж просто інкогніто";
+
+/* Text for a label that indicates the description of protection section from onboarding screen. */
+"Onboarding.Protection.Description" = "Сконфігуруйте налаштування, щоб вирішувати, якими даними ділитися.";
+
+/* Text for a label that indicates the title of protection section from onboarding screen. */
+"Onboarding.Protection.Title" = "Захищайтеся на власний розсуд";
+
+/* Text for a label that indicates the subtitle for onboarding screen. */
+"Onboarding.Subtitle" = "Піднесіть свій приватний перегляд на новий рівень.";
+
+/* Text for a label that indicates the title for onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Title" = "Вітаємо у Firefox %@!";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Оберіть Safari, потім оберіть Блокувальники вмісту";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsEnable" = "Увімкніть %@";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsExtentions" = "Виберіть Safari, потім виберіть Розширення";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled */
+"Safari.instructionsNotEnabled" = "%@ не увімкнено.";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "Відкрийте параметри програми";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.openInstruction" = "Відкрийте параметри пристрою";
+
+/* Save button label */
+"Save" = "Зберегти";
+
+/* Label for error state when entering an invalid search engine URL. %s is a search term in a URL. */
+"SearchEngine.addEngineError" = "Це не спрацювало. Спробуйте змінити пошуковий запит цим: %s.";
+
+/* Label for disable option on search suggestions prompt */
+"SearchSuggestions.promptDisable" = "Ні";
+
+/* Label for enable option on search suggestions prompt */
+"SearchSuggestions.promptEnable" = "Так";
+
+/* %@ is the name of the app (Focus / Klar). Label for search suggestions prompt message */
+"SearchSuggestions.promptMessage" = "Для отримання пропозицій %@ повинен відправляти пошуковій системі введений в адресному рядку текст.";
+
+/* Title for search suggestions prompt */
+"SearchSuggestions.promptTitle" = "Показувати пошукові пропозиції?";
+
+/* Title for the URL Autocomplete row */
+"Settings.autocompleteSection" = "Автозавершення URL";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "Блокування інших елементів стеження може порушити роботу деяких відео й вебсторінок.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo2" = "Скасувати";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes2" = "Блокувати стеження вмісту";
+
+/* Dark theme option in settings menu */
+"Settings.darkTheme" = "Темна";
+
+/* Description associated with the Crash Reports toggle on settings screen */
+"Settings.detailTextCrashReports" = "Звіти про збої дають нам змогу діагностувати й усувати проблеми з браузером.";
+
+/* Description associated to the Search Suggestions toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSearchSuggestion" = "%@ відправлятиме пошуковій системі текст, введений в адресному рядку.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSendUsageData" = "Mozilla зобов'язується збирати лише ті дані, що необхідні для роботи та вдосконалення %@.";
+
+/* Description associated to the Studies toggle on the settings screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextStudies" = "%@ може час від часу встановлювати й виконувати дослідження.";
+
+/* Title for section in settings menu */
+"Settings.general" = "Загальні";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Докладніше.";
+
+/* Lincese option in settings menu. Tapping the cell will take the user to a list of licences for the 3rd parties used in the app. */
+"Settings.licenses" = "Ліцензії";
+
+/* Light theme option in settings menu */
+"Settings.lightTheme" = "Світла";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, allows the user to leave a review for the app on the app store. */
+"Settings.rate" = "Оцінити %@";
+
+/* Label for Safari integration section */
+"Settings.safariTitle" = "ІНТЕГРАЦІЯ SAFARI";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "Параметри";
+
+/* Text for button to add another search engine in settings */
+"Settings.Search.AddSearchEngineButton" = "Додати іншу пошукову систему";
+
+/* Title on add search engine settings screen */
+"Settings.Search.AddSearchEngineTitle" = "Додати пошукову систему";
+
+/* Header for rows of installed search engines */
+"Settings.Search.InstalledSearchEngines" = "ВСТАНОВЛЕНІ ПОШУКОВІ СИСТЕМИ";
+
+/* Label for input field for the name of the search engine to be added */
+"Settings.Search.NameToDisplay" = "Назва для показу";
+
+/* Toast displayed after adding a search engine */
+"Settings.Search.NewSearchEngineAdded" = "Нову пошукову систему додано.";
+
+/* Label for button to bring deleted default engines back */
+"Settings.Search.RestoreEngine" = "Відновити типові пошукові системи";
+
+/* Placeholder text for input of new search engine name */
+"Settings.Search.SearchEngineName" = "Назва пошукової системи";
+
+/* Label for input of search engine template */
+"Settings.Search.SearchTemplate" = "Запит для пошуку";
+
+/* Text displayed as an example of the template to add a search engine. */
+"settings.Search.SearchTemplateExample" = "Приклад: searchengine.example.com/search/?q=%s";
+
+/* Placeholder text for input of new search engine template */
+"Settings.Search.SearchTemplatePlaceholder" = "Вставте або введіть запит для пошуку. Якщо необхідно, замініть пошуковий термін на: %s.";
+
+/* Label for the search engine in the search screen */
+"Settings.searchLabel" = "Пошукова система";
+
+/* Label for the Search Suggestions toggle row */
+"Settings.searchSuggestions" = "Отримувати пошукові пропозиції";
+
+/* Title for the search selection screen */
+"Settings.searchTitle2" = "ПОШУК";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "ПРИВАТНІСТЬ";
+
+/* Label title for set as default browser row */
+"Settings.setAsDefaultBrowser" = "Встановити типовим браузером";
+
+/* %@ is the name of the app. Description for set as default browser option */
+"Settings.setAsDefaultBrowserDescription" = "Автоматично відкривати посилання з вебсайтів, електронних листів та повідомлень у %@.";
+
+/* System value for theme section in settings menu */
+"Settings.systemTheme" = "Системна тема";
+
+/* Theme section in settings menu */
+"Settings.theme" = "Тема";
+
+/* Header for manual theme section in settings menu */
+"Settings.themePicker" = "Вибір теми";
+
+/* Label for the checkbox to toggle Advertising trackers */
+"Settings.toggleBlockAds2" = "Реклама";
+
+/* Label for the checkbox to toggle Analytics trackers */
+"Settings.toggleBlockAnalytics2" = "Аналітика";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "Блокувати вебшрифти";
+
+/* Label for the checkbox to toggle Other trackers */
+"Settings.toggleBlockOther2" = "Вміст";
+
+/* Label for the checkbox to toggle Social trackers */
+"Settings.toggleBlockSocial2" = "Соціальні мережі";
+
+/* Label for Crash Reports toggle on settings screen */
+"Settings.toggleCrashReports" = "Автоматично надсилати звіти про збої";
+
+/* Label for toggle on settings screen */
+"Settings.toggleFaceID" = "Використовувати Face ID для розблокування програми";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Face ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleFaceIDDescription" = "Face ID блокуватиме %@, якщо в програмі відкрито якусь сторінку";
+
+/* Show home screen tips toggle label on settings screen */
+"Settings.toggleHomeScreenTips" = "Показувати поради на головному екрані";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Надсилати дані про використання";
+
+/* Label for Studies toggle on the settings screen */
+"Settings.toggleStudies" = "Дослідження";
+
+/* Label for toggle on settings screen */
+"Settings.toggleTouchID" = "Використовувати Touch ID для розблокування програми";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Touch ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleTouchIDDescription" = "Touch ID блокуватиме %@, якщо в програмі відкрито якусь сторінку";
+
+/* Status off for tracking protection in settings screen */
+"Settings.trackingProtectionOff" = "Вимкнено";
+
+/* Status on for tracking protection in settings screen */
+"Settings.trackingProtectionOn" = "Увімкнено";
+
+/* Value for theme toggle in settings menu */
+"Settings.useSystemTheme" = "Повторювати тему системи";
+
+/* Title for settings section to enable different Siri Shortcuts. */
+"Settinsg.siriShortcutsTitle" = "ШВИДКІ КОМАНДИ SIRI";
+
+/* Text for a share button */
+"share" = "Поділитися";
+
+/* Text for the share menu option when a user wants to add the site to Shortcuts */
+"ShareMenu.AddToShortcuts" = "Додати до ярликів";
+
+/* Toast displayed to the user after adding the item to the Shortcuts. */
+"ShareMenu.AddToShortcuts.Confirm" = "Додано до ярликів";
+
+/* Text for the share menu when a user wants to copy a URL. */
+"shareMenu.copyAddress" = "Копіювати адресу";
+
+/* Text for the share menu option when a user wants to open the find in page menu */
+"ShareMenu.FindInPage" = "Знайти на сторінці";
+
+/* Text for the share menu option when a user wants to remove the site from Shortcuts */
+"ShareMenu.RemoveFromShortcuts" = "Вилучити з ярликів";
+
+/* Toast displayed to the user after removing the item from the Shortcuts. */
+"ShareMenu.RemoveShortcut.Confirm" = "Ярлик вилучено";
+
+/* Text for the share menu option when a user wants to reload the site as a desktop */
+"ShareMenu.RequestDesktop" = "Повна версія сайту";
+
+/* Text for the share menu option when a user wants to reload the site as a mobile device */
+"ShareMenu.RequestMobile" = "Мобільна версія сайту";
+
+/* Text for the share menu option when a user wants to open the current website in the Chrome app. */
+"ShareMenu.ShareOpenChrome" = "Відкрити в Chrome";
+
+/* Text for the share menu option when a user wants to open the current website in the default browser. */
+"ShareMenu.ShareOpenDefaultBrowser" = "Відкрити в типовому браузері";
+
+/* Text for the share menu option when a user wants to open the current website in the Firefox app. */
+"ShareMenu.ShareOpenFirefox" = "Відкрити у Firefox";
+
+/* Text for the share menu option when a user wants to open the current website inside the app. */
+"ShareMenu.ShareOpenLink" = "Відкрити посилання";
+
+/* Text for the share menu option when a user wants to share the current website they are on through another app. */
+"ShareMenu.SharePage" = "Поділитися сторінкою…";
+
+/* Text for the long press on a shortcut option in context menu. */
+"ShortcutView.RemoveFromShortcuts" = "Вилучити з ярликів";
+
+/* Text for the long press on a shortcut rename option in context menu. */
+"ShortcutView.Rename" = "Перейменувати ярлик";
+
+/* Text for the placeholder textfield on rename shortcut alert. */
+"ShortcutView.RenameShortcutAlertPlaceholder" = "Назва ярлика";
+
+/* Text for the rename shortcut alert primary action. */
+"ShortcutView.RenameShortcutAlertPrimaryAction" = "Зберегти";
+
+/* Text for the rename shortcut alert secondary action. */
+"ShortcutView.RenameShortcutAlertSecondaryAction" = "Скасувати";
+
+/* This is the button text that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.ButtonText.V2" = "Готово";
+
+/* This is the subtitle text for step one that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepOne.V2" = "Утримуйте пальцем головний екран, доки піктограми не почнуть тремтіти.";
+
+/* This is the subtitle text for step three that is displayed in the Show Me How onboarding screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.SubtitleStepThree.V2" = "Знайдіть %@. Потім оберіть віджет.";
+
+/* This is the subtitle text for step two that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepTwo.V2" = "Торкніться піктограми плюсика.";
+
+/* This is the title text that is displayed in the Show Me How Onboarding Screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.Title.V2" = "Додайте віджет %@";
+
+/* Button to add a favorite URL to Siri. */
+"Siri.add" = "Додати";
+
+/* Button to add a specified shortcut option to Siri. */
+"Siri.addTo" = "Додати до Siri";
+
+/* Label for button to edit the Siri phrase or delete the Siri functionality. */
+"Siri.editOpenUrl" = "Перезаписати чи видалити швидку команду";
+
+/* Title of option in settings to set up Siri to erase */
+"Siri.erase" = "Стерти";
+
+/* Title of option in settings to set up Siri to erase and then open the app. */
+"Siri.eraseAndOpen" = "Стерти й відкрити";
+
+/* Title for screen to add a favorite URL to Siri. */
+"Siri.favoriteUrl" = "Відкрити улюблений сайт";
+
+/* Title of option in settings to set up Siri to open a specified URL in Focus/Klar. */
+"Siri.openURL" = "Відкрити улюблений сайт";
+
+/* Label for input to set a favorite URL to be opened by Siri. */
+"Siri.urlToOpen" = "URL-адреса";
+
+/* Text for a label that indicates the title for biometric tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.Biometric.Title" = "Блокувати %@, якщо сайт відкрито:";
+
+/* Text for a label that indicates the description for biometric Face ID tip. */
+"Tip.BiometricFaceId.Description" = "Увімкнути Face ID";
+
+/* Text for a label that indicates the description for biometric Touch ID tip. */
+"Tip.BiometricTouchId.Description" = "Увімкнути Touch ID";
+
+/* Text for a label that indicates the description for request desktop tip. */
+"Tip.RequestDesktop.Description" = "Дії сторінки > Повна версія сайту";
+
+/* Text for a label that indicates the title for request desktop tip. */
+"Tip.RequestDesktop.Title" = "Хочете переглянути повну версію сайту?";
+
+/* Text for a label that indicates the description for share trackers tip. The placeholder is the number of trackers blocked. Only shown when there are more than 10 trackers blocked. For locales where we would need plural support, please feel free to translate this string as `Trackers blocked so far: %@` instead. */
+"Tip.ShareTrackers.Description" = "Заблоковано елементів стеження: %@";
+
+/* Text for a label that indicates the title for share trackers tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.ShareTrackers.Title" = "Ви переглядаєте. %@ блокує.";
+
+/* Text for a label that indicates the description for shortcuts tip. The placeholder is replaced with the short product name (Focus or Klar). */
+"Tip.Shortcuts.Description" = "Виберіть Додати до ярликів у меню %@";
+
+/* Text for a label that indicates the title for shortcuts tip. */
+"Tip.Shortcuts.Title" = "Створіть ярлики для сайтів, які ви відвідуєте найчастіше:";
+
+/* Text for a label that indicates the description for siri erase tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriErase.Description" = "Додати швидку команду Siri";
+
+/* Text for a label that indicates the title for siri erase tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.SiriErase.Title" = "“Siri, зітри мій сеанс %@.”";
+
+/* Text for a label that indicates the description for siri favorite tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriFavorite.Description" = "Додати швидку команду Siri";
+
+/* Text for a label that indicates the title for siri favorite tip. */
+"Tip.SiriFavorite.Title" = "“Siri, відкрий мій улюблений сайт.”";
+
+/* Text for a label that indicates the description for sites not working tip. */
+"Tip.SitesNotWorking.Description" = "Спробуйте вимкнути захист від стеження";
+
+/* Text for a label that indicates the title for sites not working tip. */
+"Tip.SitesNotWorking.Title" = "На сайті відсутній вміст або він дивно поводиться?";
+
+/* Text shown on quick action widget inviting the user to browse in the app. %@ is the name of the app (Focus/Klar). */
+"TodayWidget.SearchInApp.Instruction" = "Шукати у %@";
+
+/* This is the body text that is displayed for the Context Menu icon tooltip */
+"TooltipBodyText.ContextMenu" = "Перейдіть до Налаштувань, щоб керувати певними опціями приватності та безпеки.";
+
+/* This is the body text that is displayed for the Privacy tooltip */
+"TooltipBodyText.Privacy" = "Ці типові налаштування забезпечують надійний захист. Але їх можна легко змінити відповідно до ваших особистих потреб.";
+
+/* This is the body text that is displayed for the Search Bar tooltip */
+"TooltipBodyText.SearchBar" = "Почніть сеанс приватного перегляду, а ми заблокуємо стеження та інші небажані елементи.";
+
+/* This is the body text that is displayed for the Shield icon tooltip. Where placeholder can be (Focus or Klar). */
+"TooltipBodyText.ShieldIcon" = "%@ запобіг стеженню за вами цим сайтом. Торкніться щита, щоб отримати інформацію про те, що ми заблокували.";
+
+/* This is the body text that is displayed for the Shield icon tooltip when we block trackers for the first time on a website */
+"TooltipBodyText.ShieldIconTrackerBlocked.V2" = "Спіймався! Ми не дозволили цьому сайту стежити за вами. Торкніться щита, щоб побачити заблоковані елементи.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon" = "Торкніться кошика будь-коли, щоб вилучити всі сліди поточного сеансу.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon.V2" = "Торкніться тут, щоб стерти все – історію, файли cookie й інші дані – та розпочніть начисто у новій вкладці.";
+
+/* This is the title text that is displayed for the Privacy tooltip */
+"TooltipTitleText.Privacy" = "Ви захищені!";
+
+/* Text for tracking protection screen showing the connection is not secure */
+"trackingProtection.connectionNotSecureLabel" = "З’єднання не захищене";
+
+/* Text for tracking protection screen showing the connection is secure */
+"trackingProtection.connectionSecureLabel" = "З’єднання захищене";
+
+/* Title for the tracking settings page to change what trackers are blocked. */
+"trackingProtection.label" = "Захист від стеження";
+
+/* Text for the status off from Tracking Protection. */
+"trackingProtection.statusOff" = "Захист вимкнено для цього сеансу";
+
+/* Text for the status on from Tracking Protection. */
+"trackingProtection.statusOn" = "Захист увімкнено для цього сеансу";
+
+/* Text for the toggle that enables/disables tracking protection. */
+"trackingProtection.toggleLabel2" = "Розширений захист від стеження";
+
+/* Text for tracking protection screen showing the number of trackers blocked since the app install. The placeholder is replaced with the install date of the application. */
+"trackingProtection.trackersBlockedLabel" = "Заблоковано стеження, починаючи з %@";
+
+/* Text for the header of trackers section from Tracking Protection. */
+"trackingProtection.trackersHeader" = "Блокувати стеження й скрипти";
+
+/* Label displayed for button used as a shortcut to add a link to the list of URLs to autocomplete. */
+"URL.addToAutocompleteLabel" = "Додати посилання для автозавершення";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Вставити і перейти";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "СТЕРТИ";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel2" = "Історію перегляду очищено";
+
+/* Label displayed for find in page button when typing in the URL Bar. %@ is any text the user has typed into the URL bar that they want to find on the current page. */
+"URL.findOnPageLabel" = "Знайти на сторінці: %@";
+
+/* Text for a menu displayed from the bottom of the screen when a user long presses on the URL bar with clipboard contents. */
+"URL.paste" = "Вставити";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "Введіть запит чи адресу";
+
+/* Label displayed for search button when typing in the URL bar */
+"URL.searchLabel" = "Шукати %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Заблоковано стеження";
+
+/* Title for the action button shown on card view that will take the user to a tutorial explaining the user how to add an widget */
+"WidgetOnboardingCard.ActionButton" = "Покажіть мені як";
+
+/* Subtitle shown on card view explaining the app has a widget option. %@ is the name of the app (Focus/Klar). */
+"WidgetOnboardingCard.Subtitle" = "Ми залишимо вас у режимі приватного перегляду, але наступного разу розпочніть роботу швидше за допомогою віджета %@ на головному екрані.";
+
+/* Title shown on card view explaining the app has a widget option */
+"WidgetOnboardingCard.Title" = "Історію перегляду очищено! 🎉";
+
