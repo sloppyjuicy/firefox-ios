@@ -21,9 +21,9 @@ curl ${BITRISE_STACK_INFO} | jq ' . | keys'
 ]
 '''
 pattern = 'osx-xcode-'
+patterns = [pattern]
 BITRISE_YML = 'bitrise.yml'
 WORKFLOW = 'NewXcodeVersions'
-
 
 resp = requests.get(BITRISE_STACK_INFO)
 resp.raise_for_status()
@@ -39,39 +39,26 @@ def parse_semver(raw_str):
         return False
 
 
-def available_stacks():
+def default_stack():
     try:
         resp = requests.get(BITRISE_STACK_INFO)
         resp_json = resp.json()
-        return resp_json['available_stacks']
+        return resp_json['project_types_with_default_stacks']['ios']['default_stack']
     except HTTPError as http_error:
         print('An HTTP error has occurred: {http_error}')
     except Exception as err:
         print('An exception has occurred: {err}')
 
-
-def largest_version():
-    stacks = available_stacks()
-    count = 0
-    for item in stacks:
-        if pattern in item:
-            p = parse_semver(item)
-            if p:
-                if count == 0 or semver.compare(largest, p) == -1:
-                    largest = p
-                count += 1
-    return '{0}.x'.format('.'.join(largest.split('.')[0:2]))
-
 if __name__ == '__main__':
     '''
     STEPS
-    1. check bitrise API stack info for latest XCode version
+    1. check bitrise API stack info for the default stack version
     2. compare latest with current bitrise.yml stack version in repo
     3. if same exit, if not, continue
     4. modify bitrise.yml (update stack value)
     '''
 
-    largest_semver = largest_version()
+    default_semver = default_stack().split(pattern)[1]
     tmp_file = 'tmp.yml'
 
     with open(BITRISE_YML, 'r') as infile:
@@ -85,17 +72,17 @@ if __name__ == '__main__':
         y = obj_yaml.load(infile)
 
         current_semver = y['workflows'][WORKFLOW]['meta']['bitrise.io']['stack']
-
+        
         # remove pattern prefix from current_semver to compare with largest
         current_semver = current_semver.split(pattern)[1]
 
-        if current_semver == largest_semver:
-            print('Xcode version unchanged! aborting.')
+        if current_semver >= default_semver:
+            print('Xcode version unchanged or more recent! aborting.')
         else:
-            print('New Xcode version available: {0} ... updating bitrise.yml!'.format(largest_semver))
+            print('New Xcode version available: {0} ... updating bitrise.yml!'.format(default_semver))
             # add prefix pattern back to be recognizable by bitrise
             # as a valid stack value
-            y['workflows'][WORKFLOW]['meta']['bitrise.io']['stack'] = '{0}{1}'.format(pattern, largest_semver)
+            y['workflows'][WORKFLOW]['meta']['bitrise.io']['stack'] = '{0}{1}'.format(pattern, default_semver)
             with open(tmp_file, 'w+') as tmpfile:
                 obj_yaml.dump(y, tmpfile)
                 copyfile(tmp_file, BITRISE_YML)

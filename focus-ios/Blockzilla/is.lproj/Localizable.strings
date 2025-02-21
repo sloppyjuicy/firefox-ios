@@ -1,0 +1,660 @@
+/* Button on About screen */
+"About.learnMoreButton" = "Fræðast meira";
+
+/* Label on About screen */
+"About.missionLabel" = "%@ er framleitt af Mozilla. Markmið okkar er að stuðla að heilbrigðu og opnu Alneti.";
+
+/* Label on About screen */
+"About.privateBullet1" = "Leita og vafra beint í forritinu";
+
+/* Label on About screen */
+"About.privateBullet2" = "Loka á rekjara (eða uppfæra stillingar til að leyfa rekjara)";
+
+/* Label on About screen */
+"About.privateBullet3" = "Hreinsa til að eyða vefkökum, leitar- og vafraferlum";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "Nota sem einkavafra til að:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "Hjálp";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Meðferð persónuupplýsinga";
+
+/* Label for row in About screen */
+"About.rowRights" = "Réttindi þín";
+
+/* Label on About screen */
+"About.safariBullet1" = "Loka á rekjara fyrir aukna gagnaleynd";
+
+/* Label on About screen */
+"About.safariBullet2" = "Loka á vefletur til að minnka stærð síðunnar";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Nota sem Safari-viðauka til að:";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, takes the user to a page with information about the product. Also displayed as a header for the About page. */
+"About.title" = "Um %@";
+
+/* Label on About screen */
+"About.topLabel" = "%@ gefur þér stjórnina.";
+
+/* Title for action sheet item to open the current page in another application. Placeholder is the name of the application to open the current page. */
+"actionSheet.openIn" = "Opna með %@";
+
+/* Button to dismiss the 'Add Pass Failed' alert. */
+"AddPass.Error.Dismiss" = "Í lagi";
+
+/* Message of the 'Add Pass Failed' alert. */
+"AddPass.Error.Message" = "Villa átti sér stað þegar verið var að senda gögn í veskið. Reyndu aftur síðar.";
+
+/* Title of the 'Add Pass Failed' alert. */
+"AddPass.Error.Title" = "Mistókst að bæta við passa";
+
+/* %@ is app name. Prompt shown to ask the user to use Touch ID, Face ID, or passcode to continue browsing after returning to the app. */
+"Authentication.reason" = "Staðfesta til að snúa aftur í %@";
+
+/* Label for button to add a custom URL */
+"Autocomplete.addCustomUrl" = "Bæta við sérsniðinni vefslóð";
+
+/* Label for error state when entering an invalid URL */
+"Autocomplete.addCustomUrlError" = "Athugaðu slóðina sem þú settir inn.";
+
+/* A label displaying an example URL */
+"Autocomplete.addCustomUrlExample" = "Til dæmis: example.com";
+
+/* Label for the input to add a custom URL */
+"Autocomplete.addCustomUrlLabel" = "URL-slóð til að bæta við";
+
+/* Placeholder for the input field to add a custom URL */
+"Autocomplete.addCustomUrlPlaceholder" = "Límdu eða settu inn slóð";
+
+/* Label for button to add a custom URL with the + prefix */
+"Autocomplete.addCustomUrlWithPlus" = "+ Bæta við sérsniðinni vefslóð";
+
+/* Label for toast alerting a custom URL has been added */
+"Autocomplete.customUrlAdded" = "Nýrri sérsniðinni vefslóð bætt við.";
+
+/* Description for enabling or disabling the default list. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.defaultDescriptoin" = "Virkja sjálfvirka útfyllingu í staðsetningarslá %@ á rúmlega 450 vinsælum slóðum.";
+
+/* label describing URL Autocomplete as disabled */
+"Autocomplete.disabled" = "Óvirkt";
+
+/* Label for toast alerting that the custom URL being added is a duplicate */
+"Autocomplete.duplicateUrl" = "Slóð þegar til";
+
+/* Label for button to add a custom URL */
+"Autocomplete.emptyState" = "Engar sérsniðnar vefslóðir til að birta";
+
+/* label describing URL Autocomplete as enabled */
+"Autocomplete.enabled" = "Virkt";
+
+/* Label for button taking you to your custom Autocomplete URL list */
+"Autocomplete.manageSites" = "Stjórna vefsvæðum";
+
+/* Label for enabling or disabling autocomplete */
+"Autocomplete.mySites" = "Vefsvæðin mín";
+
+/* Description for adding and managing custom autocomplete URLs. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"Autocomplete.mySitesDesc" = "Leyfa %@ að klára uppáhaldsvefslóðirnar þínar.";
+
+/* Label for enabling or disabling top sites */
+"Autocomplete.topSites" = "Vinsælustu svæðin";
+
+/* Title for the action button shown on the Splash Screen which gives the user the ability to log in with biometrics. */
+"BiometricAuthentication.UnlockButton.Title" = "Aflæsa";
+
+/* Create a new session after failing a biometric check */
+"BiometricPrompt.newSession" = "Ný seta";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "Til baka";
+
+/* Toast displayed after a URL has been copied to the clipboard */
+"browser.copyAddressToast" = "Vefslóð afrituð á klippispjald";
+
+/* Copy URL button in URL long press menu */
+"Browser.copyMenuLabel" = "Afrita";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "Áfram";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "Endurhlaða";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "Stillingar";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "Stöðva";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "Velja staðsetningarslá";
+
+/* Label on button to complete edits */
+"Done" = "Búið";
+
+/* Label on button to allow edits */
+"Edit" = "Breyta";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "Reyna aftur";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Hætta við";
+
+/* Dialog title used for opening an external app from Focus. The placeholder string is the app name of either Focus or Klar. */
+"ExternalAppLink.messageTitle" = "%@ vill opna annað smáforrit";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Opna";
+
+/* Dialog title used for opening an external app from Focus. First placeholder string is the app name of either Focus or Klar and the second placeholder string specifies the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "%1$@ vill opna %2$@";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "Hætta við";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "Tölvupóstur";
+
+/* Accessibility label for done button in Find in Page Toolbar. */
+"FindInPage.Done" = "Finna á síðu búið";
+
+/* Accessibility label for next result button in Find in Page Toolbar. */
+"FindInPage.NextResult" = "Finna næst á síðu";
+
+/* Accessibility label for previous result button in Find in Page Toolbar. */
+"FindInPage.PreviousResult" = "Finna fyrra á síðu";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.lastSlide.buttonLabel" = "Í lagi, ég skil";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "Vafra þannig að enginn taki eftir því.";
+
+/* Button label used to close a menu that displays as a popup. */
+"Menu.Close" = "Loka";
+
+/* Text for a label that indicates the title of button from onboarding screen version 2. */
+"NewOnboarding.Button.Title.V2" = "Hefjast handa";
+
+/* Text for a label that indicates the subtitle for the onboarding screen version 2. */
+"NewOnboarding.Subtitle.V2" = "Hraðvirkt. Einkamál. Engar truflanir.";
+
+/* Text for a label that indicates the title of button from onboarding screen */
+"Onboarding.Button.Title" = "Byrjaðu að vafra";
+
+/* Text for a label that indicates the title of the bottom button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.BottomButtonTitle.V2" = "Sleppa";
+
+/* Text for a label that indicates the first subtitle for the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.FirstSubtitle.V2" = "Við hreinsum vafurferilinn þegar þú lokar forritinu til að auka persónuvernd.";
+
+/* Text for a label that indicates the second subtitle for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.SecondSubtitle.V2" = "Gerðu %@ sjálfgefið til að vernda gögnin þín við hvern tengil sem þú opnar.";
+
+/* Text for a label that indicates the title for the default browser onboarding screen version 2. %@ is the name of the app (Focus/Klar) */
+"Onboarding.DefaultBrowser.Title.V2" = "%@ er ekki eins og aðrir vafrar";
+
+/* Text for a label that indicates the title of the top button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.TopButtonTitle.V2" = "Setja sem sjálfgefinn vafra";
+
+/* Text for a label that indicates the description of history section from onboarding screen. */
+"Onboarding.History.Description" = "Eyddu vafraferli þínum, lykilorðum, vafrakökum og komdu í veg fyrir að óæskilegar auglýsingar fylgi þér, allt með einum smelli!";
+
+/* Text for a label that indicates the title of history section from onboarding screen. */
+"Onboarding.History.Title" = "Sagan þín fylgir þér ekki";
+
+/* Text for a label that indicates the description of incognito section from onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Incognito.Description" = "%@ er sérstakur persónuverndarvafri með rakningarvörn og útilokun efnis.";
+
+/* Text for a label that indicates the title of incognito section from onboarding screen. */
+"Onboarding.Incognito.Title" = "Meira en huliðshjálmur";
+
+/* Text for a label that indicates the description of protection section from onboarding screen. */
+"Onboarding.Protection.Description" = "Aðlagaðu stillingar svo þú getir ákveðið hversu miklu eða litlu þú deilir.";
+
+/* Text for a label that indicates the title of protection section from onboarding screen. */
+"Onboarding.Protection.Title" = "Vernd eftir þínum eigin geðþótta";
+
+/* Text for a label that indicates the subtitle for onboarding screen. */
+"Onboarding.Subtitle" = "Taktu huliðsvafur þitt upp á næsta stig.";
+
+/* Text for a label that indicates the title for onboarding screen. Placeholder can be (Focus or Klar). */
+"Onboarding.Title" = "Velkomin í Firefox %@!";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Ýttu á Safari, veldu síðan lokun á efni";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsEnable" = "Virkja %@";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsExtentions" = "Veldu Safari, veldu síðan Forritsaukar";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled */
+"Safari.instructionsNotEnabled" = "%@ er óvirkt.";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "Opna stillingar";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.openInstruction" = "Opnaðu stillingar tækisins";
+
+/* Save button label */
+"Save" = "Vista";
+
+/* Label for error state when entering an invalid search engine URL. %s is a search term in a URL. */
+"SearchEngine.addEngineError" = "Þetta gekk ekki. Skipta um leitarorð í: %s.";
+
+/* Label for disable option on search suggestions prompt */
+"SearchSuggestions.promptDisable" = "Nei";
+
+/* Label for enable option on search suggestions prompt */
+"SearchSuggestions.promptEnable" = "Já";
+
+/* %@ is the name of the app (Focus / Klar). Label for search suggestions prompt message */
+"SearchSuggestions.promptMessage" = "Til að fá tillögur, þarf %@ að senda það sem þú skrifar í slóðina til leitarvélarinnar.";
+
+/* Title for search suggestions prompt */
+"SearchSuggestions.promptTitle" = "Sýna leitartillögur?";
+
+/* Title for the URL Autocomplete row */
+"Settings.autocompleteSection" = "Sjálfvirk leiðrétting á slóðum";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "Að loka á aðra efnisrekjara gæti haft áhrif á sum myndbönd og vefsíður.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo2" = "Hætta við";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes2" = "Loka á rekjara";
+
+/* On the Settings screen, this is the subtitle text for a toggle which controls sending daily usage ping. */
+"Settings.DailyUsagePing.Message" = "Þetta hjálpar Mozilla að áætla virka notendur.";
+
+/* On the Settings screen, this is the title text for a toggle which controls automatically sending daily usage ping. */
+"Settings.DailyUsagePing.Title" = "Ping um daglega notkun";
+
+/* Dark theme option in settings menu */
+"Settings.darkTheme" = "Dökkt";
+
+/* Description associated with the Crash Reports toggle on settings screen */
+"Settings.detailTextCrashReports.V2" = "Þetta hjálpar okkur að greina og laga vandamál í vafranum.";
+
+/* Description associated to the Search Suggestions toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSearchSuggestion" = "%@ mun senda það sem þú skrifar í slóðina yfir á leitarvélina þína.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSendUsageData" = "Mozilla safnar eingöngu því sem nauðsynlegt er til að betrumbæta %@ fyrir alla.";
+
+/* Description associated to the Studies toggle on the settings screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextStudies" = "%@ kann að setja upp og keyra rannsóknir af og til.";
+
+/* Title for section in settings menu */
+"Settings.general" = "Almennt";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Fræðast meira.";
+
+/* Lincese option in settings menu. Tapping the cell will take the user to a list of licences for the 3rd parties used in the app. */
+"Settings.licenses" = "Notkunarleyfi";
+
+/* Light theme option in settings menu */
+"Settings.lightTheme" = "Ljóst";
+
+/* %@ is the name of the app (Focus / Klar). Title displayed in the settings screen that, when tapped, allows the user to leave a review for the app on the app store. */
+"Settings.rate" = "Gefa %@ einkunn";
+
+/* Label for Safari integration section */
+"Settings.safariTitle" = "SAFARI SAMEINING";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "Stillingar";
+
+/* Text for button to add another search engine in settings */
+"Settings.Search.AddSearchEngineButton" = "Bæta við annari leitarvél";
+
+/* Title on add search engine settings screen */
+"Settings.Search.AddSearchEngineTitle" = "Bæta við leitarvél";
+
+/* Header for rows of installed search engines */
+"Settings.Search.InstalledSearchEngines" = "UPPSETTAR LEITARVÉLAR";
+
+/* Label for input field for the name of the search engine to be added */
+"Settings.Search.NameToDisplay" = "Heiti sem birtist";
+
+/* Toast displayed after adding a search engine */
+"Settings.Search.NewSearchEngineAdded" = "Nýrri leitarvél bætt við.";
+
+/* Label for button to bring deleted default engines back */
+"Settings.Search.RestoreEngine" = "Endurheimta upprunalegar leitarvélar";
+
+/* Placeholder text for input of new search engine name */
+"Settings.Search.SearchEngineName" = "Heiti leitarvélar";
+
+/* Label for input of search engine template */
+"Settings.Search.SearchTemplate" = "Leitarstrengur sem á að nota";
+
+/* Text displayed as an example of the template to add a search engine. */
+"settings.Search.SearchTemplateExample" = "Dæmi: searchengine.example.com/search/?q=%s";
+
+/* Placeholder text for input of new search engine template */
+"Settings.Search.SearchTemplatePlaceholder" = "Líma eða skrá inn leitarstreng. Skipta út leitarheiti með: %s, ef nauðsynlegt.";
+
+/* Label for the search engine in the search screen */
+"Settings.searchLabel" = "Leitarvél";
+
+/* Label for the Search Suggestions toggle row */
+"Settings.searchSuggestions" = "Fá leitartillögur";
+
+/* Title for the search selection screen */
+"Settings.searchTitle2" = "LEITA";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "FRIÐHELGI";
+
+/* Label title for set as default browser row */
+"Settings.setAsDefaultBrowser" = "Setja sem sjálfgefinn vafra";
+
+/* %@ is the name of the app. Description for set as default browser option */
+"Settings.setAsDefaultBrowserDescription" = "Stilltu tengla frá vefsvæðum, tölvupósti og skilaboðum til að opna sjálfkrafa í %@.";
+
+/* System value for theme section in settings menu */
+"Settings.systemTheme" = "Kerfisþema";
+
+/* Theme section in settings menu */
+"Settings.theme" = "Þema";
+
+/* Header for manual theme section in settings menu */
+"Settings.themePicker" = "Þemaval";
+
+/* Label for the checkbox to toggle Advertising trackers */
+"Settings.toggleBlockAds2" = "Auglýsingar";
+
+/* Label for the checkbox to toggle Analytics trackers */
+"Settings.toggleBlockAnalytics2" = "Greining";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "Loka á vef leturgerðir";
+
+/* Label for the checkbox to toggle Other trackers */
+"Settings.toggleBlockOther2" = "Efni";
+
+/* Label for the checkbox to toggle Social trackers */
+"Settings.toggleBlockSocial2" = "Samfélagsmiðlar";
+
+/* Label for Crash Reports toggle on settings screen */
+"Settings.toggleCrashReports" = "Senda hrunskýrslur inn sjálfkrafa";
+
+/* Label for toggle on settings screen */
+"Settings.toggleFaceID" = "Nota andlitsauðkenningu til að aflæsa smáforriti";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Face ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleFaceIDDescription" = "Andlitsauðkenning getur aflæst %@ ef URL er nú þegar opið í smáforritinu";
+
+/* Show home screen tips toggle label on settings screen */
+"Settings.toggleHomeScreenTips" = "Sýna ábendingar á heimasvæði";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Senda notkunarupplýsingar";
+
+/* Label for Studies toggle on the settings screen */
+"Settings.toggleStudies" = "Kannanir";
+
+/* Label for toggle on settings screen */
+"Settings.toggleTouchID" = "Nota fingrafaraauðkenningu til að aflæsa smáforriti";
+
+/* %@ is the name of the app (Focus / Klar). Description for 'Enable Touch ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleTouchIDDescription" = "Fingrafara auðkenning getur aflæst %@ ef URL er nú þegar opið í smáforritinu";
+
+/* Status off for tracking protection in settings screen */
+"Settings.trackingProtectionOff" = "Óvirkt";
+
+/* Status on for tracking protection in settings screen */
+"Settings.trackingProtectionOn" = "Virkt";
+
+/* Value for theme toggle in settings menu */
+"Settings.useSystemTheme" = "Nota ljóst/dökkt þema kerfis";
+
+/* Title for settings section to enable different Siri Shortcuts. */
+"Settinsg.siriShortcutsTitle" = "SIRI FLÝTILEIÐIR";
+
+/* Text for a share button */
+"share" = "Deila";
+
+/* Text for the share menu option when a user wants to add the site to Shortcuts */
+"ShareMenu.AddToShortcuts" = "Bæta við flýtileiðir";
+
+/* Toast displayed to the user after adding the item to the Shortcuts. */
+"ShareMenu.AddToShortcuts.Confirm" = "Bætt við flýtileiðir";
+
+/* Text for the share menu when a user wants to copy a URL. */
+"shareMenu.copyAddress" = "Afrita vistfang";
+
+/* Text for the share menu option when a user wants to open the find in page menu */
+"ShareMenu.FindInPage" = "Finna á síðu";
+
+/* Text for the share menu option when a user wants to remove the site from Shortcuts */
+"ShareMenu.RemoveFromShortcuts" = "Fjarlægja úr flýtileiðum";
+
+/* Toast displayed to the user after removing the item from the Shortcuts. */
+"ShareMenu.RemoveShortcut.Confirm" = "Flýtivísun fjarlægð";
+
+/* Text for the share menu option when a user wants to reload the site as a desktop */
+"ShareMenu.RequestDesktop" = "Fá borðtölvu vefsvæði";
+
+/* Text for the share menu option when a user wants to reload the site as a mobile device */
+"ShareMenu.RequestMobile" = "Biðja um svæði fyrir snjalltæki";
+
+/* Text for the share menu option when a user wants to open the current website in the Chrome app. */
+"ShareMenu.ShareOpenChrome" = "Opna í Chrome";
+
+/* Text for the share menu option when a user wants to open the current website in the default browser. */
+"ShareMenu.ShareOpenDefaultBrowser" = "Opna í sjálfgefnum vafra";
+
+/* Text for the share menu option when a user wants to open the current website in the Firefox app. */
+"ShareMenu.ShareOpenFirefox" = "Opna í Firefox";
+
+/* Text for the share menu option when a user wants to open the current website inside the app. */
+"ShareMenu.ShareOpenLink" = "Opna tengil";
+
+/* Text for the share menu option when a user wants to share the current website they are on through another app. */
+"ShareMenu.SharePage" = "Deila síðu með…";
+
+/* Text for the long press on a shortcut option in context menu. */
+"ShortcutView.RemoveFromShortcuts" = "Fjarlægja úr flýtileiðum";
+
+/* Text for the long press on a shortcut rename option in context menu. */
+"ShortcutView.Rename" = "Endurnefna flýtileið";
+
+/* Text for the placeholder textfield on rename shortcut alert. */
+"ShortcutView.RenameShortcutAlertPlaceholder" = "Nafn flýtileiðar";
+
+/* Text for the rename shortcut alert primary action. */
+"ShortcutView.RenameShortcutAlertPrimaryAction" = "Vista";
+
+/* Text for the rename shortcut alert secondary action. */
+"ShortcutView.RenameShortcutAlertSecondaryAction" = "Hætta við";
+
+/* This is the button text that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.ButtonText.V2" = "Lokið";
+
+/* This is the subtitle text for step one that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepOne.V2" = "Ýttu lengi á heimaskjáinn þar til táknmyndirnar byrja að vagga.";
+
+/* This is the subtitle text for step three that is displayed in the Show Me How onboarding screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.SubtitleStepThree.V2" = "Leitaðu að %@. Veldu síðan viðmótshluta.";
+
+/* This is the subtitle text for step two that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepTwo.V2" = "Ýttu á plús-táknið.";
+
+/* This is the title text that is displayed in the Show Me How Onboarding Screen. %@ is the name of the app (Focus/Klar) */
+"ShowMeHowOnboarding.Title.V2" = "Bættu við %@ viðmótshluta";
+
+/* Button to add a favorite URL to Siri. */
+"Siri.add" = "Bæta við";
+
+/* Button to add a specified shortcut option to Siri. */
+"Siri.addTo" = "Bæta við í Siri";
+
+/* Label for button to edit the Siri phrase or delete the Siri functionality. */
+"Siri.editOpenUrl" = "Taka upp aftur eða eyða flýtileið";
+
+/* Title of option in settings to set up Siri to erase */
+"Siri.erase" = "Hreinsa";
+
+/* Title of option in settings to set up Siri to erase and then open the app. */
+"Siri.eraseAndOpen" = "Hreinsa og opna";
+
+/* Title for screen to add a favorite URL to Siri. */
+"Siri.favoriteUrl" = "Opna uppáhalds svæði";
+
+/* Title of option in settings to set up Siri to open a specified URL in Focus/Klar. */
+"Siri.openURL" = "Opna uppáhalds svæði";
+
+/* Label for input to set a favorite URL to be opened by Siri. */
+"Siri.urlToOpen" = "URL til að opna";
+
+/* Text for a label that indicates the title for biometric tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.Biometric.Title" = "Læsa %@ þegar vefsvæði er opið:";
+
+/* Text for a label that indicates the description for biometric Face ID tip. */
+"Tip.BiometricFaceId.Description" = "Kveikja á Face ID";
+
+/* Text for a label that indicates the description for biometric Touch ID tip. */
+"Tip.BiometricTouchId.Description" = "Kveikja á Touch ID";
+
+/* Text for a label that indicates the description for request desktop tip. */
+"Tip.RequestDesktop.Description" = "Síðuaðgerðir > Biðja um borðtölvusíður";
+
+/* Text for a label that indicates the title for request desktop tip. */
+"Tip.RequestDesktop.Title" = "Viltu sjá fulla borðtölvuútgáfu af vefsvæði?";
+
+/* Text for a label that indicates the description for share trackers tip. The placeholder is the number of trackers blocked. Only shown when there are more than 10 trackers blocked. For locales where we would need plural support, please feel free to translate this string as `Trackers blocked so far: %@` instead. */
+"Tip.ShareTrackers.Description" = "Lokað á %@ rekjara hingað til";
+
+/* Text for a label that indicates the title for share trackers tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.ShareTrackers.Title" = "Þú vafrar. %@ lokar á.";
+
+/* Text for a label that indicates the description for shortcuts tip. The placeholder is replaced with the short product name (Focus or Klar). */
+"Tip.Shortcuts.Description" = "Veldu Bæta við flýtileiðum í %@ valmyndinni";
+
+/* Text for a label that indicates the title for shortcuts tip. */
+"Tip.Shortcuts.Title" = "Útbúðu flýtileiðir að þeim vefsvæðum sem þú heimsækir mest:";
+
+/* Text for a label that indicates the description for siri erase tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriErase.Description" = "Bæta við Siri-flýtileið";
+
+/* Text for a label that indicates the title for siri erase tip. The placeholder is replaced with the long product name (Firefox Focus or Firefox Klar). */
+"Tip.SiriErase.Title" = "\"Siri, eyddu %@ setunni minni.\"";
+
+/* Text for a label that indicates the description for siri favorite tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriFavorite.Description" = "Bæta við Siri-flýtileið";
+
+/* Text for a label that indicates the title for siri favorite tip. */
+"Tip.SiriFavorite.Title" = "\"Siri, opnaðu uppáhaldssíðuna mína.\"";
+
+/* Text for a label that indicates the description for sites not working tip. */
+"Tip.SitesNotWorking.Description" = "Prófaðu að slökkva á rakningarvörnum";
+
+/* Text for a label that indicates the title for sites not working tip. */
+"Tip.SitesNotWorking.Title" = "Vantar efni á vefsvæðið eða hegðar það sér undarlega?";
+
+/* Text shown on quick action widget inviting the user to browse in the app. %@ is the name of the app (Focus/Klar). */
+"TodayWidget.SearchInApp.Instruction" = "Leita í %@";
+
+/* This is the body text that is displayed for the Context Menu icon tooltip */
+"TooltipBodyText.ContextMenu" = "Farðu í Stillingar til að stjórna sértækum persónuverndar- og öryggisvalkostum.";
+
+/* This is the body text that is displayed for the Privacy tooltip */
+"TooltipBodyText.Privacy" = "Þessar sjálfgefnu stillingar bjóða upp á öfluga vernd. En það er auðvelt að laga til stillingarnar til að mæta sérþörfum þínum.";
+
+/* This is the body text that is displayed for the Search Bar tooltip */
+"TooltipBodyText.SearchBar" = "Byrjaðu huliðsvafralotuna þína og við lokum á rakningar og annað vont dót á meðan þú vafrar.";
+
+/* This is the body text that is displayed for the Shield icon tooltip. Where placeholder can be (Focus or Klar). */
+"TooltipBodyText.ShieldIcon" = "%@ kom í veg fyrir að þetta vefsvæði njósnaði um þig. Ýttu á skjöldinn til að fá upplýsingar um það sem við lokuðum á.";
+
+/* This is the body text that is displayed for the Shield icon tooltip when we block trackers for the first time on a website */
+"TooltipBodyText.ShieldIconTrackerBlocked.V2" = "Náðonum! Við komum í veg fyrir að þetta vefsvæði njósnaði um þig. Ýttu á skjöldinn til að fá upplýsingar um það sem við lokuðum á.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon" = "Pikkaðu á ruslið hvenær sem er til að fjarlægja öll ummerki um núverandi lotu.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon.V2" = "Ýttu hér til að henda öllu - ferli, vefkökum, öllu - og byrjaðu upp á nýtt á nýjum flipa.";
+
+/* This is the title text that is displayed for the Privacy tooltip */
+"TooltipTitleText.Privacy" = "Þú ert varin/n!";
+
+/* Text for tracking protection screen showing the connection is not secure */
+"trackingProtection.connectionNotSecureLabel" = "Tenging er ekki örugg";
+
+/* Text for tracking protection screen showing the connection is secure */
+"trackingProtection.connectionSecureLabel" = "Tenging er örugg";
+
+/* Title for the tracking settings page to change what trackers are blocked. */
+"trackingProtection.label" = "Vörn gegn gagnasöfnun rekjara";
+
+/* Text for the status off from Tracking Protection. */
+"trackingProtection.statusOff" = "Slökkt er á vörnum fyrir þessa setu";
+
+/* Text for the status on from Tracking Protection. */
+"trackingProtection.statusOn" = "Kveikt er á vörnum fyrir þessa setu";
+
+/* Text for the toggle that enables/disables tracking protection. */
+"trackingProtection.toggleLabel2" = "Aukin rakningarvörn";
+
+/* Text for tracking protection screen showing the number of trackers blocked since the app install. The placeholder is replaced with the install date of the application. */
+"trackingProtection.trackersBlockedLabel" = "Rekjarar sem lokað er fyrir síðan %@";
+
+/* Text for the header of trackers section from Tracking Protection. */
+"trackingProtection.trackersHeader" = "Rekjarar og skriftur sem á að útiloka";
+
+/* Label displayed for button used as a shortcut to add a link to the list of URLs to autocomplete. */
+"URL.addToAutocompleteLabel" = "Bæta vefslóð við í autocomplete";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Líma & áfram";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "HREINSA";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel2" = "Vafraferill hreinsaður";
+
+/* Label displayed for find in page button when typing in the URL Bar. %@ is any text the user has typed into the URL bar that they want to find on the current page. */
+"URL.findOnPageLabel" = "Finna á síðu: %@";
+
+/* Text for a menu displayed from the bottom of the screen when a user long presses on the URL bar with clipboard contents. */
+"URL.paste" = "Líma";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "Leitaðu eða settu inn vistfang";
+
+/* Label displayed for search button when typing in the URL bar */
+"URL.searchLabel" = "Leita að %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Lokað á rekjara";
+
+/* Title for the action button shown on card view that will take the user to a tutorial explaining the user how to add an widget */
+"WidgetOnboardingCard.ActionButton" = "Sýna mér hvernig";
+
+/* Subtitle shown on card view explaining the app has a widget option. %@ is the name of the app (Focus/Klar). */
+"WidgetOnboardingCard.Subtitle" = "Við látum þig vera í huliðsvafrinu þínu, en byrjum hraðar næst með %@-viðmótshlutanum á upphafsskjánum þínum.";
+
+/* Title shown on card view explaining the app has a widget option */
+"WidgetOnboardingCard.Title" = "Vafraferill hreinsaður! 🎉";
+

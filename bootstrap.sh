@@ -5,63 +5,22 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #
-# Bootstrap the Carthage dependencies. If the Carthage directory
-# already exists then nothing is done. This speeds up builds on
-# CI services where the Carthage directory can be cached.
-#
-# Use the --force option to force a rebuild of the dependencies.
-# Use the --importLocales option to fetch and update locales only
-#
-
-getLocale() {
-  echo "Getting locale..."
-  git clone https://github.com/boek/ios-l10n-scripts.git -b new_tool || exit 1
-
-  echo "Creating firefoxios-l10n Git repo"
-  rm -rf firefoxios-l10n
-  git clone --depth 1 https://github.com/mozilla-l10n/firefoxios-l10n firefoxios-l10n || exit 1
-}
-
-# Useful to check if previous command was successful - quit if it wasn't
-# Pass the error message as a parameter of the function with 'verifyExitCode "message"'
-verifyExitCode() {
-  EXIT_CODE=$?
-  if [ $EXIT_CODE == 0 ]; then
-    echo "$1"
-    exit 0
-  fi
-}
+# Use the --force option to force a re-build locales.
 
 if [ "$1" == "--force" ]; then
-    rm -rf firefoxios-l10n
-    rm -rf ios-l10n-scripts
-    rm -rf Carthage/*
-    rm -rf ~/Library/Caches/org.carthage.CarthageKit
+    rm -rf build
 fi
 
-if [ "$1" == "--importLocales" ]; then
-  # Import locales
-  if [ -d "/firefoxios-l10n" ] && [ -d "/ios-l10n-scripts" ]; then
-      echo "l10n directories found. Not downloading scripts."
-  else
-      echo "l10n directory not found. Downloading repo and scripts."
-      getLocale
-  fi
+# Download the nimbus-fml.sh script from application-services.
+NIMBUS_FML_FILE=./firefox-ios/nimbus.fml.yaml
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/mozilla/application-services/main/components/nimbus/ios/scripts/bootstrap.sh | bash -s -- --directory ./firefox-ios/bin $NIMBUS_FML_FILE
 
-  ./ios-l10n-scripts/ios-l10n-tools --project-path Client.xcodeproj --l10n-project-path ./firefoxios-l10n --import
-  exit 0
-fi
+# Move hooks from .githooks to .git/hooks
+cp -r .githooks/* .git/hooks/
 
-# Run carthage
-./carthage_command.sh
-verifyExitCode "Exit due to carthage_command.sh"
-
-# Move Glean script to source folder from MozillaAppServices.framework
-# as we don't want to ship our app with this Glean script inside framework
-mv Carthage/Build/iOS/MozillaAppServices.framework/sdk_generator.sh ./
+# Make the hooks are executable
+chmod +x .git/hooks/*
 
 # Install Node.js dependencies and build user scripts
 npm install
 npm run build
-
-(cd content-blocker-lib-ios/ContentBlockerGen && swift run)

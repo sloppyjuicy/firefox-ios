@@ -1,0 +1,4 @@
+---
+includes:
+  - messaging/messaging-evergreen-messages.fml.yaml
+  - messaging/messaging-firefox-ios.fml.yaml

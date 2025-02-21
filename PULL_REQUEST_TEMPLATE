@@ -1,6 +1,16 @@
-*Thank you for submitting a pull request, your contributions are greatly appreciated!*
+## :scroll: Tickets
+[Jira ticket](https://mozilla-hub.atlassian.net/browse/FXIOS-TODO)
+[Github issue](https://github.com/mozilla-mobile/firefox-ios/issues/TODO)
 
-Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
+## :bulb: Description
+<!--- Describe your changes so the reviewer can understand the context and decisions made for your work -->
 
-Please make sure you've run the test scheme and all the tests pass. If your changes affect existing tests please make sure to update the tests as well.
+## :pencil: Checklist
+You have to check all boxes before merging
+- [ ] Filled in the above information (tickets numbers and description of your work)
+- [ ] Updated the PR name to follow our [PR naming guidelines](https://github.com/mozilla-mobile/firefox-ios/wiki/Pull-Request-Naming-Guide)
+- [ ] Wrote unit tests and/or ensured the tests suite is passing
+- [ ] When working on UI, I checked and implemented accessibility (minimum Dynamic Text and VoiceOver)
+- [ ] If needed, I updated documentation / comments for complex code and public methods
+- [ ] If needed, added a backport comment (example `@Mergifyio backport release/v120`)
 
