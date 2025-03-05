@@ -1,0 +1,132 @@
+{
+  "configurations" : [
+    {
+      "id" : "7507FB87-8AE7-4A01-A172-706A9E6B1C1D",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "commandLineArgumentEntries" : [
+      {
+        "argument" : "FIREFOX_SKIP_INTRO"
+      },
+      {
+        "argument" : "FIREFOX_TEST"
+      },
+      {
+        "argument" : "FIREFOX_CLEAR_PROFILE"
+      },
+      {
+        "argument" : "\"GCDWEBSERVER_PORT:7777\""
+      },
+      {
+        "argument" : "DISABLE_ANIMATIONS"
+      }
+    ],
+    "environmentVariableEntries" : [
+      {
+        "key" : "WEBSERVER_PORT",
+        "value" : "7777"
+      },
+      {
+        "key" : "EXPERIMENT_NAME",
+        "value" : "${EXPERIMENT_NAME}"
+      }
+    ],
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Client.xcodeproj",
+      "identifier" : "F84B21BD1A090F8100AAB793",
+      "name" : "Client"
+    },
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "skippedTests" : [
+        "A11yHomePageTests",
+        "A11yHomePageTests\/testA11yHomePageAccessibilityLabels()",
+        "A11yHomePageTests\/testA11yHomePageAudit()",
+        "A11yHomePageTests\/testA11yHomePageVoiceOverNavigation()",
+        "A11yOnboardingTests",
+        "A11yOnboardingTests\/testA11yFirstRunTour()",
+        "A11ySearchTest",
+        "A11ySearchTest\/testA11ySearchSuggestions()",
+        "A11yUtils",
+        "ActivityStreamTest",
+        "AddressesTests",
+        "AddressesTests\/testAddNewAddressAllFieldsFilled()",
+        "AddressesTests\/testAddNewAddressCityFilled()",
+        "AddressesTests\/testAddNewAddressEmailFilled()",
+        "AddressesTests\/testAddNewAddressNameFilled()",
+        "AddressesTests\/testAddNewAddressOrganizationFilled()",
+        "AddressesTests\/testAddNewAddressPhoneFilled()",
+        "AddressesTests\/testAddNewAddressPostalCodeFilled()",
+        "AddressesTests\/testAddNewAddressStreetAddressFilled()",
+        "AddressesTests\/testDeleteAddress()",
+        "AddressesTests\/testUpdateAllAddressFields()",
+        "AuthenticationTest",
+        "BaseTestCase",
+        "BrowsingPDFTests",
+        "CreditCardsTests\/testAccessingTheCreditCardsSection()",
+        "DataManagementTests",
+        "DatabaseFixtureTest",
+        "DesktopModeTestsIpad",
+        "DesktopModeTestsIphone",
+        "DisplaySettingTests",
+        "DomainAutocompleteTests",
+        "DragAndDropTestIpad",
+        "DragAndDropTests",
+        "EngagementNotificationTests",
+        "FirefoxSuggestTest",
+        "FirefoxSuggestTest\/testFirefoxSuggestExists()",
+        "FxScreenGraphTests",
+        "HomeButtonTests",
+        "HomePageSettingsUITests\/testRecentlyVisited()",
+        "InactiveTabsTest",
+        "IntegrationTests",
+        "IpadOnlyTestCase",
+        "IphoneOnlyTestCase",
+        "JumpBackInTests",
+        "LibraryTestsIpad",
+        "LoginTest",
+        "MicrosurveyTests",
+        "MultiWindowTests",
+        "NavigationTest",
+        "NightModeTests",
+        "OpeningScreenTests",
+        "PerformanceTests",
+        "PhotonActionSheetTests",
+        "PocketTest",
+        "PocketTests",
+        "PrivateBrowsingTest",
+        "PrivateBrowsingTestIpad",
+        "ReportSiteTests",
+        "ScreenGraphTest",
+        "SearchSettingsUITests",
+        "ShareLongPressTests",
+        "ShareMenuTests",
+        "ShareToolbarTests",
+        "SiteLoadTest",
+        "SyncUITests",
+        "TabTrayTests",
+        "TabTrayTests\/testAccessibility()",
+        "ThirdPartySearchTest",
+        "TodayWidgetTests",
+        "TopTabsTestIpad",
+        "TrackingProtectionTests",
+        "URLValidationTests",
+        "WhatsNewTest"
+      ],
+      "target" : {
+        "containerPath" : "container:Client.xcodeproj",
+        "identifier" : "3BFE4B061D342FB800DDF53F",
+        "name" : "XCUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
