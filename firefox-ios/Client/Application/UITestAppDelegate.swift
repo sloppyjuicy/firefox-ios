@@ -1,0 +1,352 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Foundation
+import Shared
+import Kingfisher
+import WebKit
+
+import class MozillaAppServices.HardcodedNimbusFeatures
+
+class UITestAppDelegate: AppDelegate {
+    nonisolated static let dirForTestProfile = "\(UITestAppDelegate.appRootDir())/profile.testProfile"
+
+    private var internalProfile: Profile?
+
+    override var profile: Profile {
+        get {
+            getProfile(UIApplication.shared)
+        }
+        set {
+            internalProfile = newValue
+        }
+    }
+
+    func getProfile(_ application: UIApplication) -> Profile {
+        if let profile = self.internalProfile {
+            return profile
+        }
+
+        var profile: BrowserProfile
+        let launchArguments = ProcessInfo.processInfo.arguments
+
+        launchArguments.forEach { arg in
+            if arg.starts(with: LaunchArguments.ServerPort) {
+                configureWebserverPort(arg)
+            }
+
+            if arg.starts(with: LaunchArguments.LoadDatabasePrefix) {
+                configureDatabase(arg, launchArguments: launchArguments)
+            }
+
+            if arg.starts(with: LaunchArguments.LoadTabsStateArchive) {
+                configureTabs(arg, launchArguments: launchArguments)
+            }
+        }
+
+        if launchArguments.contains(LaunchArguments.ClearProfile) {
+            // Use a clean profile for each test session.
+            profile = BrowserProfile(
+                localName: "testProfile",
+                fxaCommandsDelegate: application.fxaCommandsDelegate,
+                clear: true
+            )
+        } else {
+            profile = BrowserProfile(
+                localName: "testProfile",
+                fxaCommandsDelegate: application.fxaCommandsDelegate
+            )
+        }
+
+        if launchArguments.contains(LaunchArguments.SkipAddingGoogleTopSite) {
+            profile.prefs.setBool(true, forKey: PrefsKeys.GoogleTopSiteHideKey)
+        }
+
+        // Don't show the Contextual hint for jump back in section.
+        if launchArguments.contains(LaunchArguments.SkipContextualHints) {
+            PrefsKeys.ContextualHints.allCases.forEach {
+                profile.prefs.setBool(true, forKey: $0.rawValue)
+            }
+        }
+
+        if launchArguments.contains(LaunchArguments.SkipSponsoredShortcuts) {
+            profile.prefs.setBool(false, forKey: PrefsKeys.FeatureFlags.SponsoredShortcuts)
+        }
+
+        // Don't show the What's New page.
+        if launchArguments.contains(LaunchArguments.SkipWhatsNew) {
+            profile.prefs.setInt(1, forKey: PrefsKeys.AppVersion.Latest)
+        }
+
+        if launchArguments.contains(LaunchArguments.SkipDefaultBrowserOnboarding) {
+            profile.prefs.setBool(true, forKey: PrefsKeys.KeyDidShowDefaultBrowserOnboarding)
+        }
+
+        if launchArguments.contains(LaunchArguments.SkipTermsOfUse) {
+            profile.prefs.setBool(true, forKey: PrefsKeys.TermsOfUseAccepted)
+        }
+
+        // Skip the intro when requested by for example tests or automation
+        if launchArguments.contains(LaunchArguments.SkipIntro) {
+            IntroScreenManager(prefs: profile.prefs).didSeeIntroScreen()
+        }
+
+        if launchArguments.contains(LaunchArguments.StageServer) {
+            profile.prefs.setInt(1, forKey: PrefsKeys.UseStageServer)
+        }
+
+        // Point the FxA account manager at a custom content server (e.g. a local
+        // FxA stack) so pairing/sign-in can run against it. Set before the
+        // account manager initializes. Used by the pairing E2E test.
+        if let customFxA = ProcessInfo.processInfo.environment["CUSTOM_FXA_SERVER"],
+           !customFxA.isEmpty {
+            profile.prefs.setBool(true, forKey: PrefsKeys.KeyUseCustomFxAContentServer)
+            profile.prefs.setString(customFxA, forKey: PrefsKeys.KeyCustomFxAContentServer)
+        }
+
+        if launchArguments.contains(LaunchArguments.FxAChinaServer) {
+            profile.prefs.setInt(1, forKey: PrefsKeys.KeyEnableChinaSyncService)
+        }
+
+        if launchArguments.contains(LaunchArguments.DisableAnimations) {
+            UIView.setAnimationsEnabled(false)
+        }
+
+        if launchArguments.contains(LaunchArguments.ResetMicrosurveyExpirationCount) {
+            // String is pulled from our "evergreen" messages configurations
+            // that are displayed via the Nimbus Messaging system.
+            let microsurveyID = "homepage-microsurvey-message"
+            UserDefaults.standard.set(nil, forKey: "\(GleanPlumbMessageStore.rootKey)\(microsurveyID)")
+        }
+
+        self.profile = profile
+        return profile
+    }
+
+    private func configureWebserverPort(_ arg: String) {
+        let portString = arg.replacingOccurrences(of: LaunchArguments.ServerPort, with: "")
+        if let port = Int(portString) {
+            AppInfo.webserverPort = port
+        } else {
+            fatalError("Failed to set web server port override.")
+        }
+    }
+
+    private func configureDatabase(_ arg: String, launchArguments: [String]) {
+        if launchArguments.contains(LaunchArguments.ClearProfile) {
+            fatalError("Clearing profile and loading a test database is not a supported combination.")
+        }
+
+        // Grab the name of file in the bundle's test-fixtures dir, and copy it to the runtime app dir.
+        let filename = arg.replacingOccurrences(of: LaunchArguments.LoadDatabasePrefix, with: "")
+        let input = URL(
+            fileURLWithPath: Bundle(for: UITestAppDelegate.self).path(
+                forResource: filename,
+                ofType: nil,
+                inDirectory: "test-fixtures"
+            )!
+        )
+        try? FileManager.default.createDirectory(
+            atPath: UITestAppDelegate.dirForTestProfile,
+            withIntermediateDirectories: false,
+            attributes: nil
+        )
+        let output = URL(fileURLWithPath: "\(UITestAppDelegate.dirForTestProfile)/places.db")
+
+        let enumerator = FileManager.default.enumerator(atPath: UITestAppDelegate.dirForTestProfile)
+        guard let filePaths = enumerator?.allObjects as? [String] else {
+            logger.log("Failed to retrieve file paths during database configuration in UITestAppDelegate class",
+                       level: .info,
+                       category: .lifecycle)
+            return
+        }
+        filePaths.filter { $0.contains(".db") }.forEach { item in
+            try? FileManager.default.removeItem(
+                at: URL(fileURLWithPath: "\(UITestAppDelegate.dirForTestProfile)/\(item)")
+            )
+        }
+
+        do {
+            try FileManager.default.copyItem(at: input, to: output)
+        } catch {
+            fatalError("Could not copy items from \(input) to \(output): \(error)")
+        }
+
+        // Tests currently load a browserdb history, we make sure we migrate it every time
+        UserDefaults.standard.setValue(false, forKey: PrefsKeys.PlacesHistoryMigrationSucceeded)
+    }
+
+    private func configureTabs(_ arg: String, launchArguments: [String]) {
+        let tabDirectory = "\(UITestAppDelegate.appRootDir())/profile.profile"
+        if launchArguments.contains(LaunchArguments.ClearProfile) {
+            fatalError("Clearing profile and loading tabs, not a supported combination.")
+        }
+
+        // Grab the name of file in the bundle's test-fixtures dir, and copy it to the runtime app dir.
+        let filenameArchive = arg.replacingOccurrences(of: LaunchArguments.LoadTabsStateArchive, with: "")
+        let input = URL(
+            fileURLWithPath: Bundle(for: UITestAppDelegate.self).path(
+                forResource: filenameArchive,
+                ofType: nil,
+                inDirectory: "test-fixtures"
+            )!
+        )
+        try? FileManager.default.createDirectory(
+            atPath: tabDirectory,
+            withIntermediateDirectories: false,
+            attributes: nil
+        )
+        let outputDir = URL(fileURLWithPath: "\(tabDirectory)/window-data")
+        let outputFile = URL(
+            fileURLWithPath: "\(tabDirectory)/window-data/window-44BA0B7D-097A-484D-8358-91A6E374451D"
+        )
+        let enumerator = FileManager.default.enumerator(atPath: "\(tabDirectory)/window-data")
+        let filePaths = enumerator?.allObjects as? [String]
+        filePaths?.filter { $0.contains("window-") }.forEach { item in
+            do {
+                try FileManager.default.removeItem(
+                    at: URL(fileURLWithPath: "\(tabDirectory)/window-data/\(item)")
+                )
+            } catch {
+                fatalError("Could not remove items at \(tabDirectory)/window-data/\(item): \(error)")
+            }
+        }
+
+        try? FileManager.default.createDirectory(
+            at: outputDir,
+            withIntermediateDirectories: true
+        )
+
+        do {
+            try FileManager.default.copyItem(at: input, to: outputFile)
+        } catch {
+            fatalError("Could not copy items at from \(input) to \(outputFile): \(error)")
+        }
+    }
+
+    override func application(
+        _ application: UIApplication,
+        willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // If the app is running from a XCUITest reset all settings in the app
+        if ProcessInfo.processInfo.arguments.contains(LaunchArguments.ClearProfile) {
+            resetApplication()
+        }
+
+        // ClearProfile does not reset UserDefaults.standard, so the default-browser flag leaks across
+        // tests on a shared simulator. Force it false here so the default-browser onboarding card renders.
+        if ProcessInfo.processInfo.arguments.contains(LaunchArguments.ResetDefaultBrowserStatus) {
+            UserDefaults.standard.set(false, forKey: DefaultBrowserUtility.UserDefaultsKey.isBrowserDefault)
+        }
+
+        // Opt-in: WKWebView cookies/site data live in WKWebsiteDataStore, which ClearProfile does not
+        // clear. Only cleared when this argument is present so it doesn't reset web state for every test.
+        if ProcessInfo.processInfo.arguments.contains(LaunchArguments.ClearWebData) {
+            WKWebsiteDataStore.default().removeData(
+                ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
+                modifiedSince: .distantPast
+            ) {}
+        }
+
+        Tab.ChangeUserAgent.clear()
+
+        return super.application(application, willFinishLaunchingWithOptions: launchOptions)
+    }
+
+    /// Use this to reset the application between tests.
+    func resetApplication() {
+        // Clear image cache - Kingfisher
+        KingfisherManager.shared.cache.clearMemoryCache()
+        KingfisherManager.shared.cache.clearDiskCache()
+
+        // Clear the cookie/url cache
+        // removeAllCachedResponses() crashes on iOS 17 simulators from Xcode 26
+        // https://github.com/mozilla-mobile/firefox-ios/issues/30947
+        // URLCache.shared.removeAllCachedResponses()
+        let storage = HTTPCookieStorage.shared
+        if let cookies = storage.cookies {
+            for cookie in cookies {
+                storage.deleteCookie(cookie)
+            }
+        }
+
+        // Clear the documents directory
+        let rootPath = UITestAppDelegate.appRootDir()
+        let manager = FileManager.default
+        let documents = URL(fileURLWithPath: rootPath)
+        do {
+            let docContents = try manager.contentsOfDirectory(atPath: rootPath)
+            for content in docContents {
+                do {
+                    try manager.removeItem(at: documents.appendingPathComponent(content))
+                } catch {
+                    // Couldn't delete some document contents.
+                }
+            }
+        } catch {
+            fatalError("Could not retrieve documents at \(rootPath): \(error)")
+        }
+    }
+
+    override func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        // Speed up the animations to 100 times as fast.
+        defer { UIWindow.keyWindow?.layer.speed = 100.0 }
+
+        loadExperiment()
+
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+
+    nonisolated static func appRootDir() -> String {
+        var rootPath = ""
+        let sharedContainerIdentifier = AppInfo.sharedContainerIdentifier
+        if let url = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: sharedContainerIdentifier
+        ) {
+            rootPath = url.path
+        } else {
+            rootPath = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+        }
+        return rootPath
+    }
+
+    // MARK: - Private
+    private func loadExperiment() {
+        let argumentExperimentFile = ProcessInfo.processInfo.arguments.filter { string in
+            string.starts(with: LaunchArguments.LoadExperiment)
+        }
+
+        let argumentFeatureName = ProcessInfo.processInfo.arguments.filter { string in
+            string.starts(with: LaunchArguments.ExperimentFeatureName)
+        }
+
+        guard !argumentExperimentFile.isEmpty, !argumentFeatureName.isEmpty else { return }
+
+        let experimentsName = argumentFeatureName.map { string in
+            string.replacingOccurrences(of: LaunchArguments.ExperimentFeatureName, with: "")
+        }
+        let experimentFileName = argumentExperimentFile.map { string in
+            string.replacingOccurrences(of: LaunchArguments.LoadExperiment, with: "")
+        }
+
+        var injectingFeature = [String: String]()
+
+        for index in 0..<experimentsName.count {
+            let fileURL = Bundle.main.url(forResource: experimentFileName[index], withExtension: "json")
+            if let fileURL {
+                do {
+                    let fileContent = try String(contentsOf: fileURL)
+                    injectingFeature[experimentsName[index]] = fileContent
+                } catch {
+                }
+            }
+        }
+        let features = HardcodedNimbusFeatures(with: injectingFeature)
+        features.connect(with: FxNimbus.shared)
+    }
+}

@@ -1,0 +1,439 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Foundation
+import Shared
+
+/// A view controller that manages the hidden Firefox Suggest debug settings.
+final class FeatureFlagsDebugViewController: SettingsTableViewController, FeatureFlaggable {
+    init(profile: Profile, windowUUID: WindowUUID) {
+        super.init(style: .grouped, windowUUID: windowUUID)
+        self.profile = profile
+        self.title = "Feature Flags"
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func generateSettings() -> [SettingSection] {
+        return [
+            generateFeatureFlagToggleSettings(),
+            generateDefaultBrowserStatusDisplay(),
+            generateFeatureFlagList()
+        ]
+    }
+
+    // swiftlint:disable:next function_body_length
+    private func generateFeatureFlagToggleSettings() -> SettingSection {
+        // For better code readability and parsability in-app, please keep in alphabetical
+        // order by titleText
+        let children: [Setting] =  [
+            FeatureFlagsBoolSetting(
+                with: .adBlocker,
+                titleText: format(string: "Ad Blocker"),
+                statusText: format(string: "Toggle to show the Ad Blocker feature.")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .adBlockerBadge,
+                titleText: format(string: "Ad Blocker Badge"),
+                statusText: format(string: "Toggle to show the Ad Blocker badge in the Site Menu.")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .backgroundAudio,
+                titleText: format(string: "Background Audio"),
+                statusText: format(string: "Toggle to allow audio to continue playing when the app is backgrounded.")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .addressBarGestureToOpenTabTrayInteractive,
+                titleText: format(string: "Address bar gesture interactive"),
+                statusText: format(string: "Toggle to enable fancier animations for address bar swipe gestures")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .addressBarGestureToOpenTabTraySwipe,
+                titleText: format(string: "Address bar gesture swipe"),
+                statusText: format(string: """
+                                            Toggle to enable swipe gestures for the address bar.
+                                            Overrides interactive animation if enabled
+                                            """)
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .addressBarGestureToOpenTabTrayCloseTab,
+                titleText: format(string: "Address bar gesture to close tab"),
+                statusText: format(string: """
+                                            Toggle to enable closing a tab by dragging it into the top 1/4
+                                            of the screen. Requires the interactive gesture be enabled.
+                                            """)
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .adsClient,
+                titleText: format(string: "Ads Client"),
+                statusText: format(string: "Toggle to enable the rust ads client")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .aiKillSwitch,
+                titleText: format(string: "Ai Kill Switch"),
+                statusText: format(string: "Toggle Ai Kill Switch")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .httpsUpgrade,
+                titleText: format(string: "Automatic HTTPS upgrade"),
+                statusText: format(string: "Toggle to enable automatic HTTPS upgrade.")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .bookmarksSearchFeature,
+                titleText: format(string: "Bookmarks Search"),
+                statusText: format(string: "Toggle to enable bookmarks panel search feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .browserDataExport,
+                titleText: format(string: "Browser Data Export"),
+                statusText: format(string: "Toggle to enable exporting bookmarks and history to another browser")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .browserDataImport,
+                titleText: format(string: "Browser Data Import"),
+                statusText: format(string: "Toggle to enable importing bookmarks and history from another browser")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .customReaderModeScheme,
+                titleText: format(string: "Custom Reader Mode Scheme"),
+                statusText: format(string: "Toggle to serve reader mode via the readermode:// scheme handler")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .deeplinkOptimizationRefactor,
+                titleText: format(string: "Deeplink Optimization Refactor"),
+                statusText: format(string: "Toggle to enable deeplink optimization refactor")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .downloadLiveActivities,
+                titleText: format(string: "Download Live Activities"),
+                statusText: format(string: "Toggle to enable download live activities")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .googleLens,
+                titleText: format(string: "Google Lens"),
+                statusText: format(string: "Toggle to enable Google Lens entry points")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .homepageAddShortcutTile,
+                titleText: format(string: "Homepage Add Shortcut"),
+                statusText: format(string: "Toggle to enable the homepage add shortcut tile")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .homepagePinnedHeader,
+                titleText: format(string: "Homepage Pinned Header"),
+                statusText: format(string: "Toggle to enable the pinned homepage newsfeed header")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .homepageAnimatedCenterSearchBar,
+                titleText: format(string: "Homepage Animated Center Search Bar"),
+                statusText: format(string: "Toggle to enable homepage animated center search bar for redesign")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .homepageStoryCategories,
+                titleText: format(string: "Homepage Story Categories"),
+                statusText: format(string: "Toggle to enable homepage story categories")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .homepageTrackerBlockerModule,
+                titleText: format(string: "Homepage Tracker Blocker Module"),
+                statusText: format(string: "Toggle homepage Tracker Blocker module")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .hostedSummarizer,
+                titleText: format(string: "Hosted Summarizer Feature"),
+                statusText: format(string: "Toggle to enable the hosted summarizer feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .improvedAppStoreReviewTriggerFeature,
+                titleText: format(string: "Improved App Store Review Trigger"),
+                statusText: format(string: "Toggle to enable App Store Review Trigger feature.")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .mergeWindows,
+                titleText: format(string: "Combine Windows"),
+                statusText: format(string: "Toggle to show the Combine Windows home screen Quick Action on iPad")
+            ) { [weak self] _ in
+                MergeWindowsQuickActionController().update()
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .microsurvey,
+                titleText: format(string: "Microsurvey"),
+                statusText: format(string: "Toggle to reset microsurvey expiration")
+            ) { [weak self] _ in
+                UserDefaults.standard.set(nil, forKey: "\(GleanPlumbMessageStore.rootKey)\("homepage-microsurvey-message")")
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .multiDayOnboarding,
+                titleText: format(string: "Multi-day Onboarding"),
+                statusText: format(string: "Toggle to enable multi-day onboarding")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .nativeErrorPage,
+                titleText: format(string: "Native Error Page"),
+                statusText: format(string: "Toggle to display natively created error pages")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .newBookmarkFolderTree,
+                titleText: format(string: "New Bookmarks Folder Tree"),
+                statusText: format(string: "Toggle to use new bookmarks folder tree UI")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .novaDesign,
+                titleText: format(string: "Nova Design"),
+                statusText: format(string: "Toggle to enable Nova design")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .novaPrivateThemeOverride,
+                titleText: format(string: "Nova Private Theme Override"),
+                statusText: format(string: "Toggle to disable purple theme for private mode")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .privacyDashboard,
+                titleText: format(string: "Privacy Dashboard"),
+                statusText: format(string: "Toggle Privacy Dashboard")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .quickAnswers,
+                titleText: format(string: "Quick Answers"),
+                statusText: format(string: "Toggle to enable the Quick Answers feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .relayIntegration,
+                titleText: format(string: "Relay Email Masks"),
+                statusText: format(string: "Toggle to enable Relay mask feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .reportBrokenSite,
+                titleText: format(string: "Report Broken Site"),
+                statusText: format(string: "Toggle Report Broken Site")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .recentSearches,
+                titleText: format(string: "Search - Recent"),
+                statusText: format(string: "Toggle to enable the recent searches feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .trendingSearches,
+                titleText: format(string: "Search - Trending"),
+                statusText: format(string: "Toggle to enable the trending searches feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .sentFromFirefox,
+                titleText: format(string: "Sent from Firefox"),
+                statusText: format(string: "Toggle to enable Sent from Firefox to append text to WhatsApp shares")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .summarizerAppAttestAuth,
+                titleText: format(string: "Summarizer App Attest Auth Feature"),
+                statusText: format(string: "Toggle to enable the app attest authentication for the summarizer feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .summarizerLanguageExpansion,
+                titleText: format(string: "Summarizer Language Expansion"),
+                statusText: format(string: "Toggle to enable Summarizer language expansion feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .summarizerPermissiveGuardrails,
+                titleText: format(string: "Summarizer Permissive Guardrails Feature"),
+                statusText: format(string: "Toggle to enable the permissive guardrails for the summarizer feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .tabScrollRefactorFeature,
+                titleText: format(string: "Tab scroll refactor"),
+                statusText: format(string: "Toggle to enable tab scroll refactor feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .tabTrayiPadUIExperiments,
+                titleText: format(string: "Tab Tray iPad UI Experiment"),
+                statusText: format(string: "Toggle to use the new tab tray UI on iPad")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .tabTrayScreenshotButtonStyle,
+                titleText: format(string: "Tab Tray Screenshot Button Style"),
+                statusText: format(string: "Toggle to use the screenshot style tab tray button in the toolbar")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .tabTrayUIExperiments,
+                titleText: format(string: "Tab Tray UI Experiment"),
+                statusText: format(string: "Toggle to use the new tab tray UI")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .touFeature,
+                titleText: format(string: "Terms of Use"),
+                statusText: format(string: "Toggle to enable Terms of Use feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .translationLanguagePicker,
+                titleText: format(string: "Translation Language Picker"),
+                statusText: format(string: "Toggle to enable language picker for translations")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .translation,
+                titleText: format(string: "Translations"),
+                statusText: format(string: "Toggle to enable translations feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .unifiedSearch,
+                titleText: format(string: "Unified Search"),
+                statusText: format(string: "Toggle to use unified search within the new toolbar")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .vpnFeature,
+                titleText: format(string: "VPN"),
+                statusText: format(string: "Toggle to enable the VPN feature")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .waybackMachine,
+                titleText: format(string: "Wayback Machine"),
+                statusText: format(string: "Toggle to show Wayback Machine fallback on native error pages")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+            FeatureFlagsBoolSetting(
+                with: .webViewDocumentFetchRefactor,
+                titleText: format(string: "Webview Document Refactor"),
+                statusText: format(string: "Toggle to enable document sharing to fetch WebView data directly")
+            ) { [weak self] _ in
+                self?.reloadView()
+            },
+        ]
+
+        return SettingSection(
+            title: nil,
+            children: children
+        )
+    }
+
+    private func generateDefaultBrowserStatusDisplay() -> SettingSection {
+        return SettingSection(
+            title: NSAttributedString(string: "Default Browser Status"),
+            children: [Setting(
+                title: format(string: "isDefaultBrowser: \(DefaultBrowserUtility().isDefaultBrowser)")
+            )]
+        )
+    }
+
+    private func generateFeatureFlagList() -> SettingSection {
+        let flags = FeatureFlagID.allCases.filter { $0.debugKey != nil }
+        let settingsList = flags.compactMap { flagID in
+            return Setting(title: format(string: "\(flagID): \(featureFlagsProvider.isEnabled(flagID))"))
+        }
+        return SettingSection(
+            title: NSAttributedString(string: "Build only status"),
+            children: settingsList
+        )
+    }
+
+    private func reloadView() {
+        self.settings = self.generateSettings()
+        self.tableView.reloadData()
+    }
+
+    private func format(string: String) -> NSAttributedString {
+        let theme = currentTheme()
+        return NSAttributedString(
+            string: string,
+            attributes: [NSAttributedString.Key.foregroundColor: theme.colors.textPrimary]
+        )
+    }
+}

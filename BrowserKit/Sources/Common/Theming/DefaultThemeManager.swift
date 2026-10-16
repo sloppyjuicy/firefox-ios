@@ -1,0 +1,267 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import UIKit
+
+/// The `ThemeManager` will be responsible for providing the theme throughout the app
+@MainActor
+public final class DefaultThemeManager: ThemeManager, Notifiable {
+    // These have been carried over from the legacy system to maintain backwards compatibility
+    enum ThemeKeys {
+        static let themeName = "prefKeyThemeName"
+        static let systemThemeIsOn = "prefKeySystemThemeSwitchOnOff"
+
+        enum AutomaticBrightness {
+            static let isOn = "prefKeyAutomaticSwitchOnOff"
+            static let thresholdValue = "prefKeyAutomaticSliderValue"
+        }
+
+        enum NightMode {
+            static let isOn = "profile.NightModeStatus"
+        }
+    }
+
+    // MARK: - Variables
+
+    private var windows: [WindowUUID: UIWindow] = [:]
+    private var privateBrowsingState: [WindowUUID: Bool] = [:]
+    private var allWindowUUIDs: [WindowUUID] { return Array(windows.keys) }
+    public let notificationCenter: NotificationProtocol
+
+    private var userDefaults: UserDefaultsInterface
+    private var mainQueue: DispatchQueueInterface
+    private var sharedContainerIdentifier: String
+
+    private var isNovaDesignOnClosure: () -> Bool
+    private var isPrivateThemeOverrideEnabledClosure: () -> Bool
+
+    private var nightModeIsOn: Bool {
+        return userDefaults.bool(forKey: ThemeKeys.NightMode.isOn)
+    }
+
+    public var systemThemeIsOn: Bool {
+        return userDefaults.bool(forKey: ThemeKeys.systemThemeIsOn)
+    }
+
+    public var automaticBrightnessIsOn: Bool {
+        return userDefaults.bool(forKey: ThemeKeys.AutomaticBrightness.isOn)
+    }
+
+    public var automaticBrightnessValue: Float {
+        return userDefaults.float(forKey: ThemeKeys.AutomaticBrightness.thresholdValue)
+    }
+
+    public var isNovaDesignOn: Bool {
+        return isNovaDesignOnClosure()
+    }
+
+    public var isPrivateThemeOverrideEnabled: Bool {
+        return isPrivateThemeOverrideEnabledClosure()
+    }
+
+    // MARK: - Initializers
+
+    public init(
+        userDefaults: UserDefaultsInterface = UserDefaults.standard,
+        notificationCenter: NotificationProtocol = NotificationCenter.default,
+        mainQueue: DispatchQueueInterface = DispatchQueue.main,
+        sharedContainerIdentifier: String,
+        isNovaDesignOnClosure: @escaping () -> Bool = { false },
+        isPrivateThemeOverrideEnabledClosure: @escaping () -> Bool = { false }
+    ) {
+        self.userDefaults = userDefaults
+        self.notificationCenter = notificationCenter
+        self.mainQueue = mainQueue
+        self.sharedContainerIdentifier = sharedContainerIdentifier
+        self.isNovaDesignOnClosure = isNovaDesignOnClosure
+        self.isPrivateThemeOverrideEnabledClosure = isPrivateThemeOverrideEnabledClosure
+
+        self.userDefaults.register(defaults: [
+            ThemeKeys.systemThemeIsOn: true,
+            ThemeKeys.NightMode.isOn: false
+        ])
+
+        startObservingNotifications(
+            withNotificationCenter: notificationCenter,
+            forObserver: self,
+            observing: [UIScreen.brightnessDidChangeNotification,
+                        UIApplication.didBecomeActiveNotification]
+        )
+    }
+
+    // MARK: - Theming general functions
+    @MainActor
+    public func getCurrentTheme(for window: WindowUUID?) -> Theme {
+        guard let window else {
+            assertionFailure("Attempt to get the theme for a nil window UUID.")
+            return DarkTheme()
+        }
+
+        return getThemeFrom(type: determineThemeType(for: window))
+    }
+
+    public func resolvedTheme(with shouldShowPrivateTheme: Bool) -> Theme {
+        return getThemeFrom(type: shouldShowPrivateTheme ? .privateMode : determineUserTheme())
+    }
+
+    @MainActor
+    public func applyThemeUpdatesToWindows() {
+        allWindowUUIDs.forEach { windowUUID in
+            applyThemeChanges(for: windowUUID, using: determineThemeType(for: windowUUID))
+        }
+    }
+
+    // MARK: - Manual theme functions
+    public func setManualTheme(to newTheme: ThemeType) {
+        updateSavedTheme(to: newTheme)
+        applyThemeUpdatesToWindows()
+    }
+
+    public func getUserManualTheme() -> ThemeType {
+        guard let savedThemeDescription = userDefaults.string(forKey: ThemeKeys.themeName),
+              let savedTheme = ThemeType(rawValue: savedThemeDescription)
+        else { return getThemeTypeBasedOnSystem() }
+
+        return savedTheme
+    }
+
+    // MARK: - System theme functions
+    public func setSystemTheme(isOn: Bool) {
+        userDefaults.set(isOn, forKey: ThemeKeys.systemThemeIsOn)
+        applyThemeUpdatesToWindows()
+    }
+
+    private func getThemeTypeBasedOnSystem() -> ThemeType {
+        return UIScreen.main.traitCollection.userInterfaceStyle == .dark ? ThemeType.dark : ThemeType.light
+    }
+
+    // MARK: - Private theme functions
+    public func setPrivateTheme(isOn: Bool, for window: WindowUUID) {
+        guard getPrivateThemeIsOn(for: window) != isOn else { return }
+        privateBrowsingState[window] = isOn
+        applyThemeChanges(for: window, using: determineThemeType(for: window))
+    }
+
+    public func getPrivateThemeIsOn(for window: WindowUUID) -> Bool {
+        return privateBrowsingState[window] ?? false
+    }
+
+    // MARK: - Automatic brightness theme functions
+    public func setAutomaticBrightness(isOn: Bool) {
+        guard automaticBrightnessIsOn != isOn else { return }
+        userDefaults.set(isOn, forKey: ThemeKeys.AutomaticBrightness.isOn)
+        applyThemeUpdatesToWindows()
+    }
+
+    public func setAutomaticBrightnessValue(_ value: Float) {
+        userDefaults.set(value, forKey: ThemeKeys.AutomaticBrightness.thresholdValue)
+        applyThemeUpdatesToWindows()
+    }
+
+    private func getThemeTypeBasedOnBrightness() -> ThemeType {
+        return Float(UIScreen.main.brightness) < automaticBrightnessValue ? .dark : .light
+    }
+
+    // MARK: - Window specific functions
+    public func windowNonspecificTheme() -> Theme {
+        switch getUserManualTheme() {
+        case .dark, .nightMode, .privateMode: return getThemeFrom(type: .dark)
+        case .light: return getThemeFrom(type: .light)
+        }
+    }
+
+    public func windowDidClose(uuid: WindowUUID) {
+        windows.removeValue(forKey: uuid)
+    }
+
+    public func setWindow(_ window: UIWindow, for uuid: WindowUUID) {
+        windows[uuid] = window
+        updateSavedTheme(to: getUserManualTheme())
+        applyThemeChanges(for: uuid, using: determineThemeType(for: uuid))
+    }
+
+    // MARK: - Private helper methods
+
+    private func updateSavedTheme(to newTheme: ThemeType) {
+        userDefaults.set(newTheme.rawValue, forKey: ThemeKeys.themeName)
+    }
+
+    @MainActor
+    private func applyThemeChanges(for window: WindowUUID, using newTheme: ThemeType) {
+        // Overwrite the user interface style on the window attached to our scene
+        // once we have multiple scenes we need to update all of them
+        let theme = self.getCurrentTheme(for: window)
+        let style = theme.type.getInterfaceStyle()
+        self.windows[window]?.overrideUserInterfaceStyle = style
+        // Nova only: highlighted text purple tint.
+        let selectedTextTint = theme.isNova ? theme.colors.actionPrimary : nil
+        UITextField.appearance().tintColor = selectedTextTint
+        UITextView.appearance().tintColor = selectedTextTint
+        notifyCurrentThemeDidChange(for: window)
+    }
+
+    @MainActor
+    private func notifyCurrentThemeDidChange(for window: WindowUUID) {
+        notificationCenter.post(
+            name: .ThemeDidChange,
+            withUserInfo: window.userInfo
+        )
+    }
+
+    private func determineThemeType(for window: WindowUUID) -> ThemeType {
+        if getPrivateThemeIsOn(for: window) { return .privateMode }
+        return determineUserTheme()
+    }
+
+    private func determineUserTheme() -> ThemeType {
+        if systemThemeIsOn { return getThemeTypeBasedOnSystem() }
+        if automaticBrightnessIsOn { return getThemeTypeBasedOnBrightness() }
+
+        return getUserManualTheme()
+    }
+
+    private func getThemeFrom(type: ThemeType) -> Theme {
+        if isNovaDesignOn, let novaTheme = novaTheme(for: type) {
+            return novaTheme
+        }
+
+        switch type {
+        case .light:
+            return LightTheme()
+        case .dark:
+            return DarkTheme()
+        case .nightMode:
+            return NightModeTheme()
+        case .privateMode:
+            return PrivateModeTheme()
+        }
+    }
+
+    private func novaTheme(for type: ThemeType) -> Theme? {
+        switch type {
+        case .light:
+            return NovaLightTheme()
+        case .dark:
+            return NovaDarkTheme()
+        case .nightMode:
+            return NovaNightModeTheme()
+        case .privateMode:
+            return NovaPrivateTheme()
+        }
+    }
+
+    // MARK: - Notifiable
+
+    public func handleNotifications(_ notification: Notification) {
+        switch notification.name {
+        case UIScreen.brightnessDidChangeNotification,
+            UIApplication.didBecomeActiveNotification:
+            ensureMainThread {
+                self.applyThemeUpdatesToWindows()
+            }
+        default:
+            return
+        }
+    }
+}

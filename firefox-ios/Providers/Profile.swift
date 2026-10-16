@@ -1,0 +1,837 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+// IMPORTANT!: Please take into consideration when adding new imports to
+// this file that it is utilized by external components besides the core
+// application (i.e. App Extensions). Introducing new dependencies here
+// may have unintended negative consequences for App Extensions such as
+// increased startup times which may lead to termination by the OS.
+
+import Common
+import Shared
+import Storage
+import AuthenticationServices
+
+import class Account.Autopush
+import class Account.RustFirefoxAccounts
+import class MozillaAppServices.RemoteSettingsService
+import struct MozillaAppServices.RemoteSettingsContext
+import enum MozillaAppServices.Level
+import enum MozillaAppServices.RemoteSettingsServer
+import enum MozillaAppServices.SyncReason
+import enum MozillaAppServices.VisitType
+import func MozillaAppServices.setLogger
+import func MozillaAppServices.setMaxLevel
+import func MozillaAppServices.getLocaleTag
+import struct MozillaAppServices.HistoryMigrationResult
+import struct MozillaAppServices.SyncParams
+import struct MozillaAppServices.SyncResult
+import struct MozillaAppServices.VisitObservation
+import struct MozillaAppServices.PendingCommand
+import struct MozillaAppServices.RemoteSettingsConfig
+
+// TODO: FXIOS-14225 - SyncManager shouldn't be Sendable
+public protocol SyncManager: Sendable {
+    var isSyncing: Bool { get }
+    var lastSyncFinishTime: Timestamp? { get set }
+    var syncDisplayState: SyncDisplayState? { get }
+
+    func syncTabs() -> Deferred<Maybe<SyncResult>>
+    func syncHistory() -> Deferred<Maybe<SyncResult>>
+    func syncNamedCollections(why: SyncReason, names: [String]) -> Deferred<Maybe<SyncResult>>
+    func syncPostSyncSettingsChange(why: SyncReason, names: [String])
+    func reportOpenSyncSettingsMenuTelemetry()
+    @discardableResult
+    func syncEverything(why: SyncReason) -> Success
+
+    func endTimedSyncs()
+    func applicationDidBecomeActive()
+    func applicationDidEnterBackground()
+    func checkCreditCardEngineEnablement() -> Bool
+
+    @discardableResult
+    func onRemovedAccount() -> Success
+    @discardableResult
+    func onAddedAccount() -> Success
+}
+
+/// This exists to pass in external context: e.g., the UIApplication can
+/// expose notification functionality in this way.
+public protocol FxACommandsDelegate: AnyObject {
+    @MainActor
+    func openSendTabs(for urls: [URL])
+    func closeTabs(for urls: [URL])
+}
+
+struct ProfileFileAccessor: FileAccessor, Sendable {
+    public var rootPath: String
+
+    init(localName: String, logger: Logger = DefaultLogger.shared) {
+        let profileDirName = "profile.\(localName)"
+
+        // Bug 1147262: First option is for device, second is for simulator.
+        var rootPath: String
+        let sharedContainerIdentifier = AppInfo.sharedContainerIdentifier
+        if let url = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: sharedContainerIdentifier
+        ) {
+            rootPath = url.path
+        } else {
+            rootPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        }
+
+        self.rootPath = URL(fileURLWithPath: rootPath).appendingPathComponent(profileDirName).path
+    }
+}
+
+// TODO: FXIOS-12610 Profile should be refactored so it is **not** `Sendable`
+/**
+ * A Profile manages access to the user's data.
+ */
+protocol Profile: AnyObject, Sendable {
+    var autofill: RustAutofill { get }
+    var places: RustPlaces { get }
+    var prefs: Prefs { get }
+    var queue: TabQueue { get }
+    var files: FileAccessor { get }
+    var pinnedSites: PinnedSites { get }
+    var logins: RustLogins { get }
+    var firefoxSuggest: RustFirefoxSuggestProtocol? { get }
+    var remoteSettingsService: RemoteSettingsService { get }
+    var certStore: CertStore { get }
+    var recentlyClosedTabs: ClosedTabsStore { get }
+
+#if !MOZ_TARGET_NOTIFICATIONSERVICE
+    var readingList: ReadingList { get }
+#endif
+
+    var isShutdown: Bool { get }
+
+    /// WARNING: Only to be called as part of the app lifecycle from the AppDelegate
+    /// or from App Extension code.
+    func shutdown()
+
+    /// WARNING: Only to be called as part of the app lifecycle from the AppDelegate
+    /// or from App Extension code.
+    func reopen()
+
+    // I got really weird EXC_BAD_ACCESS errors on a non-null reference when I made this a getter. Similar to
+    // <http://stackoverflow.com/questions/26029317/exc-bad-access-when-indirectly-accessing-inherited-member-in-swift>
+    func localName() -> String
+
+    // Do we have an account at all?
+    func hasAccount() -> Bool
+
+    // Do we have an account that (as far as we know) is in a syncable state?
+    func hasSyncableAccount() -> Bool
+
+    var rustFxA: RustFirefoxAccounts { get }
+
+    func removeAccount()
+
+    func getClientsAndTabs() -> Deferred<Maybe<[ClientAndTabs]>>
+    func getCachedClientsAndTabs() -> Deferred<Maybe<[ClientAndTabs]>>
+
+    func getClientsAndTabs(completion: @escaping @Sendable ([ClientAndTabs]?) -> Void)
+    func getCachedClientsAndTabs(completion: @escaping @Sendable ([ClientAndTabs]?) -> Void)
+
+    func cleanupHistoryIfNeeded()
+
+    @discardableResult
+    func storeAndSyncTabs(_ tabs: [RemoteTab]) -> Deferred<Maybe<Int>>
+
+    func addTabToCommandQueue(_ deviceId: String, url: URL)
+    func flushTabCommands(toDeviceId: String?)
+
+    func sendItem(_ item: ShareItem, toDevices devices: [RemoteDevice]) -> Success
+    func pollCommands(forcePoll: Bool)
+
+    var syncManager: SyncManager? { get }
+    func hasSyncedLogins() -> Deferred<Maybe<Bool>>
+
+    func syncCredentialIdentities() -> Deferred<Result<Void, Error>>
+    func updateCredentialIdentities() -> Deferred<Result<Void, Error>>
+    func clearCredentialStore() -> Deferred<Result<Void, Error>>
+
+    func setCommandArrived()
+}
+
+extension Profile {
+    func syncCredentialIdentities() -> Deferred<Result<Void, Error>> {
+        let deferred = Deferred<Result<Void, Error>>()
+        self.clearCredentialStore().upon { clearResult in
+            self.updateCredentialIdentities().upon { updateResult in
+                switch (clearResult, updateResult) {
+                case (.success, .success):
+                    deferred.fill(.success(()))
+                case (.failure(let error), _):
+                    deferred.fill(.failure(error))
+                case (_, .failure(let error)):
+                    deferred.fill(.failure(error))
+                }
+            }
+        }
+        return deferred
+    }
+
+    func updateCredentialIdentities() -> Deferred<Result<Void, Error>> {
+        let deferred = Deferred<Result<Void, Error>>()
+        self.logins.listLogins { loginResult in
+            switch loginResult {
+            case let .failure(error):
+                deferred.fill(.failure(error))
+            case let .success(logins):
+                self.populateCredentialStore(
+                        identities: logins.map(\.passwordCredentialIdentity)
+                ).upon(deferred.fill)
+            }
+        }
+        return deferred
+    }
+
+    func populateCredentialStore(identities: [ASPasswordCredentialIdentity]) -> Deferred<Result<Void, Error>> {
+        let deferred = Deferred<Result<Void, Error>>()
+        ASCredentialIdentityStore.shared.saveCredentialIdentities(identities) { (success, error) in
+            if success {
+                deferred.fill(.success(()))
+            } else if let err = error {
+                deferred.fill(.failure(err))
+            }
+        }
+        return deferred
+    }
+
+    func clearCredentialStore() -> Deferred<Result<Void, Error>> {
+        let deferred = Deferred<Result<Void, Error>>()
+
+        ASCredentialIdentityStore.shared.removeAllCredentialIdentities { (success, error) in
+            if success {
+                deferred.fill(.success(()))
+            } else if let err = error {
+                deferred.fill(.failure(err))
+            }
+        }
+
+        return deferred
+    }
+}
+
+// TODO: Removed unchecked flag with FXIOS-12610
+open class BrowserProfile: Profile,
+                           @unchecked Sendable {
+    private let logger: Logger
+    private lazy var directory: String = {
+        do {
+            return try self.files.getAndEnsureDirectory()
+        } catch {
+            logger.log("Could not create directory at root path",
+                       level: .fatal,
+                       category: .setup,
+                       extra: ["error": "\(error)"])
+            fatalError("Could not create directory at root path: \(error)")
+        }
+    }()
+    fileprivate let name: String
+    fileprivate let keychain: KeychainProtocol
+    var isShutdown = false
+
+    internal let files: FileAccessor
+
+    let database: BrowserDB
+    let readingListDB: BrowserDB
+    var syncManager: SyncManager?
+
+    var fxaCommandsDelegate: FxACommandsDelegate?
+
+    /**
+     * N.B., BrowserProfile is used from our extensions, often via a pattern like
+     *
+     *   BrowserProfile(…).foo.saveSomething(…)
+     *
+     * This can break if BrowserProfile's initializer does async work that
+     * subsequently — and asynchronously — expects the profile to stick around:
+     * see Bug 1218833. Be sure to only perform synchronous actions here.
+     *
+     * A SentTabDelegate can be provided in this initializer, or once the profile is initialized.
+     * However, if we provide it here, it's assumed that we're initializing it from the application.
+     */
+    typealias RemoteSettingsServiceFactory = (String, RemoteSettingsConfig) -> RemoteSettingsService
+    private let remoteSettingsServiceFactory: RemoteSettingsServiceFactory
+
+    init(localName: String,
+         fxaCommandsDelegate: FxACommandsDelegate? = nil,
+         clear: Bool = false,
+         logger: Logger = DefaultLogger.shared,
+         remoteSettingsServiceFactory: @escaping RemoteSettingsServiceFactory = { storageDir, config in
+            RemoteSettingsService(storageDir: storageDir, config: config)
+         }) {
+        logger.log("Initing profile \(localName) on thread \(Thread.current).",
+                   level: .debug,
+                   category: .setup)
+        self.name = localName
+        self.files = ProfileFileAccessor(localName: localName)
+        self.keychain = KeychainManager.shared
+        self.logger = logger
+        self.fxaCommandsDelegate = fxaCommandsDelegate
+        self.remoteSettingsServiceFactory = remoteSettingsServiceFactory
+
+        if clear {
+            do {
+                // Remove the contents of the directory…
+                try self.files.removeFilesInDirectory()
+                // …then remove the directory itself.
+                try self.files.remove("")
+            } catch {
+                logger.log("Cannot clear profile: \(error)",
+                           level: .info,
+                           category: .setup)
+            }
+        }
+
+        // If the profile dir doesn't exist yet, this is first run (for this profile). The check is made here
+        // since the DB handles will create new DBs under the new profile folder.
+        let isNewProfile = !files.exists("")
+
+        // Set up our database handles.
+        self.database = BrowserDB(
+            filename: "browser.db",
+            schema: BrowserSchema(),
+            files: files
+        )
+        self.readingListDB = BrowserDB(
+            filename: "ReadingList.db",
+            schema: ReadingListSchema(),
+            files: files
+        )
+
+        if isNewProfile {
+            logger.log("New profile. Removing old Keychain/Prefs data.",
+                       level: .info,
+                       category: .setup)
+            RustKeychain.wipeKeychain()
+            prefs.clearAll()
+        }
+
+        setLogger(logger: ForwardOnLog(logger: self.logger))
+        setMaxLevel(level: Level.info)
+
+        // Initiating the sync manager has to happen prior to the databases being opened,
+        // because opening them can trigger events to which the SyncManager listens.
+        self.syncManager = RustSyncManager(profile: self)
+
+        // Remove the default homepage. This does not change the user's preference,
+        // just the behaviour when there is no homepage.
+        prefs.removeObjectForKey(PrefsKeys.KeyDefaultHomePageURL)
+
+        // Create the "Downloads" folder in the documents directory.
+        if let downloadsPath = try? FileManager.default.url(
+            for: .documentDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: false
+        ).appendingPathComponent("Downloads").path {
+            try? FileManager.default.createDirectory(
+                atPath: downloadsPath,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+        }
+        AppEventQueue.signal(event: .profileInitialized)
+    }
+
+    func reopen() {
+        logger.log("Reopening profile.",
+                   level: .debug,
+                   category: .storage)
+        isShutdown = false
+
+        database.reopenIfClosed()
+        _ = logins.reopenIfClosed()
+        // it's possible we are going through a history migration
+        // lets make sure that if the places connection is already open
+        // we don't try to reopen it
+        if !places.isOpen {
+            _ = places.reopenIfClosed()
+        }
+        _ = tabs.reopenIfClosed()
+        _ = autofill.reopenIfClosed()
+    }
+
+    func shutdown() {
+        logger.log("Shutting down profile.",
+                   level: .debug,
+                   category: .storage)
+        isShutdown = true
+
+        database.forceClose()
+        _ = logins.forceClose()
+        _ = places.forceClose()
+        _ = tabs.forceClose()
+        _ = autofill.forceClose()
+    }
+
+    deinit {
+        self.syncManager?.endTimedSyncs()
+    }
+
+    func localName() -> String {
+        return name
+    }
+
+    lazy var queue: TabQueue = {
+        withExtendedLifetime(self.legacyPlaces) {
+            return SQLiteQueue(db: self.database)
+        }
+    }()
+
+    /**
+     * Any other class that needs to access any one of these should ensure
+     * that this is initialized first.
+     */
+    private lazy var legacyPlaces: PinnedSites = {
+        return BrowserDBSQLite(database: self.database, prefs: self.prefs)
+    }()
+
+    var pinnedSites: PinnedSites {
+        return self.legacyPlaces
+    }
+
+    lazy var browserDbPath = URL(
+        fileURLWithPath: directory
+    ).appendingPathComponent("browser.db").path
+    lazy var placesDbPath = URL(
+        fileURLWithPath: directory,
+        isDirectory: true
+    ).appendingPathComponent("places.db").path
+    lazy var places = RustPlaces(databasePath: self.placesDbPath)
+
+    public func migrateHistoryToPlaces(
+        callback: @escaping @Sendable (HistoryMigrationResult) -> Void,
+        errCallback: @escaping @Sendable (Error?) -> Void
+    ) {
+        guard FileManager.default.fileExists(atPath: browserDbPath) else {
+            // This is the user's first run of the app, they don't have a browserDB, so lets report a successful
+            // migration with zero visits
+            callback(HistoryMigrationResult(numTotal: 0, numSucceeded: 0, numFailed: 0, totalDuration: 0))
+            return
+        }
+        let lastSyncTimestamp = Int64(syncManager?.lastSyncFinishTime ?? 0)
+        places.migrateHistory(
+            dbPath: browserDbPath,
+            lastSyncTimestamp: lastSyncTimestamp,
+            completion: callback,
+            errCallback: errCallback
+        )
+    }
+
+    lazy var tabsDbPath = URL(
+        fileURLWithPath: directory,
+        isDirectory: true
+    ).appendingPathComponent("tabs.db").path
+
+    lazy var tabs = RustRemoteTabs(databasePath: tabsDbPath)
+
+    lazy var autofillDbPath = URL(
+        fileURLWithPath: directory,
+        isDirectory: true
+    ).appendingPathComponent("autofill.db").path
+
+    lazy var autofill = RustAutofill(databasePath: autofillDbPath)
+
+    func makePrefs() -> Prefs {
+        return NSUserDefaultsPrefs(prefix: self.localName())
+    }
+
+    lazy var prefs: Prefs = {
+        return self.makePrefs()
+    }()
+
+    lazy var readingList: ReadingList = {
+        return SQLiteReadingList(db: self.readingListDB)
+    }()
+
+    lazy var certStore: CertStore = {
+        return CertStore()
+    }()
+
+    lazy var recentlyClosedTabs: ClosedTabsStore = {
+        return ClosedTabsStore(prefs: self.prefs)
+    }()
+
+    func retrieveTabData() -> Deferred<Maybe<[ClientAndTabs]>> {
+        logger.log("Getting all tabs and clients", level: .debug, category: .tabs)
+
+        guard let accountManager = self.rustFxA.accountManager,
+              let state = accountManager.deviceConstellation()?.state()
+        else {
+            return deferMaybe([])
+        }
+
+        let remoteDeviceIds: [String] = state.remoteDevices.compactMap {
+            guard $0.capabilities.contains(.sendTab) else { return nil }
+            return $0.id
+        }
+
+        let clientAndTabs = tabs.getRemoteClients(remoteDeviceIds: remoteDeviceIds)
+        return clientAndTabs
+    }
+
+    public func getClientsAndTabs() -> Deferred<Maybe<[ClientAndTabs]>> {
+        guard let syncManager else {
+            return deferMaybe([])
+        }
+        return syncManager.syncTabs().bind { result in
+            if result.isSuccess {
+                return self.retrieveTabData()
+            }
+            return deferMaybe(result.failureValue!)
+        }
+    }
+
+    public func getClientsAndTabs(completion: @escaping @Sendable ([ClientAndTabs]?) -> Void) {
+        let deferredResponse = self.getClientsAndTabs()
+        deferredResponse.upon { result in
+            completion(result.successValue)
+        }
+    }
+
+    public func getCachedClientsAndTabs(completion: @escaping @Sendable ([ClientAndTabs]?) -> Void) {
+        let deferredResponse = self.retrieveTabData()
+        deferredResponse.upon { result in
+            completion(result.successValue)
+        }
+    }
+
+    public func getCachedClientsAndTabs() -> Deferred<Maybe<[ClientAndTabs]>> {
+        return self.retrieveTabData()
+    }
+
+    public func cleanupHistoryIfNeeded() {
+        // We run the cleanup in the background, this is a low priority task
+        // that compacts the places db and reduces it's size to be under the limit.
+        DispatchQueue.global(qos: .background).async {
+            self.places.runMaintenance(dbSizeLimit: AppConstants.databaseSizeLimitInBytes)
+        }
+    }
+
+    public func sendQueuedSyncEvents() {
+        if !hasAccount() {
+            // We shouldn't be called at all if the user isn't signed in.
+            return
+        }
+        if let syncManager, syncManager.isSyncing {
+            // If Sync is already running, `BrowserSyncManager#endSyncing` will
+            // send a ping with the queued events when it's done, so don't send
+            // an events-only ping now.
+            return
+        }
+    }
+
+    // Store the tabs that we'll be syncing to other clients, and sync right after
+    func storeAndSyncTabs(_ tabs: [RemoteTab]) -> Deferred<Maybe<Int>> {
+        // Store local tabs into the DB
+        let res = self.tabs.setLocalTabs(localTabs: tabs)
+
+        // If for some reason we don't have a sync manager, just return
+        // the result of setLocalTabs
+        guard let syncManager = self.syncManager else { return res }
+
+        // Chain syncTabs after setLocalTabs has completed
+        return res.bind { result in
+            // Only sync if the local tabs were successfully set
+            return result.isSuccess
+                // Return the original result from setLocalTabs
+                ? syncManager.syncTabs().bind { _ in res }
+                // If setLocalTabs failed, just return its result
+                : res
+        }
+    }
+
+    func addTabToCommandQueue(_ deviceId: String, url: URL) {
+        tabs.addRemoteCommand(deviceId: deviceId, url: url)
+    }
+
+    public func sendItem(_ item: ShareItem, toDevices devices: [RemoteDevice]) -> Success {
+        let deferred = Success()
+        if let accountManager = RustFirefoxAccounts.shared.accountManager {
+            guard let constellation = accountManager.deviceConstellation() else {
+                deferred.fill(Maybe(failure: NoAccountError()))
+                return deferred
+            }
+            devices.forEach {
+                if let id = $0.id {
+                    constellation.sendEventToDevice(
+                        targetDeviceId: id,
+                        e: .sendTab(title: item.title ?? "", url: item.url)
+                    )
+                }
+            }
+            self.sendQueuedSyncEvents()
+            deferred.fill(Maybe(success: ()))
+        }
+        return deferred
+    }
+
+    public func flushTabCommands(toDeviceId: String?) {
+        guard let deviceId = toDeviceId,
+            let constellation = RustFirefoxAccounts.shared.accountManager?.deviceConstellation() else {
+            return
+        }
+
+        // send all unsent close tab commands
+        self.tabs.getUnsentCommandUrlsByDeviceId(deviceId: deviceId) { urls in
+            constellation.sendEventToDevice(targetDeviceId: deviceId,
+                                            e: .closeTabs(urls: urls)) { result in
+                switch result {
+                case .success:
+                    // mark all pending tab commands as sent
+                    self.tabs.setPendingCommandsSent(deviceId: deviceId)
+                case .failure(.tabsNotClosed(let urls)):
+                    // mark pending tab commands as sent excluding unsentUrls
+                    self.tabs.setPendingCommandsSent(deviceId: deviceId, unsentCommandUrls: urls)
+                default:
+                    // technically this should not be possible here as a non-tabsNotClosed error would
+                    // result after a sendTab sendEventToDevice call but we are covering this case to
+                    // make the compiler happy
+                    break
+                }
+            }
+        }
+    }
+
+    public func setCommandArrived() {
+        prefs.setTimestamp(0, forKey: PrefsKeys.PollCommandsTimestamp)
+    }
+
+    /// Polls for missed send tabs and handles them
+    /// The method will not poll FxA if the interval hasn't passed
+    /// See AppConstants.fxaCommandsInterval for the interval value
+    public func pollCommands(forcePoll: Bool = false) {
+        // We should only poll if the interval has passed to not
+        // overwhelm FxA
+        let lastPoll = self.prefs.timestampForKey(PrefsKeys.PollCommandsTimestamp)
+        let now = Date.now()
+        if let lastPoll = lastPoll,
+           lastPoll != 0,
+           lastPoll < now,
+           !forcePoll,
+           now - lastPoll < AppConstants.fxaCommandsInterval {
+            return
+        }
+        self.prefs.setTimestamp(now, forKey: PrefsKeys.PollCommandsTimestamp)
+        if let accountManager = self.rustFxA.accountManager {
+            accountManager.deviceConstellation()?.pollForCommands { commands in
+                guard let commands = try? commands.get() else { return }
+
+                var receivedTabURLs: [URL] = []
+                var closedTabURLs: [URL] = []
+                for command in commands {
+                    switch command {
+                    case .tabReceived(_, let tabData):
+                        if let urlString = tabData.entries.last?.url, let url = URL(string: urlString) {
+                            receivedTabURLs.append(url)
+                        }
+                    case .tabsClosed(sender: _, let closeTabPayload):
+                        closedTabURLs.append(contentsOf: closeTabPayload.urls.compactMap { URL(string: $0) })
+                    }
+                }
+                if !receivedTabURLs.isEmpty {
+                    // TODO: FXIOS-12854 pollForCommands completionHandler should be marked as @MainActor
+                    Task { @MainActor in
+                        self.fxaCommandsDelegate?.openSendTabs(for: receivedTabURLs)
+                    }
+                }
+
+                if !closedTabURLs.isEmpty {
+                    self.fxaCommandsDelegate?.closeTabs(for: closedTabURLs)
+                }
+            }
+        }
+    }
+
+    lazy var logins: RustLogins = {
+        let databasePath = URL(
+            fileURLWithPath: directory,
+            isDirectory: true
+        ).appendingPathComponent("loginsPerField.db").path
+        return RustLogins(databasePath: databasePath)
+    }()
+
+    lazy var remoteSettingsService: RemoteSettingsService = {
+        let remoteSettingsEnvironmentKey = prefs.stringForKey(PrefsKeys.RemoteSettings.remoteSettingsEnvironment) ?? ""
+        let remoteSettingsEnvironment = RemoteSettingsEnvironment(rawValue: remoteSettingsEnvironmentKey) ?? .prod
+        let remoteSettingsServer = remoteSettingsEnvironment.toRemoteSettingsServer()
+        let bucketName = (remoteSettingsServer == .prod ? "main" : "main-preview")
+        let config = RemoteSettingsConfig(
+            server: remoteSettingsServer,
+            bucketName: bucketName,
+            appContext: remoteSettingsAppContext()
+        )
+
+        let url = URL(fileURLWithPath: directory, isDirectory: true).appendingPathComponent("remote-settings")
+        let path = url.path
+
+        // Create the remote settings directory if needed
+        if !FileManager.default.fileExists(atPath: path) {
+            try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        }
+        let service = remoteSettingsServiceFactory(path, config)
+        #if !MOZ_TARGET_NOTIFICATIONSERVICE && !MOZ_TARGET_SHARETO && !MOZ_TARGET_CREDENTIAL_PROVIDER
+        service.setTelemetry(telemetry: RemoteSettingsGleanTelemetry())
+        serviceSyncCoordinator = RemoteSettingsServiceSyncCoordinator(service: service, prefs: prefs)
+        #endif
+        return service
+    }()
+
+    private(set) var serviceSyncCoordinator: RemoteSettingsServiceSyncCoordinator?
+
+    lazy var firefoxSuggest: RustFirefoxSuggestProtocol? = {
+        do {
+            let cacheFileURL = try FileManager.default.url(
+                for: .cachesDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            ).appendingPathComponent("suggest.db", isDirectory: false)
+            return try RustFirefoxSuggest(
+                dataPath: URL(
+                    fileURLWithPath: directory,
+                    isDirectory: true
+                ).appendingPathComponent("suggest-data.db").path,
+                cachePath: cacheFileURL.path,
+                remoteSettingsService: remoteSettingsService
+            )
+        } catch {
+            logger.log("Failed to open Firefox Suggest database: \(error.localizedDescription)",
+                       level: .warning,
+                       category: .storage)
+            return nil
+        }
+    }()
+
+    private func remoteSettingsAppContext() -> RemoteSettingsContext {
+        let appInfo = BrowserKitInformation.shared
+        let formFactor = switch UIDeviceDetails.userInterfaceIdiom {
+        case .pad: "tablet"
+        case .mac: "desktop"
+        default: "phone"
+        }
+        let regionCode = SystemLocaleProvider().regionCode()
+        let country = regionCode == "und" ? nil : regionCode
+
+        return RemoteSettingsContext(
+            channel: appInfo.buildChannel?.rawValue ?? "release",
+            appVersion: AppInfo.appVersion,
+            appId: AppInfo.bundleIdentifier,
+            /// `Locale.current.identifier` uses an underscore (e.g. “en_US”), which is not supported by RS.
+            /// Nimbus’s `getLocaleTag()` returns a Gecko-compatible locale (e.g. “en-US”).
+            /// In Gecko, we use BCP47 format, specifically `appLocaleAsBCP47`
+            /// See : https://searchfox.org/mozilla-central/rev/240ca3f/toolkit/modules/RustSharedRemoteSettingsService.sys.mjs#46
+            /// Once we drop support for iOS <16 we can support the proper  BCP47 by using `Locale.IdentifierType.bcp47`
+            /// See: https://developer.apple.com/documentation/foundation/locale/identifiertype/bcp47
+            locale: getLocaleTag(),
+            os: "iOS",
+            osVersion: UIDeviceDetails.systemVersion,
+            formFactor: formFactor,
+            country: country)
+    }
+
+    func hasAccount() -> Bool {
+        return rustFxA.hasAccount()
+    }
+
+    func hasSyncableAccount() -> Bool {
+        return hasAccount() && !rustFxA.accountNeedsReauth()
+    }
+
+    var rustFxA: RustFirefoxAccounts {
+        return RustFirefoxAccounts.shared
+    }
+
+    func removeAccount() {
+        logger.log("Removing sync account", level: .debug, category: .sync)
+
+        RustFirefoxAccounts.shared.disconnect()
+
+        // Not available in extensions
+        #if !MOZ_TARGET_NOTIFICATIONSERVICE && !MOZ_TARGET_SHARETO && !MOZ_TARGET_CREDENTIAL_PROVIDER
+        unregisterRemoteNotifications()
+        #endif
+
+        // remove Account Metadata
+        prefs.removeObjectForKey(PrefsKeys.KeyLastRemoteTabSyncTime)
+
+        // Save the keys that will be restored
+        let (creditCardKey, creditCardCanary) = keychain.getCreditCardKeyData()
+        let (loginsKey, loginsCanary) = keychain.getLoginsKeyData()
+
+        // Remove all items, removal is not key-by-key specific (due to the risk of failing to delete something),
+        // simply restore what is needed.
+        keychain.removeAllKeys()
+
+        if let creditCardKey = creditCardKey, let creditCardCanary = creditCardCanary {
+            keychain.setCreditCardsKeyData(keyValue: creditCardKey, canaryValue: creditCardCanary)
+        }
+
+        if let loginsKey = loginsKey, let loginsCanary = loginsCanary {
+            keychain.setLoginsKeyData(keyValue: loginsKey, canaryValue: loginsCanary)
+        }
+
+        // Tell any observers that our account has changed.
+        NotificationCenter.default.post(name: .FirefoxAccountChanged, object: nil)
+
+        // Trigger cleanup. Pass in the account in case we want to try to remove
+        // client-specific data from the server.
+        self.syncManager?.onRemovedAccount()
+    }
+
+    public func hasSyncedLogins() -> Deferred<Maybe<Bool>> {
+        return logins.hasSyncedLogins()
+    }
+
+    // Profile exists in extensions, UIApp is unavailable there, make this code run for the main app only
+    @available(
+        iOSApplicationExtension,
+        unavailable,
+        message: "UIApplication.shared is unavailable in application extensions"
+    )
+    private func unregisterRemoteNotifications() {
+        Task {
+            do {
+                let autopush = try await Autopush(files: files)
+                // unsubscribe returns a boolean telling the caller if the subscription was already
+                // unsubscribed, we ignore it because regardless the subscription is gone.
+                _ = try await autopush.unsubscribe(scope: RustFirefoxAccounts.pushScope)
+            } catch let error {
+                logger.log("Unable to unsubscribe account push subscription",
+                           level: .warning,
+                           category: .sync,
+                           description: error.localizedDescription
+                )
+            }
+        }
+
+        ensureMainThread {
+            if let application = UIApplication.value(forKeyPath: #keyPath(UIApplication.shared)) as? UIApplication {
+                application.unregisterForRemoteNotifications()
+            }
+        }
+    }
+
+    struct NoAccountError: MaybeErrorType {
+        let description = "No account."
+    }
+}
+
+extension RemoteSettingsEnvironment {
+    /// NOTE: It would much cleaner to use RemoteSettingsServer if it had a public initializer.
+    /// TODO(FXIOS-13189): Add public initializer from rawValue to RemoteSettingsServer.
+    public func toRemoteSettingsServer() -> RemoteSettingsServer {
+        switch self {
+        case .prod: return .prod
+        case .stage: return .stage
+        case .dev: return .dev
+        }
+    }
+}

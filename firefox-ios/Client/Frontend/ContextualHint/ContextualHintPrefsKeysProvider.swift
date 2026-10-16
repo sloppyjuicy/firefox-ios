@@ -1,0 +1,25 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+import Shared
+
+protocol ContextualHintPrefsKeysProvider {
+    func prefsKey(for hintType: ContextualHintType) -> String
+}
+
+extension ContextualHintPrefsKeysProvider {
+    typealias CFRPrefsKeys = PrefsKeys.ContextualHints
+
+    func prefsKey(for hintType: ContextualHintType) -> String {
+        switch hintType {
+        case .jumpBackIn: return CFRPrefsKeys.jumpBackinKey.rawValue
+        case .jumpBackInSyncedTab: return CFRPrefsKeys.jumpBackInSyncedTabKey.rawValue
+        case .mainMenu: return CFRPrefsKeys.mainMenuRedesignKey.rawValue
+        case .navigation: return CFRPrefsKeys.navigationKey.rawValue
+        case .relay: return CFRPrefsKeys.relayMaskKey.rawValue
+        case .summarizeToolbarEntry: return CFRPrefsKeys.summarizerToolbarEntryKey.rawValue
+        }
+    }
+}

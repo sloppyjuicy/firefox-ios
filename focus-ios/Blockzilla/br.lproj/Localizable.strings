@@ -1,0 +1,672 @@
+/* Button on About screen */
+"About.learnMoreButton" = "Gouzout hiroc'h";
+
+/* Label on About screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"About.missionLabel" = "Gant Mozilla eo savet %@. Stourm a reomp evit difenn un Internet yac'h ha digor.";
+
+/* Label on About screen */
+"About.privateBullet1" = "Klaskit ha merdeit en arload";
+
+/* Label on About screen */
+"About.privateBullet2" = "Stankit an heulierien (pe kemmit an arventennoù evit aotren an heulierien)";
+
+/* Label on About screen */
+"About.privateBullet3" = "Dilamit ho toupinoù, ho roll istor hag ho roll enklask";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "Arverit anezhañ evel ur merdeer prevez:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "Skoazell";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Evezhiadennoù a-fet buhez prevez";
+
+/* Label for row in About screen */
+"About.rowRights" = "Ho kwirioù";
+
+/* Label for row in About screen */
+"About.rowTerms" = "Termenoù implij";
+
+/* Label on About screen */
+"About.safariBullet1" = "Stankit an heulierien evit difenn ho puhez prevez";
+
+/* Label on About screen */
+"About.safariBullet2" = "Stankit an nodrezhoù web evit digreskiñ ment ar bajenn";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Arverit anezhañ evel un askouezh Safari:";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Title displayed in the settings screen that, when tapped, takes the user to a page with information about the product. Also displayed as a header for the About page. */
+"About.title" = "A-zivout %@";
+
+/* Label on About screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"About.topLabel" = "Chom a rit mestr gant %@.";
+
+/* Title for action sheet item to open the current page in another application. %@ is the name of the application to open the current page. */
+"actionSheet.openIn" = "Digeriñ e %@";
+
+/* Button to dismiss the 'Add Pass Failed' alert. */
+"AddPass.Error.Dismiss" = "Mat eo";
+
+/* Message of the 'Add Pass Failed' alert. */
+"AddPass.Error.Message" = "Ur fazi a zo degouezhet en ur ouzhpennañ ar bilhed da Wallet. Klaskit en-dro diwezhatoc’h.";
+
+/* Title of the 'Add Pass Failed' alert. */
+"AddPass.Error.Title" = "C'hwitet eo bet ouzhpennañ ar bilhed";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Prompt shown to ask the user to use Touch ID, Face ID, or passcode to continue browsing after returning to the app. */
+"Authentication.reason" = "Dilesait da zistreiñ da %@";
+
+/* Label for button to add a custom URL */
+"Autocomplete.addCustomUrl" = "Ouzhpennañ un URL personelaet";
+
+/* Label for error state when entering an invalid URL */
+"Autocomplete.addCustomUrlError" = "Gwiriekaat an URL enanket.";
+
+/* A label displaying an example URL */
+"Autocomplete.addCustomUrlExample" = "Skouer: example.com";
+
+/* Label for the input to add a custom URL */
+"Autocomplete.addCustomUrlLabel" = "URL da ouzhpennañ";
+
+/* Placeholder for the input field to add a custom URL */
+"Autocomplete.addCustomUrlPlaceholder" = "Pegañ pe enankañ un URL";
+
+/* Label for button to add a custom URL with the + prefix */
+"Autocomplete.addCustomUrlWithPlus" = "+ ouzhpennañ un URL personelaet";
+
+/* Label for toast alerting a custom URL has been added */
+"Autocomplete.customUrlAdded" = "URL personelaet ouzhpennet.";
+
+/* Description for enabling or disabling the default list. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Autocomplete.defaultDescriptoin" = "Gweredekait evit ma vefe klokaet gant %@ ent emgefreek ouzhpenn 450 URL brudet er varrenn chomlec'h.";
+
+/* label describing URL Autocomplete as disabled */
+"Autocomplete.disabled" = "Diweredekaet";
+
+/* Label for toast alerting that the custom URL being added is a duplicate */
+"Autocomplete.duplicateUrl" = "An URL a zo dioutañ endeo";
+
+/* Label for button to add a custom URL */
+"Autocomplete.emptyState" = "URL personelaet ebet da ziskouez";
+
+/* label describing URL Autocomplete as enabled */
+"Autocomplete.enabled" = "Gweredekaet";
+
+/* Label for button taking you to your custom Autocomplete URL list */
+"Autocomplete.manageSites" = "Merañ lec'hiennoù";
+
+/* Label for enabling or disabling autocomplete */
+"Autocomplete.mySites" = "Ma lec'hiennoù";
+
+/* Description for adding and managing custom autocomplete URLs. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Autocomplete.mySitesDesc" = "Gweredekait evit ma vefe leuniet ent emgefreek hoc'h URLoù gwellañ deoc'h gant %@";
+
+/* Label for enabling or disabling top sites */
+"Autocomplete.topSites" = "Lec'hiennoù gwellañ";
+
+/* Title for the action button shown on the Splash Screen which gives the user the ability to log in with biometrics. */
+"BiometricAuthentication.UnlockButton.Title" = "Dibrennañ";
+
+/* Create a new session after failing a biometric check */
+"BiometricPrompt.newSession" = "Estez nevez";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "Distreiñ";
+
+/* Toast displayed after a URL has been copied to the clipboard */
+"browser.copyAddressToast" = "URL eilet er golver";
+
+/* Copy URL button in URL long press menu */
+"Browser.copyMenuLabel" = "Eilañ";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "War-lerc'h";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "Adkargañ";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "Arventennoù";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "Herzel";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "Diuzañ ar varrenn lec'hiadur";
+
+/* Label on button to complete edits */
+"Done" = "Graet";
+
+/* Label on button to allow edits */
+"Edit" = "Embann";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "Klask en-dro";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Nullañ";
+
+/* Dialog title used for opening an external app from Focus. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ExternalAppLink.messageTitle" = "Fellout a ra da %@ digeriñ un arload all";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Digeriñ";
+
+/* Dialog title used for opening an external app from Focus. %1$@ is the app name (for example “Firefox Focus” or ”Firefox Klar”), %2$@ is the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "Fellout a ra da %1$@ digeriñ %2$@";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "Nullañ";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "Postel";
+
+/* Accessibility label for done button in Find in Page Toolbar. */
+"FindInPage.Done" = "Kavet er bajenn";
+
+/* Accessibility label for next result button in Find in Page Toolbar. */
+"FindInPage.NextResult" = "Kavout an hini da-heul er bajenn";
+
+/* Accessibility label for previous result button in Find in Page Toolbar. */
+"FindInPage.PreviousResult" = "Kavout an hini kent er bajenn";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.lastSlide.buttonLabel" = "Mat eo, komprenet 'm eus!";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "Merdeit 'vel ma vefe den o sellet.";
+
+/* Button label used to close a menu that displays as a popup. */
+"Menu.Close" = "Serriñ";
+
+/* Button text for retrying network connection */
+"Network.Offline.RetryButton" = "Klask en-dro";
+
+/* Text for a label that indicates the title of button from onboarding screen version 2. */
+"NewOnboarding.Button.Title.V2" = "Kregiñ ganti";
+
+/* Text for a label that indicates the subtitle for the onboarding screen version 2. */
+"NewOnboarding.Subtitle.V2" = "Prim. Prevez. Disoursi.";
+
+/* Text for a label that indicates the title of button from onboarding screen */
+"Onboarding.Button.Title" = "Kregiñ gant ar merdeiñ";
+
+/* Text for a label that indicates the title of the bottom button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.BottomButtonTitle.V2" = "Tremen";
+
+/* Text for a label that indicates the first subtitle for the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.FirstSubtitle.V2" = "Evit muioc'h a vuhez prevez e vo skarzhet ar roll istor pa vo serret an arload.";
+
+/* Text for a label that indicates the second subtitle for the default browser onboarding screen version 2. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.DefaultBrowser.SecondSubtitle.V2" = "Lakaat %@ dre ziouer evit gwareziñ ho roadennoù gant pep liamm digoret.";
+
+/* Text for a label that indicates the title for the default browser onboarding screen version 2. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.DefaultBrowser.Title.V2" = "%@ n'eo ket evel ar verdeerien all";
+
+/* Text for a label that indicates the title of the top button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.TopButtonTitle.V2" = "Lakaat da verdeer dre ziouer";
+
+/* Text for a label that indicates the description of history section from onboarding screen. */
+"Onboarding.History.Description" = "Dilemel roll-istor ar merdeiñ, ar gerioù-tremen, an toupinoù ha mirout ouzh ar bruderezhioù strobus da heuliañ ac'hanoc'h gant ur c'hlik nemetken!";
+
+/* Text for a label that indicates the title of history section from onboarding screen. */
+"Onboarding.History.Title" = "Ho roll istor ne heuilh ket ac'hanoc'h";
+
+/* Text for a label that indicates the description of incognito section from onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.Incognito.Description" = "%@ eo ur merdeer gouestlet d'ar vuhez prevez gant ur gwarez a-enep an heuliañ hag ur stanker danvezioù.";
+
+/* Text for a label that indicates the title of incognito section from onboarding screen. */
+"Onboarding.Incognito.Title" = "Gwelloc'h eget ur mod incognito";
+
+/* Text that describes Firefox's commitment to privacy. %@ is a link using Onboarding.PrivacyNotice.LinkText as text. */
+"Onboarding.PrivacyNotice.Text" = "Firefox a ziwall ho puhez prevez. Lennit hiroc’h en hor %@.";
+
+/* Text for a label that indicates the description of protection section from onboarding screen. */
+"Onboarding.Protection.Description" = "Keflugnit an arventennoù evit dibab pegen ha pegen nebeud e rannit.";
+
+/* Text for a label that indicates the title of protection section from onboarding screen. */
+"Onboarding.Protection.Title" = "Ar gwarez evel ma faot deoc’h";
+
+/* Text for a label that indicates the subtitle for onboarding screen. */
+"Onboarding.Subtitle" = "Kemerit ho merdeiñ prevez d'al live da-heul.";
+
+/* Label for the agreement button in the Terms of Use screen. */
+"Onboarding.TermsOfUse.ButtonText" = "Asantiñ ha kenderc’hel";
+
+/* Label for the agreement button in the Terms of Use screen. */
+"Onboarding.TermsOfUse.ButtonTextV2" = "Kenderc’hel";
+
+/* Button label to dismiss the Privacy Policy and Terms of Use screen. */
+"Onboarding.TermsOfUse.Done.ButtonText" = "Graet eo";
+
+/* Used as a text for the link in Onboarding.TermsOfUse.Text. */
+"Onboarding.TermsOfUse.LinkText" = "Termenoù implij Firefox";
+
+/* Subtitle for the Terms of Use screen during onboarding. */
+"Onboarding.TermsOfUse.Subtitle" = "Prim. Prevez. Disoursi.";
+
+/* Text that describes the agreement to the Firefox Terms of Use. %@ is a link using Onboarding.TermsOfUse.LinkText as text. */
+"Onboarding.TermsOfUse.Text" = "Ma kendalc’hit ec’h asantit d’an %@";
+
+/* Title for the Terms of Use screen during onboarding. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.TermsOfUse.Title" = "Donemat war %@";
+
+/* Text for a label that indicates the title for onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.Title" = "Degemer mat war Firefox %@!";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Stokit war Safari ha diuzit ar stankaerioù endalc'had";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Safari.instructionsEnable" = "Gweredekaat %@";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsExtentions" = "Dibabit Safari, ha dibabit Askouezhioù";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Safari.instructionsNotEnabled" = "Diweredekaet eo %@";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "Digeriñ an arload arventennoù";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.openInstruction" = "Digorit arventennoù an trevnad";
+
+/* Save button label */
+"Save" = "Enrollañ";
+
+/* Label for error state when entering an invalid search engine URL. %s is a search term in a URL. */
+"SearchEngine.addEngineError" = "N'eo ket aet en-dro. Klaskit amsaviñ an termenoù klasket gant se: %s.";
+
+/* Label for disable option on search suggestions prompt */
+"SearchSuggestions.promptDisable" = "Ket";
+
+/* Label for enable option on search suggestions prompt */
+"SearchSuggestions.promptEnable" = "Ya";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Label for search suggestions prompt message */
+"SearchSuggestions.promptMessage" = "Evit kaout alioù en deus ezhomm %@ da gas ar pezh a viziatait er varrenn glask d'al lusker klask.";
+
+/* Title for search suggestions prompt */
+"SearchSuggestions.promptTitle" = "Diskouez an alioù klask?";
+
+/* Title for the URL Autocomplete row */
+"Settings.autocompleteSection" = "Klokadur emgefreek an URL";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "Stankañ heulierien endalc'hadoù all a c'hall mirout videoioù ha pajennadoù web da vont en-dro en un doare dereat.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo2" = "Nullañ";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes2" = "Stankañ endalc'had an heulierien";
+
+/* Dark theme option in settings menu */
+"Settings.darkTheme" = "Teñval";
+
+/* Description associated to the Search Suggestions toggle on main screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Settings.detailTextSearchSuggestion" = "%@ a gaso ar pezh a vizskrivit er varrenn chomlec'hioù d'ho lusker enklask.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example "Firefox Focus" or "Firefox Klar"). */
+"Settings.detailTextSendUsageData" = "Strivañ a ra Mozilla evit dastum ar pezh hon eus ezhomm hepken evit gwellaat ha kinnig %@ d'an holl.";
+
+/* Title for section in settings menu */
+"Settings.general" = "Hollek";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Gouzout hiroc'h.";
+
+/* Lincese option in settings menu. Tapping the cell will take the user to a list of licences for the 3rd parties used in the app. */
+"Settings.licenses" = "Lañvazioù";
+
+/* Light theme option in settings menu */
+"Settings.lightTheme" = "Sklaer";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Title displayed in the settings screen that, when tapped, allows the user to leave a review for the app on the app store. */
+"Settings.rate" = "Feur %@";
+
+/* Label for Safari integration section */
+"Settings.safariTitle" = "ENKORFADUR SAFARI";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "Arventennoù";
+
+/* Text for button to add another search engine in settings */
+"Settings.Search.AddSearchEngineButton" = "Ouzhpennañ ur c'heflusker enklask all";
+
+/* Title on add search engine settings screen */
+"Settings.Search.AddSearchEngineTitle" = "Ouzhpennañ ur c'heflusker enklask";
+
+/* Header for rows of installed search engines */
+"Settings.Search.InstalledSearchEngines" = "KEFLUSKERIOÙ ENKLASK STALIET";
+
+/* Label for input field for the name of the search engine to be added */
+"Settings.Search.NameToDisplay" = "Anv da ziskouez";
+
+/* Toast displayed after adding a search engine */
+"Settings.Search.NewSearchEngineAdded" = "Keflusker enklask nevez ouzhpennet.";
+
+/* Label for button to bring deleted default engines back */
+"Settings.Search.RestoreEngine" = "Atoriñ ar c'hefluskerioù enklask dre ziouer";
+
+/* Placeholder text for input of new search engine name */
+"Settings.Search.SearchEngineName" = "Anv ar c'heflusker enklask";
+
+/* Label for input of search engine template */
+"Settings.Search.SearchTemplate" = "Testenn glask da implij";
+
+/* Text displayed as an example of the template to add a search engine. */
+"settings.Search.SearchTemplateExample" = "Skouer: searchengine.example.com/search/?q=%s";
+
+/* Placeholder text for input of new search engine template */
+"Settings.Search.SearchTemplatePlaceholder" = "Pegit pe enankit un destenn da glask. M'eo dleet e c'hallit amsaviñ an termen klasket gant: %s.";
+
+/* Label for the search engine in the search screen */
+"Settings.searchLabel" = "Keflusker enklask";
+
+/* Label for the Search Suggestions toggle row */
+"Settings.searchSuggestions" = "Kaout alioù klask";
+
+/* Title for the search selection screen */
+"Settings.searchTitle2" = "KLASK";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "BUHEZ PREVEZ";
+
+/* Label title for set as default browser row */
+"Settings.setAsDefaultBrowser" = "Lakaat evel merdeer dre ziouer";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for set as default browser option. */
+"Settings.setAsDefaultBrowserDescription" = "Digeriñ liammoù al lec'hiennoù, posteloù ha kemennadennoù e %@ en un doare emgefreek.";
+
+/* System value for theme section in settings menu */
+"Settings.systemTheme" = "Neuz ar reizhiad";
+
+/* Theme section in settings menu */
+"Settings.theme" = "Neuz";
+
+/* Header for manual theme section in settings menu */
+"Settings.themePicker" = "Dibaber neuzioù";
+
+/* Label for the checkbox to toggle Advertising trackers */
+"Settings.toggleBlockAds2" = "Bruderezh";
+
+/* Label for the checkbox to toggle Analytics trackers */
+"Settings.toggleBlockAnalytics2" = "Statistikoù";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "Stankañ an nodrezhoù web";
+
+/* Label for the checkbox to toggle Other trackers */
+"Settings.toggleBlockOther2" = "Endalc'had";
+
+/* Label for the checkbox to toggle Social trackers */
+"Settings.toggleBlockSocial2" = "Sokial";
+
+/* Label for toggle on settings screen */
+"Settings.toggleFaceID" = "Implijit Face ID evit dibrennañ an arload";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for 'Enable Face ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleFaceIDDescription" = "Face ID a c'hall dibrennañ %@ m'eo digoret un URL en arload endeo";
+
+/* Show home screen tips toggle label on settings screen */
+"Settings.toggleHomeScreenTips" = "Diskouez tunioù pennbajenn";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Kas roadennoù arver";
+
+/* Label for toggle on settings screen */
+"Settings.toggleTouchID" = "Implijit Touch ID evit dibrennañ an arload";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for 'Enable Touch ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleTouchIDDescription" = "Touch ID a c'hall dibrennañ %@ m'eo digoret un URL en arload endeo";
+
+/* Status off for tracking protection in settings screen */
+"Settings.trackingProtectionOff" = "Diweredekaet";
+
+/* Status on for tracking protection in settings screen */
+"Settings.trackingProtectionOn" = "Gweredekaet";
+
+/* Value for theme toggle in settings menu */
+"Settings.useSystemTheme" = "Ober gant mod sklaer/teñval ar reizhiad";
+
+/* Title for settings section to enable different Siri Shortcuts. */
+"Settinsg.siriShortcutsTitle" = "BERRADENNOÙ SIRI";
+
+/* Text for a share button */
+"share" = "Rannañ";
+
+/* Text for the share menu option when a user wants to add the site to Shortcuts */
+"ShareMenu.AddToShortcuts" = "Ouzhpennañ d'ar berradennoù";
+
+/* Toast displayed to the user after adding the item to the Shortcuts. */
+"ShareMenu.AddToShortcuts.Confirm" = "Ouzhpennet d'ar berradennoù";
+
+/* Text for the share menu when a user wants to copy a URL. */
+"shareMenu.copyAddress" = "Eilañ ar chomlec'h";
+
+/* Text for the share menu option when a user wants to open the find in page menu */
+"ShareMenu.FindInPage" = "Kavout er bajennad";
+
+/* Text for the share menu option when a user wants to remove the site from Shortcuts */
+"ShareMenu.RemoveFromShortcuts" = "Lemel diouzh ar berradennoù";
+
+/* Toast displayed to the user after removing the item from the Shortcuts. */
+"ShareMenu.RemoveShortcut.Confirm" = "Berradenn dilamet";
+
+/* Text for the share menu option when a user wants to reload the site as a desktop */
+"ShareMenu.RequestDesktop" = "Goulenn al lec'hienn evit an urzhiataerioù";
+
+/* Text for the share menu option when a user wants to reload the site as a mobile device */
+"ShareMenu.RequestMobile" = "Lec'hienn hezoug";
+
+/* Text for the share menu option when a user wants to open the current website in the Chrome app. */
+"ShareMenu.ShareOpenChrome" = "Digeriñ e Chrome";
+
+/* Text for the share menu option when a user wants to open the current website in the default browser. */
+"ShareMenu.ShareOpenDefaultBrowser" = "Digeriñ er merdeer dre ziouer";
+
+/* Text for the share menu option when a user wants to open the current website in the Firefox app. */
+"ShareMenu.ShareOpenFirefox" = "Digeriñ e Firefox";
+
+/* Text for the share menu option when a user wants to open the current website inside the app. */
+"ShareMenu.ShareOpenLink" = "Digeriñ an ere";
+
+/* Text for the share menu option when a user wants to share the current website they are on through another app. */
+"ShareMenu.SharePage" = "Rannañ ar bajenn gant…";
+
+/* Text for the long press on a shortcut option in context menu. */
+"ShortcutView.RemoveFromShortcuts" = "Lemel diouzh ar berradennoù";
+
+/* Text for the long press on a shortcut rename option in context menu. */
+"ShortcutView.Rename" = "Adenvel ar verradenn";
+
+/* Text for the placeholder textfield on rename shortcut alert. */
+"ShortcutView.RenameShortcutAlertPlaceholder" = "Anv ar verradenn";
+
+/* Text for the rename shortcut alert primary action. */
+"ShortcutView.RenameShortcutAlertPrimaryAction" = "Enrollañ";
+
+/* Text for the rename shortcut alert secondary action. */
+"ShortcutView.RenameShortcutAlertSecondaryAction" = "Nullañ";
+
+/* This is the button text that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.ButtonText.V2" = "Graet";
+
+/* This is the subtitle text for step one that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepOne.V2" = "Stokit ar skramm degemer e-pad pell amzer betek ma hejfe an arlunioù.";
+
+/* This is the subtitle text for step three that is displayed in the Show Me How onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ShowMeHowOnboarding.SubtitleStepThree.V2" = "Klask %@. Dibab ur widjet war-lec’h.";
+
+/* This is the subtitle text for step two that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepTwo.V2" = "Pouezit an arlun mui.";
+
+/* This is the title text that is displayed in the Show Me How Onboarding Screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ShowMeHowOnboarding.Title.V2" = "Ouzhpenn ur widjet %@";
+
+/* Button to add a favorite URL to Siri. */
+"Siri.add" = "Bruderezh";
+
+/* Button to add a specified shortcut option to Siri. */
+"Siri.addTo" = "Ouzhpennañ da Siri";
+
+/* Label for button to edit the Siri phrase or delete the Siri functionality. */
+"Siri.editOpenUrl" = "Adenrollañ pe dilemel ar verradenn";
+
+/* Title of option in settings to set up Siri to erase */
+"Siri.erase" = "Dilemel";
+
+/* Title of option in settings to set up Siri to erase and then open the app. */
+"Siri.eraseAndOpen" = "Dilemel ha digeriñ";
+
+/* Title for screen to add a favorite URL to Siri. */
+"Siri.favoriteUrl" = "Digeriñ al lec'hienn karetañ";
+
+/* Title of option in settings to set up Siri to open a specified URL in Focus/Klar. */
+"Siri.openURL" = "Digeriñ al lec'hienn karetañ";
+
+/* Label for input to set a favorite URL to be opened by Siri. */
+"Siri.urlToOpen" = "URL da zigeriñ";
+
+/* Text for a label that indicates the title for biometric tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.Biometric.Title" = "Morailhañ %@ p'emañ digor ul lec'hienn:";
+
+/* Text for a label that indicates the description for biometric Face ID tip. */
+"Tip.BiometricFaceId.Description" = "Gweredekaat Face ID";
+
+/* Text for a label that indicates the description for biometric Touch ID tip. */
+"Tip.BiometricTouchId.Description" = "Gweredekaat Touch ID";
+
+/* Text for a label that indicates the description for request desktop tip. */
+"Tip.RequestDesktop.Description" = "Gweredoù ar bajenn > Lec’hienn urzhiataer";
+
+/* Text for a label that indicates the title for request desktop tip. */
+"Tip.RequestDesktop.Title" = "Fellout a ra deoc’h gwelet stumm urzhiataer klok ul lec’hienn?";
+
+/* Text for a label that indicates the description for share trackers tip. %@ is the number of trackers blocked. Only shown when there are more than 10 trackers blocked. For locales where we would need plural support, please feel free to translate this string as `Trackers blocked so far: %@` instead. */
+"Tip.ShareTrackers.Description" = "%@ heulier stanket betek-henn";
+
+/* Text for a label that indicates the title for share trackers tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.ShareTrackers.Title" = "Merdeiñ a rit. Stankañ a ra %@.";
+
+/* Text for a label that indicates the description for shortcuts tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.Shortcuts.Description" = "Dibabit Lakaat er varrenn berradennoù adalek lañser %@";
+
+/* Text for a label that indicates the title for shortcuts tip. */
+"Tip.Shortcuts.Title" = "Krouiñ berradennoù etrezek al lec’hienn a weladennit ar muiañ:";
+
+/* Text for a label that indicates the description for siri erase tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriErase.Description" = "Ouzhpennañ ur verradenn Siri";
+
+/* Text for a label that indicates the title for siri erase tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.SiriErase.Title" = "“Siri, diverk ma dalc'h war %@ .”";
+
+/* Text for a label that indicates the description for siri favorite tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriFavorite.Description" = "Ouzhpennañ ur verradenn Siri";
+
+/* Text for a label that indicates the title for siri favorite tip. */
+"Tip.SiriFavorite.Title" = "“Siri, digor al lec'hienn a blij din ar muiañ.”";
+
+/* Text for a label that indicates the description for sites not working tip. */
+"Tip.SitesNotWorking.Description" = "Klaskit diweredekaat ar gwarez heuliañ";
+
+/* Text for a label that indicates the title for sites not working tip. */
+"Tip.SitesNotWorking.Title" = "Mankout a ra elfennoù el lec’hienn pe iskis e seblant bezañ?";
+
+/* Text shown on quick action widget inviting the user to browse in the app. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"TodayWidget.SearchInApp.Instruction" = "Klask e %@";
+
+/* This is the body text that is displayed for the Context Menu icon tooltip */
+"TooltipBodyText.ContextMenu" = "Mont d'an arventennoù evit merañ arventennoù araokaet ar prevezded & surentez.";
+
+/* This is the body text that is displayed for the Privacy tooltip */
+"TooltipBodyText.Privacy" = "An arventennoù dre ziouer-se a ginnig ur gwarez kreñv. Aes eo kemmañ an arventennoù evit klotañ gant hoc’h ezhommoù resis.";
+
+/* This is the body text that is displayed for the Search Bar tooltip */
+"TooltipBodyText.SearchBar" = "Loc'hit hoc'h estez merdeiñ prevez ha stanket e vo an heulierien ha traoù fall all.";
+
+/* This is the body text that is displayed for the Shield icon tooltip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"TooltipBodyText.ShieldIcon" = "Miret en deus %@ da vezañ spiet gant al lec’hienn. Stokit ar skoed evit kaout titouroù war ar pezh a zo bet stanket.";
+
+/* This is the body text that is displayed for the Shield icon tooltip when we block trackers for the first time on a website */
+"TooltipBodyText.ShieldIconTrackerBlocked.V2" = "Tapet eo! Miret hon eus ac’hanoc’h da vezañ spiet gant al lec’hienn. Stokit ar skoed evit kaout titouroù war ar pezh a zo bet stanket.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon" = "Stokit ar boubelenn pa fell deoc’h tennañ holl roudoù hoc’h estez bremanel.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon.V2" = "Stokañ amañ da zilemel pep tra — roll istor, toupinoù, pep tra — ha loc'hañ en-dro en un ivinell nevez.";
+
+/* This is the title text that is displayed for the Privacy tooltip */
+"TooltipTitleText.Privacy" = "Gwarezet hoc’h!";
+
+/* Text for tracking protection screen showing the connection is not secure */
+"trackingProtection.connectionNotSecureLabel" = "N'eo ket diarvar ar c'hennask";
+
+/* Text for tracking protection screen showing the connection is secure */
+"trackingProtection.connectionSecureLabel" = "Kennask suraet";
+
+/* Title for the tracking settings page to change what trackers are blocked. */
+"trackingProtection.label" = "Gwarez heuliañ";
+
+/* Text for the status off from Tracking Protection. */
+"trackingProtection.statusOff" = "DIWEREDEKAET eo ar gwarezioù evit an dalc'h-mañ";
+
+/* Text for the status on from Tracking Protection. */
+"trackingProtection.statusOn" = "GWEREDEKAET eo ar gwarezioù evit an dalc'h-mañ";
+
+/* Text for the toggle that enables/disables tracking protection. */
+"trackingProtection.toggleLabel2" = "Gwarez heuliañ araoket";
+
+/* Text for tracking protection screen showing the number of trackers blocked since the app install. %@ is replaced with the install date of the application. */
+"trackingProtection.trackersBlockedLabel" = "Heulierien stanket abaoe %@";
+
+/* Text for the header of trackers section from Tracking Protection. */
+"trackingProtection.trackersHeader" = "Heulierien ha skriptoù da stankañ";
+
+/* Label displayed for button used as a shortcut to add a link to the list of URLs to autocomplete. */
+"URL.addToAutocompleteLabel" = "Ouzhpennañ un ere d'al leuniadur emgefreek";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Pegañ & Mont";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "DIVERKAÑ";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel2" = "Roll istor ar merdeiñ skarzhet";
+
+/* Label displayed for find in page button when typing in the URL Bar. %@ is any text the user has typed into the URL bar that they want to find on the current page. */
+"URL.findOnPageLabel" = "Kavout er bajennad: %@";
+
+/* Text for a menu displayed from the bottom of the screen when a user long presses on the URL bar with clipboard contents. */
+"URL.paste" = "Pegañ";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "Klask pe chomlec'h";
+
+/* Label displayed for search button when typing in the URL bar. %@ is the text type by the user. */
+"URL.searchLabel" = "Klask %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Heulierien stanket";
+
+/* Title for the action button shown on card view that will take the user to a tutorial explaining the user how to add an widget */
+"WidgetOnboardingCard.ActionButton" = "Diskouez din penaos ober";
+
+/* Subtitle shown on card view explaining the app has a widget option. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"WidgetOnboardingCard.Subtitle" = "Leuskel a reomp ac'hanoc'h da verdeiñ, met posupl e vo deoc'h kregiñ ganti buanoc'h ar wech a zeu a-drugarez d'ar widjed %@ war ho pajenn degemer.";
+
+/* Title shown on card view explaining the app has a widget option */
+"WidgetOnboardingCard.Title" = "Roll istor skarzhet! 🎉";
+

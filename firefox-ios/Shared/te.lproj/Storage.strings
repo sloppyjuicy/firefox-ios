@@ -1,0 +1,15 @@
+/* The title of the folder that contains mobile bookmarks. */
+"Bookmarks" = "ఇష్టాంశాలు";
+
+/* The name of the folder that contains desktop bookmarks in the menu. */
+"Bookmarks Menu" = "ఇష్టాంశాల మెనూ";
+
+/* The name of the folder that contains desktop bookmarks in the toolbar. */
+"Bookmarks Toolbar" = "బుక్మార్కుల టూల్బార్";
+
+/* The legacy title of the folder that contains mobile bookmarks. */
+"Mobile Bookmarks" = "మొబైలు ఇష్టాంశాలు";
+
+/* The name of the folder that contains unsorted desktop bookmarks. */
+"Unsorted Bookmarks" = "క్రమబద్దీకరించని ఇష్టాంశాలు";
+

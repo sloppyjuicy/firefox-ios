@@ -1,0 +1,19 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+
+enum SearchListSection: Int, CaseIterable {
+    // Pre search state
+    case recentSearches
+    case trendingSearches
+
+    // User typed search term state
+    case searchSuggestions
+    case firefoxSuggestions
+    case openedTabs
+    case bookmarks
+    case remoteTabs
+    case history
+}

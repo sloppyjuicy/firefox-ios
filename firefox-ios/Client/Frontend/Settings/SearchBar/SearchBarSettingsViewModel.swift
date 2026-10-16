@@ -1,0 +1,137 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Foundation
+import Shared
+
+enum SearchBarPosition: String, CaseIterable {
+    case top
+    case bottom
+
+    var getLocalizedTitle: String {
+        switch self {
+        case .bottom:
+            return .Settings.Toolbar.Bottom
+        case .top:
+            return .Settings.Toolbar.Top
+        }
+    }
+
+    /// NOTE: To avoid duplication, this enum is reused in the new address bar setting menu.
+    /// TODO(FXIOS-12000): Once the experiment is done, we can move this enum closer to the new UI.
+    var label: String {
+        switch self {
+        case .top:
+            return .Settings.AddressBar.Top
+        case .bottom:
+            return .Settings.AddressBar.Bottom
+        }
+    }
+
+    /// NOTE: To avoid duplication, this enum is reused in the new address bar setting menu.
+    /// TODO(FXIOS-12000): Once the experiment is done, we can move this enum closer to the new UI and remove unused props.
+    var imageName: String {
+        switch self {
+        case .top:
+            return ImageIdentifiers.AddressBar.addressBarIllustrationTop
+        case .bottom:
+            return ImageIdentifiers.AddressBar.addressBarIllustrationBottom
+        }
+    }
+}
+
+protocol SearchBarPreferenceDelegate: AnyObject {
+    @MainActor
+    func didUpdateSearchBarPositionPreference()
+}
+
+/// This protocol provides access to search bar location properties related to `FeatureFlagsManager`.
+protocol SearchBarLocationProvider: UserFeaturePreferenceProvider {
+    var searchBarPosition: SearchBarPosition { get }
+    @MainActor
+    var isBottomSearchBar: Bool { get }
+}
+
+extension SearchBarLocationProvider {
+    var searchBarPosition: SearchBarPosition {
+        userPreferences.searchBarPosition
+    }
+
+    var isBottomSearchBar: Bool {
+        guard UIDeviceDetails.userInterfaceIdiom != .pad else { return false }
+
+        return searchBarPosition == .bottom
+    }
+}
+
+final class SearchBarSettingsViewModel: FeatureFlaggable, UserFeaturePreferenceProvider {
+    weak var delegate: SearchBarPreferenceDelegate?
+
+    private let prefs: Prefs
+    private let notificationCenter: NotificationProtocol
+    init(prefs: Prefs, notificationCenter: NotificationProtocol = NotificationCenter.default) {
+        self.prefs = prefs
+        self.notificationCenter = notificationCenter
+    }
+
+    var title: String {
+        .Settings.AddressBar.AddressBarMenuTitle
+    }
+
+    var searchBarPosition: SearchBarPosition {
+        userPreferences.searchBarPosition
+    }
+
+    // TODO: FXIOS-12830 view models should not contain Views that require main actor isolation
+    @MainActor var topSetting: CheckmarkSetting {
+        return CheckmarkSetting(title: NSAttributedString(string: SearchBarPosition.top.getLocalizedTitle),
+                                subtitle: nil,
+                                accessibilityIdentifier: AccessibilityIdentifiers.Settings.SearchBar.topSetting,
+                                isChecked: { return self.searchBarPosition == .top },
+                                onChecked: { self.saveSearchBarPosition(SearchBarPosition.top) }
+        )
+    }
+
+    // TODO: FXIOS-12830 view models should not contain Views that require main actor isolation
+    @MainActor var bottomSetting: CheckmarkSetting {
+        return CheckmarkSetting(title: NSAttributedString(string: SearchBarPosition.bottom.getLocalizedTitle),
+                                subtitle: nil,
+                                accessibilityIdentifier: AccessibilityIdentifiers.Settings.SearchBar.bottomSetting,
+                                isChecked: { return self.searchBarPosition == .bottom },
+                                onChecked: { self.saveSearchBarPosition(SearchBarPosition.bottom) }
+        )
+    }
+}
+
+// MARK: Private
+extension SearchBarSettingsViewModel {
+    @MainActor
+    func saveSearchBarPosition(_ searchBarPosition: SearchBarPosition) {
+        let previousPosition = userPreferences.searchBarPosition
+
+        userPreferences.setSearchBarPosition(searchBarPosition)
+        delegate?.didUpdateSearchBarPositionPreference()
+        recordPreferenceChange(searchBarPosition, previousPosition: previousPosition)
+
+        let notificationObject = [PrefsKeys.FeatureFlags.SearchBarPosition: searchBarPosition]
+        notificationCenter.post(name: .SearchBarPositionDidChange, withObject: notificationObject)
+    }
+
+    private func recordPreferenceChange(_ searchBarPosition: SearchBarPosition, previousPosition: SearchBarPosition?) {
+        SettingsTelemetry().changedSetting(
+            PrefsKeys.FeatureFlags.SearchBarPosition,
+            to: searchBarPosition.rawValue,
+            from: previousPosition?.rawValue ?? SettingsTelemetry.Placeholders.missingValue
+        )
+    }
+}
+
+// MARK: Telemetry
+extension SearchBarSettingsViewModel {
+    static func recordLocationTelemetry(for searchbarPosition: SearchBarPosition) {
+        let extras = [TelemetryWrapper.EventExtraKey.preference.rawValue: searchbarPosition.rawValue]
+        TelemetryWrapper.recordEvent(category: .information, method: .view, object: .awesomebarLocation, extras: extras)
+    }
+}

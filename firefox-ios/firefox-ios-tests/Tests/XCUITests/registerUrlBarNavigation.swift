@@ -1,0 +1,65 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+import MappaMundi
+
+private let defaultURL = "https://www.mozilla.org/en-US/book/"
+
+@MainActor
+func registerUrlBarNavigation(in map: MMScreenGraph<FxUserState>, app: XCUIApplication) {
+    map.addScreenState(URLBarLongPressMenu) { screenState in
+        if #unavailable(iOS 16) {
+            screenState.gesture(forAction: Action.LoadURLByPasting, Action.LoadURL) { userState in
+                UIPasteboard.general.string = userState.url ?? defaultURL
+                app.cells.buttons[AccessibilityIdentifiers.Photon.pasteAndGoAction].firstMatch.waitAndTap()
+            }
+        }
+
+        screenState.gesture(forAction: Action.SetURLByPasting) { userState in
+            UIPasteboard.general.string = userState.url ?? defaultURL
+            app.cells.buttons[AccessibilityIdentifiers.Photon.pasteAction].firstMatch.waitAndTap()
+        }
+
+        screenState.backAction = {
+            app.otherElements["PopoverDismissRegion"].waitAndTap()
+        }
+        screenState.dismissOnUse = true
+    }
+
+    map.addScreenState(URLBarOpen) { screenState in
+        // This is used for opening BrowserTab with default mozilla URL
+        // For custom URL, should use Navigator.openNewURL or Navigator.openURL.
+        screenState.gesture(forAction: Action.LoadURLByTyping) { userState in
+            let url = userState.url ?? defaultURL
+            let searchTextField = app.textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]
+            // Workaround BB iOS13 be sure tap happens on url bar
+            searchTextField.waitAndTap()
+            searchTextField.waitAndTap()
+            // Tapping doesn't reliably select the existing text (seen on iPad), so typing can insert
+            // into rather than replace it. Clear explicitly before typing.
+            app.buttons["Clear text"].tapIfExists(timeout: 1.5)
+            // On CI the field is occasionally focus-less after tapping, which makes typeText abort;
+            // wait for keyboard focus (re-tapping if needed) before typing.
+            searchTextField.tapAndTypeTextWhenFocused(url)
+            searchTextField.typeText("\r")
+        }
+
+        screenState.gesture(forAction: Action.SetURLByTyping, Action.SetURL) { userState in
+            let url = userState.url ?? defaultURL
+            let textsField = app.textFields.firstMatch
+            textsField.waitAndTap()
+            textsField.waitAndTap()
+            textsField.typeText("\(url)")
+        }
+
+        screenState.noop(to: HomePanelsScreen)
+        screenState.noop(to: HomePanel_TopSites)
+
+        screenState.backAction = {
+            app.buttons[AccessibilityIdentifiers.Browser.UrlBar.cancelButton].waitAndTap()
+        }
+        screenState.dismissOnUse = true
+    }
+}

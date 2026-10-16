@@ -1,0 +1,69 @@
+---
+trust-domain: mobile
+treeherder:
+    group-names:
+        I: Docker Image Builds
+        B: Builds
+
+task-priority: highest
+
+taskgraph:
+    register: ffios_taskgraph:register
+    repositories:
+        mobile:
+            name: "Firefox for iOS"
+    cached-task-prefix: mobile.v2.firefox-ios
+    decision-parameters: ffios_taskgraph.parameters:get_decision_parameters
+
+workers:
+    aliases:
+        bitrise:
+            provisioner: scriptworker-k8s
+            implementation: scriptworker-bitrise
+            os: scriptworker
+            worker-type: mobile-{level}-bitrise
+        github:
+            provisioner: scriptworker-k8s
+            implementation: scriptworker-github
+            os: scriptworker
+            worker-type: mobile-{level}-github
+        images:
+            provisioner: 'mobile-{level}'
+            implementation: docker-worker
+            os: linux
+            worker-type: 'images'
+        misc:
+            provisioner: 'mobile-{level}'
+            implementation: docker-worker
+            os: linux
+            worker-type: 'b-linux'
+        ship-it:
+            provisioner: scriptworker-k8s
+            implementation: scriptworker-shipit
+            os: scriptworker
+            worker-type: mobile-{level}-shipit
+        tree:
+            provisioner: scriptworker-k8s
+            implementation: scriptworker-tree
+            os: scriptworker
+            worker-type: mobile-{level}-tree
+
+scriptworker:
+    scope-prefix: project:mobile:firefox-ios:releng
+
+release-promotion:
+    flavors:
+        promote:
+            target-tasks-method: promote
+        push:
+            target-tasks-method: push
+        ship:
+            target-tasks-method: ship
+        merge_automation:
+            target-tasks-method: merge_automation
+        promote_focus:
+            target-tasks-method: promote_focus
+        push_focus:
+            target-tasks-method: push_focus
+        ship_focus:
+            target-tasks-method: ship_focus

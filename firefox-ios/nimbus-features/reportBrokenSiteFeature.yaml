@@ -1,0 +1,18 @@
+# The configuration for the reportBrokenSiteFeature feature
+features:
+  report-broken-site-feature:
+    description: >
+      In-app Report Broken Site (WebCompat) reporter
+    variables:
+      enabled:
+        description: >
+          Whether or not this feature is enabled
+        type: Boolean
+        default: true
+    defaults:
+      - channel: beta
+        value:
+          enabled: true
+      - channel: developer
+        value:
+          enabled: true

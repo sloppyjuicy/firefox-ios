@@ -1,0 +1,37 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+import WebKit
+
+class PrintHelper: TabContentScript {
+    fileprivate weak var tab: Tab?
+
+    class func name() -> String {
+        return "PrintHelper"
+    }
+
+    required init(tab: Tab) {
+        self.tab = tab
+    }
+
+    func scriptMessageHandlerNames() -> [String]? {
+        return ["printHandler"]
+    }
+
+    func userContentController(
+        _ userContentController: WKUserContentController,
+        didReceiveScriptMessage message: WKScriptMessage
+    ) {
+        if let tab = tab, let webView = tab.webView {
+            let printController = UIPrintInteractionController.shared
+            let printInfo = UIPrintInfo(dictionary: nil)
+            printInfo.jobName = tab.displayTitle
+            printInfo.outputType = .general
+            printController.printInfo = printInfo
+            printController.printFormatter = webView.viewPrintFormatter()
+            printController.present(animated: true, completionHandler: nil)
+        }
+    }
+}

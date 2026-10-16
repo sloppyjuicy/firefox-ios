@@ -1,0 +1,75 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import WebEngine
+import Shared
+import WebKit
+
+@MainActor
+class TabConfigurationProvider {
+    // A WKWebViewConfiguration used for normal tabs
+    var configuration: WKEngineConfiguration {
+        configuration(from: profile, isPrivate: false)
+    }
+
+    // A WKWebViewConfiguration used for private mode tabs
+    var privateConfiguration: WKEngineConfiguration {
+        configuration(from: profile, isPrivate: true)
+    }
+
+    private let configurationProvider = DefaultWKEngineConfigurationProvider()
+    private let profile: Profile
+    private weak let tabManager: TabManager?
+
+    init(profile: Profile, tabManager: TabManager) {
+        self.profile = profile
+        self.tabManager = tabManager
+    }
+
+    func configuration(isPrivate: Bool) -> WKEngineConfiguration {
+        if isPrivate {
+            privateConfiguration
+        } else {
+            configuration
+        }
+    }
+
+    func updateAllowsPopups(_ allowsPopups: Bool) {
+        configuration.webViewConfiguration.preferences.javaScriptCanOpenWindowsAutomatically = allowsPopups
+        privateConfiguration.webViewConfiguration.preferences.javaScriptCanOpenWindowsAutomatically = allowsPopups
+    }
+
+    func updateMediaTypesRequiringUserActionForPlayback(_ mediaType: WKAudiovisualMediaTypes) {
+        configuration.webViewConfiguration.mediaTypesRequiringUserActionForPlayback = mediaType
+        privateConfiguration.webViewConfiguration.mediaTypesRequiringUserActionForPlayback = mediaType
+    }
+
+    func endPrivateBrowsingSession() {
+        configurationProvider.endPrivateBrowsingSession()
+    }
+
+    private func configuration(from profile: Profile, isPrivate: Bool) -> WKEngineConfiguration {
+        let blockPopups = profile.prefs.boolForKey(PrefsKeys.KeyBlockPopups) ?? true
+        let autoPlay = AutoplayAccessors.getMediaTypesRequiringUserActionForPlayback(profile.prefs)
+        let parameters = WKWebViewParameters(
+            blockPopups: blockPopups,
+            isPrivate: isPrivate,
+            autoPlay: autoPlay,
+            schemeHandler: InternalSchemeHandler()
+        )
+        let engineConfiguration = configurationProvider.createConfiguration(parameters: parameters)
+
+        // Register the reader mode scheme handler alongside the `internal://` one
+        if ReaderModeSchemeHandler.isCustomSchemeEnabled {
+            let webViewConfig = engineConfiguration.webViewConfiguration
+            if webViewConfig.urlSchemeHandler(forURLScheme: ReaderModeSchemeHandler.scheme) == nil {
+                webViewConfig.setURLSchemeHandler(
+                    ReaderModeSchemeHandler(profile: profile, tabManager: tabManager ?? nil),
+                    forURLScheme: ReaderModeSchemeHandler.scheme
+                )
+            }
+        }
+        return engineConfiguration
+    }
+}

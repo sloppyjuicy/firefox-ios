@@ -1,0 +1,226 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Foundation
+import UIKit
+
+import enum MozillaAppServices.VisitType
+
+protocol LibraryCoordinatorDelegate: AnyObject, LibraryPanelDelegate, RecentlyClosedPanelDelegate {
+    @MainActor
+    func didFinishLibrary(from coordinator: Coordinator)
+}
+
+protocol LibraryNavigationHandler: AnyObject {
+    @MainActor
+    func start(panelType: LibraryPanelType, navigationController: UINavigationController)
+
+    @MainActor
+    func shareLibraryItem(url: URL, sourceView: UIView)
+
+    @MainActor
+    func setNavigationBarHidden(_ value: Bool)
+}
+
+class LibraryCoordinator: BaseCoordinator,
+                          LibraryPanelDelegate,
+                          LibraryNavigationHandler,
+                          ParentCoordinatorDelegate,
+                          ShareSheetCoordinatorDelegate {
+    private let profile: Profile
+    private let tabManager: TabManager
+    private var libraryViewController: LibraryViewController?
+    weak var parentCoordinator: LibraryCoordinatorDelegate?
+    override var isDismissible: Bool { false }
+    private var windowUUID: WindowUUID { return tabManager.windowUUID }
+
+    var libraryPanelWindowUUID: WindowUUID {
+        return windowUUID
+    }
+
+    init(
+        router: Router,
+        profile: Profile = AppContainer.shared.resolve(),
+        tabManager: TabManager
+    ) {
+        self.profile = profile
+        self.tabManager = tabManager
+        super.init(router: router)
+        initializeLibraryViewController()
+    }
+
+    private func initializeLibraryViewController() {
+        let libraryViewController = LibraryViewController(profile: profile, tabManager: tabManager)
+        router.setRootViewController(libraryViewController)
+        libraryViewController.childPanelControllers = makeChildPanels()
+        libraryViewController.delegate = self
+        libraryViewController.navigationHandler = self
+
+        self.libraryViewController = libraryViewController
+    }
+
+    func start(with homepanelSection: Route.HomepanelSection) {
+        libraryViewController?.setupOpenPanel(panelType: homepanelSection.libraryPanel)
+    }
+
+    private func makeChildPanels() -> [UINavigationController] {
+        let bookmarksPanel: UIViewController
+        bookmarksPanel = BookmarksViewController(viewModel: BookmarksPanelViewModel(profile: profile,
+                                                                                    bookmarksHandler: profile.places),
+                                                 windowUUID: windowUUID)
+        let historyPanel = HistoryPanel(profile: profile, windowUUID: windowUUID)
+        let downloadsPanel = DownloadsPanel(windowUUID: windowUUID)
+        let readingListPanel = ReadingListPanel(profile: profile, windowUUID: windowUUID)
+        return [
+            LibraryNavigationController(rootViewController: bookmarksPanel, windowUUID: windowUUID),
+            LibraryNavigationController(rootViewController: historyPanel, windowUUID: windowUUID),
+            LibraryNavigationController(rootViewController: downloadsPanel, windowUUID: windowUUID),
+            LibraryNavigationController(rootViewController: readingListPanel, windowUUID: windowUUID)
+        ]
+    }
+
+    // MARK: - LibraryNavigationHandler
+
+    func start(panelType: LibraryPanelType, navigationController: UINavigationController) {
+        switch panelType {
+        case .bookmarks:
+            makeBookmarksCoordinator(navigationController: navigationController)
+        case .history:
+            makeHistoryCoordinator(navigationController: navigationController)
+        case .downloads:
+            makeDownloadsCoordinator(navigationController: navigationController)
+        case .readingList:
+            makeReadingListCoordinator(navigationController: navigationController)
+        }
+    }
+
+    func shareLibraryItem(url: URL, sourceView: UIView) {
+        if let coordinator = childCoordinators.first(where: { $0 is ShareSheetCoordinator }) as? ShareSheetCoordinator {
+            // The share sheet extension coordinator wasn't correctly removed in the last share session. Attempt to recover.
+            logger.log(
+                "ShareSheetCoordinator already exists when it shouldn't. Removing and recreating it to access share sheet."
+                + " Existing coordinator UUID: \(coordinator.windowUUID), LibraryCoordinator UUID: \(windowUUID)",
+                level: .info,
+                category: .shareSheet
+            )
+
+            coordinator.dismiss()
+        }
+
+        let coordinator = ShareSheetCoordinator(
+            router: router,
+            profile: profile,
+            tabManager: tabManager,
+            parentCoordinator: self,
+            delegate: self
+        )
+        add(child: coordinator)
+
+        // Note: Called from History, Bookmarks, and Reading List long presses > Share from the context menu
+        let arrowDirection: UIPopoverArrowDirection = UIDevice.current.userInterfaceIdiom == .pad ? .any : .up
+        coordinator.start(shareType: .site(url: url),
+                          shareMessage: nil,
+                          sourceView: sourceView,
+                          popoverArrowDirection: arrowDirection)
+    }
+
+    private func makeBookmarksCoordinator(navigationController: UINavigationController) {
+        guard !childCoordinators.contains(where: { $0 is BookmarksCoordinator }) else { return }
+        let router = DefaultRouter(navigationController: navigationController)
+        let bookmarksCoordinator = BookmarksCoordinator(
+            router: router,
+            profile: profile,
+            windowUUID: windowUUID,
+            libraryCoordinator: parentCoordinator,
+            libraryNavigationHandler: self
+        )
+        add(child: bookmarksCoordinator)
+        (navigationController.topViewController as? BookmarksViewController)?
+            .bookmarkCoordinatorDelegate = bookmarksCoordinator
+    }
+
+    private func makeHistoryCoordinator(navigationController: UINavigationController) {
+        guard !childCoordinators.contains(where: { $0 is HistoryCoordinator }) else { return }
+        let router = DefaultRouter(navigationController: navigationController)
+        let historyCoordinator = HistoryCoordinator(
+            profile: profile,
+            windowUUID: windowUUID,
+            router: router,
+            parentCoordinator: parentCoordinator,
+            navigationHandler: self
+        )
+        add(child: historyCoordinator)
+        (navigationController.topViewController as? HistoryPanel)?.historyCoordinatorDelegate = historyCoordinator
+    }
+
+    private func makeDownloadsCoordinator(navigationController: UINavigationController) {
+        guard !childCoordinators.contains(where: { $0 is DownloadsCoordinator }) else { return }
+        let router = DefaultRouter(navigationController: navigationController)
+        let downloadsCoordinator = DownloadsCoordinator(
+            router: router,
+            profile: profile,
+            parentCoordinator: parentCoordinator,
+            tabManager: tabManager
+        )
+        add(child: downloadsCoordinator)
+        (navigationController.topViewController as? DownloadsPanel)?.navigationHandler = downloadsCoordinator
+    }
+
+    private func makeReadingListCoordinator(navigationController: UINavigationController) {
+        guard !childCoordinators.contains(where: { $0 is ReadingListCoordinator }) else { return }
+        let router = DefaultRouter(navigationController: navigationController)
+        let readingListCoordinator = ReadingListCoordinator(
+            parentCoordinator: parentCoordinator,
+            navigationHandler: self,
+            router: router
+        )
+        add(child: readingListCoordinator)
+        (navigationController.topViewController as? ReadingListPanel)?.navigationHandler = readingListCoordinator
+    }
+
+    func setNavigationBarHidden(_ value: Bool) {
+        libraryViewController?.setNavigationBarHidden(value)
+    }
+
+    // MARK: - ParentCoordinatorDelegate
+
+    func didFinish(from childCoordinator: any Coordinator) {
+        remove(child: childCoordinator)
+    }
+
+    // MARK: - LibraryPanelDelegate
+
+    func libraryPanelDidRequestToOpenInNewTab(_ url: URL, isPrivate: Bool) {
+        parentCoordinator?.libraryPanelDidRequestToOpenInNewTab(url, isPrivate: isPrivate)
+    }
+
+    func libraryPanel(didSelectURL url: URL, visitType: VisitType) {
+        parentCoordinator?.libraryPanel(didSelectURL: url, visitType: visitType)
+    }
+
+    func didFinish() {
+        parentCoordinator?.didFinishLibrary(from: self)
+    }
+
+    func showToast(message: String) {
+        guard let viewController = libraryViewController else { return }
+
+        let themeManager: ThemeManager = AppContainer.shared.resolve()
+        let viewModel = PlainToastViewModel(labelText: message)
+        let theme = themeManager.resolveTheme(for: windowUUID, privateOverride: false)
+        let toast = PlainToast(viewModel: viewModel, theme: theme)
+        toast.showToast(viewController: viewController,
+                        delay: Toast.UX.toastDelayBefore,
+                        duration: Toast.UX.toastDismissAfter) { toast in
+            [
+                toast.leadingAnchor.constraint(equalTo: viewController.view.safeAreaLayoutGuide.leadingAnchor,
+                                               constant: Toast.UX.toastSidePadding),
+                toast.trailingAnchor.constraint(equalTo: viewController.view.safeAreaLayoutGuide.trailingAnchor,
+                                                constant: -Toast.UX.toastSidePadding),
+                toast.bottomAnchor.constraint(equalTo: viewController.view.safeAreaLayoutGuide.bottomAnchor)
+            ]
+        }
+    }
+}

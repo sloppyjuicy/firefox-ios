@@ -1,0 +1,54 @@
+# The configuration for the homepageRedesignFeature feature
+features:
+  homepage-redesign-feature:
+    description: >
+      This feature is for managing the roll out of the Homepage New Tab Redesign feature.
+    variables:
+      animated-center-search-bar:
+        description: >
+          If true, enables the animated center search bar feature on homepage for users.
+        type: Boolean
+        default: false
+      bookmarks-section-default:
+        description: >
+          If true, enables the bookmarks homepage section by default
+        type: Boolean
+        default: false
+      jbi-section-default:
+        description: >
+          If true, enables the jump back in homepage section by default
+        type: Boolean
+        default: false
+      categories-enabled:
+        description: >
+          If true, enables the categories flow in the stories
+        type: Boolean
+        default: false
+      pinned-header-enabled:
+        description: >
+          If true, enables the pinned newsfeed header on homepage.
+        type: Boolean
+        default: false
+      add-shortcut-tile:
+        description: >
+          If true, enables the add shortcut tile on homepage.
+        type: Boolean
+        default: false
+    defaults:
+      - channel: beta
+        value:
+          animated-center-search-bar: false
+          bookmarks-section-default: false
+          jbi-section-default: false
+          categories-enabled: false
+          pinned-header-enabled: false
+          add-shortcut-tile: false
+
+      - channel: developer
+        value:
+          animated-center-search-bar: false
+          bookmarks-section-default: false
+          jbi-section-default: false
+          categories-enabled: true
+          pinned-header-enabled: true
+          add-shortcut-tile: false

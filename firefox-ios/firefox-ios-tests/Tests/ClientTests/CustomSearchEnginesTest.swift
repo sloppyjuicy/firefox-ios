@@ -1,0 +1,89 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+@testable import Client
+import UIKit
+import Common
+import XCTest
+
+class CustomSearchEnginesTest: XCTestCase {
+    let windowUUID: WindowUUID = .XCTestDefaultUUID
+    override func setUp() async throws {
+        try await super.setUp()
+        await DependencyHelperMock().bootstrapDependencies()
+    }
+
+    override func tearDown() async throws {
+        AppContainer.shared.reset()
+        try await super.tearDown()
+    }
+
+    @MainActor
+    func testgetSearchTemplate() {
+        let profile = makeBrowserProfile(localName: "customSearchTests")
+        let customSearchEngineForm = CustomSearchViewController(windowUUID: windowUUID)
+        customSearchEngineForm.profile = profile
+
+        let template = customSearchEngineForm.getSearchTemplate(withString: "https://github.com/search=%s")
+        XCTAssertEqual(template, "https://github.com/search={searchTerms}")
+
+        let badTemplate = customSearchEngineForm.getSearchTemplate(withString: "https://github.com/search=blah")
+        XCTAssertNil(badTemplate)
+   }
+
+    @MainActor
+    func testaddSearchEngine() async {
+        let profile = makeBrowserProfile(localName: "customSearchTests")
+        let customSearchEngineForm = CustomSearchViewController(windowUUID: windowUUID)
+        customSearchEngineForm.profile = profile
+        let q = "http://www.google.ca/?#q=%s"
+        let title = "YASE"
+
+        do {
+            let engine = try await customSearchEngineForm.createEngine(query: q, name: title)
+
+            XCTAssertEqual(engine.shortName, title)
+            XCTAssertNotNil(engine.image)
+            XCTAssertEqual(engine.searchTemplate, "http://www.google.ca/?#q={searchTerms}")
+        } catch {
+            XCTFail("Failed to create engine \(error)")
+        }
+    }
+
+    @MainActor
+    func testaddSearchEngineFailure() async {
+        let profile = makeBrowserProfile(localName: "customSearchTests")
+        let customSearchEngineForm = CustomSearchViewController(windowUUID: windowUUID)
+        customSearchEngineForm.profile = profile
+        let q = "https://isthisvalid.com/hhh"
+        let title = "YASE"
+
+        do {
+            _ = try await customSearchEngineForm.createEngine(query: q, name: title)
+            XCTFail("Test should have failed to create the engine")
+        } catch {
+            XCTAssertEqual((error as? CustomSearchError)?.reason, CustomSearchError(.FormInput).reason)
+        }
+    }
+
+    @MainActor
+    func testaddSearchEngineWithoutScheme() async {
+        let profile = makeBrowserProfile(localName: "customSearchTests")
+        let customSearchEngineForm = CustomSearchViewController(windowUUID: windowUUID)
+        customSearchEngineForm.profile = profile
+        let q = "noai.duckduckgo.com/?ia=web&origin=funnelhomewebsite&q=%s"
+        let title = "YASE"
+
+        do {
+            let engine = try await customSearchEngineForm.createEngine(query: q, name: title)
+
+            XCTAssertEqual(
+                engine.searchTemplate,
+                "https://noai.duckduckgo.com/?ia=web&origin=funnelhomewebsite&q={searchTerms}"
+            )
+        } catch {
+            XCTFail("Failed to create engine \(error)")
+        }
+    }
+}

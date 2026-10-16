@@ -1,0 +1,79 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import UIKit
+import Common
+
+final class TabNumberButton: ToolbarButton, TabCountable {
+    // MARK: - UX Constants
+    struct UX {
+        static let cornerRadius: CGFloat = 2
+        static let dimmedOpacity: CGFloat = 0.2
+        static let titleFont = FXFontStyles.Bold.caption2.systemFont()
+        static let infinityFont = FXFontStyles.Bold.subheadline.systemFont()
+        static let defaultCountLabelText = "0"
+    }
+
+    // MARK: - Properties
+    private lazy var countLabel: UILabel = .build { label in
+        label.text = UX.defaultCountLabelText
+        label.font = UX.titleFont
+        label.layer.cornerRadius = UX.cornerRadius
+        label.textAlignment = .center
+    }
+
+    private var isNumCountLabel: Bool {
+        guard let text = countLabel.text else { return false }
+        return Int(text) != nil
+    }
+
+    private var countLabelCenterYAnchor: NSLayoutConstraint?
+
+    // MARK: - Init
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupLayout()
+    }
+
+    public required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func configure(element: ToolbarElement,
+                            notificationCenter: NotificationProtocol = NotificationCenter.default) {
+        super.configure(element: element)
+        countLabel.text = updateTabCount(for: element)
+
+        countLabel.font = isNumCountLabel ? UX.titleFont : UX.infinityFont
+        countLabelCenterYAnchor?.constant = isNumCountLabel ? 0 : -1
+    }
+
+    override func tintColorDidChange() {
+        super.tintColorDidChange()
+
+        if tintAdjustmentMode == .dimmed {
+            UIView.performWithoutAnimation { countLabel.alpha = UX.dimmedOpacity }
+        } else { countLabel.alpha = 1.0 }
+    }
+
+    override func updateConfiguration() {
+        super.updateConfiguration()
+        countLabel.textColor = configuration?.baseForegroundColor
+    }
+
+    // MARK: - Layout
+    private func setupLayout() {
+        addSubview(countLabel)
+
+        countLabelCenterYAnchor = countLabel.centerYAnchor.constraint(equalTo: centerYAnchor)
+        countLabelCenterYAnchor?.isActive = true
+
+        NSLayoutConstraint.activate([
+            countLabel.topAnchor.constraint(greaterThanOrEqualTo: topAnchor),
+            countLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            countLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
+            countLabel.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor)
+        ])
+    }
+}

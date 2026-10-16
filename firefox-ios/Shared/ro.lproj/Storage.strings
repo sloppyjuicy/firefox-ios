@@ -1,0 +1,15 @@
+/* The title of the folder that contains mobile bookmarks. */
+"Bookmarks" = "Marcaje";
+
+/* The name of the folder that contains desktop bookmarks in the menu. */
+"Bookmarks Menu" = "Meniu de marcaje";
+
+/* The name of the folder that contains desktop bookmarks in the toolbar. */
+"Bookmarks Toolbar" = "Bară de marcaje";
+
+/* The legacy title of the folder that contains mobile bookmarks. */
+"Mobile Bookmarks" = "Marcaje mobile";
+
+/* The name of the folder that contains unsorted desktop bookmarks. */
+"Unsorted Bookmarks" = "Marcaje nesortate";
+

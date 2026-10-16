@@ -1,0 +1,78 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+import ToolbarKit
+
+struct ToolbarMenuElementConfiguration: Equatable {
+    let actionType: ToolbarActionConfiguration.ActionType
+    let title: String
+    let imageName: String?
+    let a11yIdentifier: String?
+}
+
+struct ToolbarActionConfiguration: Equatable {
+    enum ActionType {
+        case back
+        case forward
+        case home
+        case newTab
+        case search
+        case tabs
+        case menu
+        case share
+        case reload
+        case stopLoading
+        case trackingProtection
+        case locationView
+        case googleLens
+        case googleLensPhotoLibrary
+        case googleLensTakePhoto
+        case readerMode
+        case readerModeWithSummarizer
+        case summarizer
+        case translate
+        case cancelEdit
+    }
+
+    var actionType: ActionType
+    var actionLabel: String?
+    var iconName: String?
+    var badgeImageName: String?
+    /// The image for the bottom badge in a `ToolbarButton`.
+    var bottomBadgeImage: UIImage?
+    var maskImageName: String?
+    var templateModeForImage = true
+    var loadingConfig: LoadingConfig?
+    var numberOfTabs: Int?
+    var isFlippedForRTL = false
+    var isEnabled: Bool
+    var isSelected = false
+    var hasCustomColor = false
+    var hasHighlightedColor = true
+    var largeContentTitle: String?
+    var contextualHintType: String?
+    var previousTabScreenshot: UIImage?
+    var nextTabScreenshot: UIImage?
+    var a11yLabel: String
+    var a11yHint: String?
+    var a11yId: String
+    var cacheId: String?
+    var a11yCustomActionName: String?
+    var menuElements: [ToolbarMenuElementConfiguration] = []
+
+    func canPerformLongPressAction(isShowingTopTabs: Bool) -> Bool {
+        switch actionType {
+        case .back, .forward, .reload, .newTab, .readerMode,
+             .readerModeWithSummarizer, .summarizer, .translate:
+            return true
+        case .tabs:
+            return !isShowingTopTabs
+        case .home, .search, .menu, .share, .stopLoading, .trackingProtection,
+             .locationView, .googleLens, .googleLensPhotoLibrary, .googleLensTakePhoto,
+             .cancelEdit:
+            return false
+        }
+    }
+}

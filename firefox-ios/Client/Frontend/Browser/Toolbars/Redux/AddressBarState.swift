@@ -1,0 +1,552 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import ModifiedCopy
+import Redux
+import ToolbarKit
+import SummarizeKit
+
+@Copyable
+struct AddressBarState: StateType, Sendable, Equatable {
+    var windowUUID: WindowUUID
+    var editingAccessoryAction: ToolbarActionConfiguration?
+    let borderPosition: AddressToolbarBorderPosition?
+    var url: URL?
+    var searchTerm: String?
+    var lockIconButtonA11yId: String?
+    var lockIconImageName: String?
+    var lockIconNeedsTheming: Bool
+    var safeListedURLImageName: String?
+    var isEditing: Bool
+    var shouldShowKeyboard: Bool
+    var shouldSelectSearchTerm: Bool
+    var isLoading: Bool
+    let readerModeState: ReaderModeState?
+    let canSummarize: Bool
+    let translationConfiguration: TranslationConfiguration?
+    let didStartTyping: Bool
+    let isEmptySearch: Bool
+    /// Stores the alternative search engine that the user has temporarily selected (otherwise use the default)
+    let alternativeSearchEngine: SearchEngineModel?
+    let isNovaDesignEnabled: Bool
+
+    private static let cancelEditAction = ToolbarActionConfiguration(
+        actionType: .cancelEdit,
+        iconName: StandardImageIdentifiers.Large.chevronLeft,
+        isFlippedForRTL: true,
+        isEnabled: true,
+        a11yLabel: AccessibilityIdentifiers.GeneralizedIdentifiers.back,
+        a11yId: AccessibilityIdentifiers.Browser.UrlBar.cancelButton)
+
+    private static let googleLensAction = ToolbarActionConfiguration(
+        actionType: .googleLens,
+        iconName: StandardImageIdentifiers.Medium.logoGoogleLens,
+        isEnabled: true,
+        contextualHintType: TipKitHintType.googleLens.rawValue,
+        a11yLabel: .AddressToolbar.GoogleLens.A11yLabel,
+        a11yId: AccessibilityIdentifiers.Browser.AddressToolbar.googleLensButton,
+        menuElements: [
+            ToolbarMenuElementConfiguration(
+                actionType: .googleLensTakePhoto,
+                title: .AddressToolbar.GoogleLens.ContextMenu.TakePhotoActionTitle,
+                imageName: StandardImageIdentifiers.Large.screenshot,
+                a11yIdentifier: AccessibilityIdentifiers.Browser.AddressToolbar.googleLensTakePhotoAction
+            ),
+            ToolbarMenuElementConfiguration(
+                actionType: .googleLensPhotoLibrary,
+                title: .AddressToolbar.GoogleLens.ContextMenu.PhotoLibraryActionTitle,
+                imageName: StandardImageIdentifiers.Large.image,
+                a11yIdentifier: AccessibilityIdentifiers.Browser.AddressToolbar.googleLensPhotoLibraryAction
+            )
+        ])
+
+    init(windowUUID: WindowUUID) {
+        self.init(
+            windowUUID: windowUUID,
+            editingAccessoryAction: nil,
+            borderPosition: nil,
+            url: nil,
+            searchTerm: nil,
+            lockIconButtonA11yId: nil,
+            lockIconImageName: nil,
+            lockIconNeedsTheming: true,
+            safeListedURLImageName: nil,
+            isEditing: false,
+            shouldShowKeyboard: false,
+            shouldSelectSearchTerm: false,
+            isLoading: false,
+            readerModeState: nil,
+            canSummarize: false,
+            translationConfiguration: nil,
+            didStartTyping: false,
+            isEmptySearch: true,
+            alternativeSearchEngine: nil,
+            isNovaDesignEnabled: false
+        )
+    }
+
+    init(windowUUID: WindowUUID,
+         editingAccessoryAction: ToolbarActionConfiguration?,
+         borderPosition: AddressToolbarBorderPosition?,
+         url: URL?,
+         searchTerm: String?,
+         lockIconButtonA11yId: String?,
+         lockIconImageName: String?,
+         lockIconNeedsTheming: Bool,
+         safeListedURLImageName: String?,
+         isEditing: Bool,
+         shouldShowKeyboard: Bool,
+         shouldSelectSearchTerm: Bool,
+         isLoading: Bool,
+         readerModeState: ReaderModeState?,
+         canSummarize: Bool,
+         translationConfiguration: TranslationConfiguration?,
+         didStartTyping: Bool,
+         isEmptySearch: Bool,
+         alternativeSearchEngine: SearchEngineModel?,
+         isNovaDesignEnabled: Bool) {
+        self.windowUUID = windowUUID
+        self.editingAccessoryAction = editingAccessoryAction
+        self.borderPosition = borderPosition
+        self.url = url
+        self.searchTerm = searchTerm
+        self.lockIconButtonA11yId = lockIconButtonA11yId
+        self.lockIconImageName = lockIconImageName
+        self.lockIconNeedsTheming = lockIconNeedsTheming
+        self.safeListedURLImageName = safeListedURLImageName
+        self.isEditing = isEditing
+        self.shouldShowKeyboard = shouldShowKeyboard
+        self.shouldSelectSearchTerm = shouldSelectSearchTerm
+        self.isLoading = isLoading
+        self.readerModeState = readerModeState
+        self.didStartTyping = didStartTyping
+        self.isEmptySearch = isEmptySearch
+        self.alternativeSearchEngine = alternativeSearchEngine
+        self.canSummarize = canSummarize
+        self.translationConfiguration = translationConfiguration
+        self.isNovaDesignEnabled = isNovaDesignEnabled
+    }
+
+    static let reducer: Reducer<Self> = (legacyReducer, modernReducer)
+
+    static let modernReducer: ReducerMethod<Self> = { state, action, actionWindowUUID in
+        guard let action = action as? ToolbarModernAction else { return defaultState(from: state) }
+        switch action {
+        case .didKeyboardRequestChange(let shouldShow):
+            return state.copy(shouldShowKeyboard: shouldShow)
+        default:
+            return defaultState(from: state)
+        }
+    }
+
+    // swiftlint:disable:next closure_body_length
+    static let legacyReducer: LegacyReducerMethod<Self> = { state, action in
+        guard action.windowUUID == .unavailable || action.windowUUID == state.windowUUID
+        else {
+            return defaultState(from: state)
+        }
+
+        switch action.actionType {
+        case ToolbarActionType.didLoadToolbars:
+            return handleDidLoadToolbarsAction(state: state, action: action)
+
+        // Translation related actions
+        case TranslationsActionType.didStartTranslatingPage,
+            TranslationsActionType.translationCompleted,
+            TranslationsActionType.receivedTranslationLanguage,
+            TranslationsActionType.didReceiveErrorTranslating,
+            TranslationsActionType.didTranslationSettingsChange:
+            return handleLeadingPageTranslationAction(state: state, action: action)
+
+        case ToolbarActionType.didSummarizeSettingsChange:
+            return handleSummarizeStateChangedAction(state: state, action: action)
+
+        case ToolbarActionType.readerModeStateChanged:
+            return handleReaderModeStateChangedAction(state: state, action: action)
+
+        case ToolbarActionType.websiteLoadingStateDidChange:
+            return handleWebsiteLoadingStateDidChangeAction(state: state, action: action)
+
+        case ToolbarActionType.urlDidChange:
+            return handleUrlDidChangeAction(state: state, action: action)
+
+        case ToolbarActionType.lockIconChanged:
+            return handleLockIconChangedAction(state: state, action: action)
+
+        case ToolbarActionType.backForwardButtonStateChanged:
+            return handleBackForwardButtonStateChangedAction(state: state, action: action)
+
+        case ToolbarActionType.borderPositionChanged,
+            ToolbarActionType.toolbarPositionChanged:
+            return handlePositionChangedAction(state: state, action: action)
+
+        case ToolbarActionType.didPasteSearchTerm:
+            return handleDidPasteSearchTermAction(state: state, action: action)
+
+        case ToolbarActionType.didStartEditingUrl:
+            return handleDidStartEditingUrlAction(state: state, action: action)
+
+        case ToolbarActionType.cancelEditOnHomepage:
+            return handleCancelEditOnHomepageAction(state: state, action: action)
+
+        case ToolbarActionType.cancelEdit:
+            return handleCancelEditAction(state: state, action: action)
+
+        case ToolbarActionType.didSetTextInLocationView:
+            return handleDidSetTextInLocationViewAction(state: state, action: action)
+
+        case ToolbarActionType.clearSearch:
+            return handleClearSearchAction(state: state, action: action)
+
+        case ToolbarActionType.didDeleteSearchTerm:
+            return handleDidDeleteSearchTermAction(state: state, action: action)
+
+        case ToolbarActionType.didEnterSearchTerm:
+            return handleDidEnterSearchTermAction(state: state, action: action)
+
+        case ToolbarActionType.didSetSearchTerm:
+            return handleDidSetSearchTermAction(state: state, action: action)
+
+        case ToolbarActionType.didStartTyping:
+            return handleDidStartTypingAction(state: state, action: action)
+
+        case SearchEngineSelectionActionType.didTapSearchEngine:
+            return handleDidTapSearchEngine(state: state, action: action)
+
+        case SearchEngineSelectionMiddlewareActionType.didClearAlternativeSearchEngine:
+            return handleDidClearAlternativeSearchEngine(state: state, action: action)
+
+        case ToolbarMiddlewareActionType.googleLensAvailabilityDidChange:
+            return handleGoogleLensAvailabilityDidChange(state: state, action: action)
+
+        default:
+            return defaultState(from: state)
+        }
+    }
+
+    @MainActor
+    private static func handleDidLoadToolbarsAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction,
+              let borderPosition = toolbarAction.addressBorderPosition else {
+            return defaultState(from: state)
+        }
+
+        return state
+            .copy(editingAccessoryAction: nil)
+            .copy(borderPosition: borderPosition)
+            .copy(url: nil)
+            .copy(searchTerm: nil)
+            .copy(lockIconButtonA11yId: nil)
+            .copy(lockIconImageName: nil)
+            .copy(lockIconNeedsTheming: true)
+            .copy(safeListedURLImageName: nil)
+            .copy(isEditing: false)
+            .copy(shouldShowKeyboard: false)
+            .copy(shouldSelectSearchTerm: false)
+            .copy(isLoading: false)
+            .copy(readerModeState: nil)
+            .copy(canSummarize: false)
+            .copy(translationConfiguration: nil)
+            .copy(didStartTyping: false)
+            .copy(isEmptySearch: true)
+            .copy(isNovaDesignEnabled: toolbarAction.isNovaDesignEnabled ?? state.isNovaDesignEnabled)
+    }
+
+    @MainActor
+    private static func handleLeadingPageTranslationAction(state: Self, action: Action) -> Self {
+        guard let translationsAction = action as? TranslationsAction else {
+            return defaultState(from: state)
+        }
+
+        let translationConfiguration = translationsAction.translationConfiguration
+        return state
+            .copy(translationConfiguration: translationConfiguration)
+    }
+
+    @MainActor
+    private static func handleSummarizeStateChangedAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else {
+            return defaultState(from: state)
+        }
+
+        return state
+            .copy(canSummarize: toolbarAction.canSummarize)
+    }
+
+    @MainActor
+    private static func handleReaderModeStateChangedAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        let lockIconImageName = toolbarAction.readerModeState == .active ? nil : state.lockIconImageName
+        let canSummarize = toolbarAction.canSummarize
+        let readerModeState = toolbarAction.readerModeState
+
+        return state
+            .copy(lockIconImageName: lockIconImageName)
+            .copy(readerModeState: readerModeState)
+            .copy(canSummarize: canSummarize)
+    }
+
+    @MainActor
+    private static func handleWebsiteLoadingStateDidChangeAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        return state
+            .copy(isLoading: toolbarAction.isLoading ?? state.isLoading)
+    }
+
+    @MainActor
+    private static func handleUrlDidChangeAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        let isEmptySearch = toolbarAction.url == nil
+        let translationConfiguration = resolveTranslationConfig(from: toolbarAction,
+                                                                existingConfig: state.translationConfiguration)
+
+        return state
+            .copy(url: toolbarAction.url)
+            .copy(searchTerm: nil)
+            .copy(lockIconButtonA11yId: toolbarAction.lockIconButtonA11yId ?? state.lockIconButtonA11yId)
+            .copy(lockIconImageName: toolbarAction.lockIconImageName ?? state.lockIconImageName)
+            .copy(lockIconNeedsTheming: toolbarAction.lockIconNeedsTheming ?? state.lockIconNeedsTheming)
+            .copy(safeListedURLImageName: toolbarAction.safeListedURLImageName)
+            .copy(translationConfiguration: translationConfiguration)
+            .copy(isEmptySearch: isEmptySearch)
+    }
+
+    private static func resolveTranslationConfig(
+        from action: ToolbarAction,
+        existingConfig: TranslationConfiguration?
+    ) -> TranslationConfiguration? {
+        // The action's config is authoritative — it carries the originating tab's persisted state
+        // (see `Tab.translationConfiguration`). Inheriting the existing Redux state here would leak
+        // the previous tab's icon onto a new tab whose own state is nil (FXIOS-15606).
+        return action.translationConfiguration ?? existingConfig
+    }
+
+    @MainActor
+    private static func handleLockIconChangedAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        return state
+            .copy(lockIconButtonA11yId: toolbarAction.lockIconButtonA11yId ?? state.lockIconButtonA11yId)
+            .copy(lockIconImageName: toolbarAction.lockIconImageName ?? state.lockIconImageName)
+            .copy(lockIconNeedsTheming: toolbarAction.lockIconNeedsTheming ?? state.lockIconNeedsTheming)
+    }
+
+    @MainActor
+    private static func handleBackForwardButtonStateChangedAction(state: Self, action: Action) -> Self {
+        guard action is ToolbarAction else { return defaultState(from: state) }
+
+        return state
+            .copy(searchTerm: nil)
+    }
+
+    @MainActor
+    private static func handlePositionChangedAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        return state
+            .copy(borderPosition: toolbarAction.addressBorderPosition)
+    }
+
+    @MainActor
+    private static func handleDidPasteSearchTermAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        let isEmptySearch = toolbarAction.searchTerm == nil || toolbarAction.searchTerm?.isEmpty == true
+        // This action always puts the address bar into editing mode.
+        // Declared once and reused so the actions computed here can never drift out of sync
+        let isEditing = true
+
+        return state
+            .copy(searchTerm: toolbarAction.searchTerm)
+            .copy(isEditing: isEditing)
+            .copy(shouldShowKeyboard: true)
+            .copy(shouldSelectSearchTerm: false)
+            .copy(didStartTyping: false)
+            .copy(isEmptySearch: isEmptySearch)
+    }
+
+    @MainActor
+    private static func handleDidStartEditingUrlAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        let searchTerm = toolbarAction.searchTerm ?? state.searchTerm
+        let locationText = searchTerm ?? state.url?.absoluteString
+        let isEmptySearch = locationText == nil || locationText?.isEmpty == true
+        // This action always puts the address bar into editing mode.
+        // Declared once and reused so the actions computed here can never drift out of sync
+        let isEditing = true
+
+        return state
+            .copy(searchTerm: searchTerm)
+            .copy(isEditing: isEditing)
+            .copy(shouldShowKeyboard: true)
+            .copy(shouldSelectSearchTerm: true)
+            .copy(didStartTyping: false)
+            .copy(isEmptySearch: isEmptySearch)
+    }
+
+    @MainActor
+    private static func handleCancelEditOnHomepageAction(state: Self, action: Action) -> Self {
+        guard action is ToolbarAction else { return defaultState(from: state) }
+
+        if state.url == nil {
+            return handleCancelEditAction(state: state, action: action)
+        } else {
+            // This case can occur when scrolling on homepage or in search view
+            // and the user is still in isEditing mode (aka Cancel button is shown)
+            // But we don't show the keyboard and the cursor is not active
+            return state.copy(shouldShowKeyboard: false)
+        }
+    }
+
+    @MainActor
+    private static func handleCancelEditAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        let url = toolbarAction.url ?? state.url
+        let isEmptySearch = url == nil
+        // This action always leaves editing mode. Declared once and reused so the actions computed here
+        // can never drift out of sync
+        let isEditing = false
+
+        return state
+            .copy(url: url)
+            .copy(searchTerm: nil)
+            .copy(isEditing: isEditing)
+            .copy(shouldShowKeyboard: false)
+            .copy(shouldSelectSearchTerm: false)
+            .copy(didStartTyping: false)
+            .copy(isEmptySearch: isEmptySearch)
+    }
+
+    @MainActor
+    private static func handleDidSetTextInLocationViewAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        let isEmptySearch = toolbarAction.searchTerm == nil || toolbarAction.searchTerm?.isEmpty == true
+        // This action always puts the address bar into editing mode.
+        // Declared once and reused so the actions computed here can never drift out of sync
+        let isEditing = true
+
+        return state
+            .copy(searchTerm: toolbarAction.searchTerm)
+            .copy(isEditing: isEditing)
+            .copy(shouldShowKeyboard: true)
+            .copy(shouldSelectSearchTerm: false)
+            .copy(didStartTyping: false)
+            .copy(isEmptySearch: isEmptySearch)
+    }
+
+    @MainActor
+    private static func handleClearSearchAction(state: Self, action: Action) -> Self {
+        guard action is ToolbarAction else { return defaultState(from: state) }
+
+        return state
+            .copy(searchTerm: nil)
+            .copy(isEditing: true)
+            .copy(isEmptySearch: true)
+    }
+
+    @MainActor
+    private static func handleDidDeleteSearchTermAction(state: Self, action: Action) -> Self {
+        guard action is ToolbarAction else { return defaultState(from: state) }
+
+        let isEditing = true
+        let isEmptySearch = true
+
+        return state
+            .copy(isEditing: isEditing)
+            .copy(shouldSelectSearchTerm: false)
+            .copy(didStartTyping: true)
+            .copy(isEmptySearch: isEmptySearch)
+    }
+
+    @MainActor
+    private static func handleDidEnterSearchTermAction(state: Self, action: Action) -> Self {
+        guard action is ToolbarAction else { return defaultState(from: state) }
+
+        let isEditing = true
+        let isEmptySearch = false
+
+        return state
+            .copy(isEditing: isEditing)
+            .copy(shouldSelectSearchTerm: false)
+            .copy(didStartTyping: true)
+            .copy(isEmptySearch: isEmptySearch)
+    }
+
+    private static func handleDidSetSearchTermAction(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarAction else { return defaultState(from: state) }
+
+        return state
+            .copy(searchTerm: toolbarAction.searchTerm)
+            .copy(didStartTyping: false)
+    }
+
+    private static func handleDidStartTypingAction(state: Self, action: Action) -> Self {
+        guard action is ToolbarAction else { return defaultState(from: state) }
+
+        return state
+            .copy(shouldSelectSearchTerm: false)
+            .copy(didStartTyping: true)
+    }
+
+    private static func handleDidTapSearchEngine(state: Self, action: Action) -> Self {
+        guard let searchEngineSelectionAction = action as? SearchEngineSelectionAction,
+              let selectedSearchEngine = searchEngineSelectionAction.selectedSearchEngine
+        else { return defaultState(from: state) }
+
+        return state.copy(alternativeSearchEngine: selectedSearchEngine)
+    }
+
+    private static func handleDidClearAlternativeSearchEngine(state: Self, action: Action) -> Self {
+        guard action is SearchEngineSelectionAction else { return defaultState(from: state) }
+
+        return state.copy(alternativeSearchEngine: nil)
+    }
+
+    private static func handleGoogleLensAvailabilityDidChange(state: Self, action: Action) -> Self {
+        guard let toolbarAction = action as? ToolbarMiddlewareAction,
+              let isGoogleLensEnabled = toolbarAction.isGoogleLensEnabled else {
+            return defaultState(from: state)
+        }
+
+        return state.copy(editingAccessoryAction: editingAccessoryAction(isGoogleLensEnabled: isGoogleLensEnabled))
+    }
+
+    static func defaultState(from state: AddressBarState) -> Self {
+        return AddressBarState(
+            windowUUID: state.windowUUID,
+            editingAccessoryAction: state.editingAccessoryAction,
+            borderPosition: state.borderPosition,
+            url: state.url,
+            searchTerm: state.searchTerm,
+            lockIconButtonA11yId: state.lockIconButtonA11yId,
+            lockIconImageName: state.lockIconImageName,
+            lockIconNeedsTheming: state.lockIconNeedsTheming,
+            safeListedURLImageName: state.safeListedURLImageName,
+            isEditing: state.isEditing,
+            shouldShowKeyboard: state.shouldShowKeyboard,
+            shouldSelectSearchTerm: state.shouldSelectSearchTerm,
+            isLoading: state.isLoading,
+            readerModeState: state.readerModeState,
+            canSummarize: state.canSummarize,
+            translationConfiguration: state.translationConfiguration,
+            didStartTyping: state.didStartTyping,
+            isEmptySearch: state.isEmptySearch,
+            alternativeSearchEngine: state.alternativeSearchEngine,
+            isNovaDesignEnabled: state.isNovaDesignEnabled
+        )
+    }
+
+    private static func editingAccessoryAction(isGoogleLensEnabled: Bool) -> ToolbarActionConfiguration? {
+        guard isGoogleLensEnabled else { return nil }
+
+        return googleLensAction
+    }
+}

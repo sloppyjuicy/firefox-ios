@@ -1,0 +1,75 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+
+@testable import Client
+
+@MainActor
+class TabCellTests: XCTestCase {
+    var cellDelegate: MockTabCellDelegate!
+    var profile: MockProfile!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        cellDelegate = MockTabCellDelegate()
+        profile = makeProfile()
+    }
+
+    override func tearDown() async throws {
+        cellDelegate = nil
+        profile = nil
+
+        try await super.tearDown()
+    }
+
+    func testTabCellDeinit() {
+        let subject = TabCell(frame: .zero)
+        trackForMemoryLeaks(subject)
+    }
+
+    func testConfigureTabAXLabel() {
+        let cell = TabCell(frame: .zero)
+        let state = createDefaultState()
+        cell.configure(with: state, theme: nil, delegate: cellDelegate, a11yId: "", newTabTitle: nil)
+        XCTAssert(cell.accessibilityLabel!.contains(state.tabTitle))
+    }
+
+    func testConfigureTabAXHint() {
+        let cell = TabCell(frame: .zero)
+        let state = createDefaultState()
+        cell.configure(with: state, theme: nil, delegate: cellDelegate, a11yId: "", newTabTitle: nil)
+        XCTAssertEqual(cell.accessibilityHint!,
+                       .TabsTray.TabTraySwipeToCloseAccessibilityHint)
+    }
+
+    func testConfigureTabSelectedState() {
+        let cell = TabCell(frame: .zero)
+        let state = createDefaultState()
+        cell.configure(with: state, theme: nil, delegate: cellDelegate, a11yId: "", newTabTitle: nil)
+        XCTAssertEqual(cell.isSelectedTab,
+                       state.isSelected)
+    }
+
+    private func createDefaultState() -> TabModel {
+        let tabUUID = "0022-22D3"
+        return TabModel(tabUUID: tabUUID,
+                        isSelected: false,
+                        isPrivate: false,
+                        isFxHomeTab: false,
+                        tabTitle: "Firefox Browser",
+                        url: URL(string: "https://www.mozilla.org/en-US/firefox/")!,
+                        screenshot: nil,
+                        hasHomeScreenshot: false,
+                        hasScreenshotOnDisk: false)
+    }
+}
+
+class MockTabCellDelegate: TabCellDelegate {
+    var tabCellClosedCounter = 0
+
+    func tabCellDidClose(for tabUUID: String) {
+        tabCellClosedCounter += 1
+    }
+}

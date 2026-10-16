@@ -1,0 +1,152 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import UIKit
+
+public struct LightTheme: Theme {
+    public var type: ThemeType = .light
+    public var colors: ThemeColourPalette = LightColourPalette()
+
+    public init() {}
+}
+
+private struct LightColourPalette: ThemeColourPalette {
+    // MARK: - Layers
+    var layer1: UIColor = FXColors.LightGrey10
+    var layer2: UIColor = FXColors.White
+    var layer3: UIColor = FXColors.LightGrey20
+    var layer4: UIColor = FXColors.LightGrey30.withAlphaComponent(0.6)
+    var layer5: UIColor = FXColors.White
+    var layer5Hover: UIColor = FXColors.LightGrey20
+    var layerScrim: UIColor = FXColors.DarkGrey30.withAlphaComponent(0.95)
+    var layerGradient = Gradient(colors: [FXColors.Violet70, FXColors.Violet60])
+    var layerGradientOverlay = Gradient(colors: [FXColors.DarkGrey40.withAlphaComponent(0),
+                                                 FXColors.DarkGrey40.withAlphaComponent(0.4)])
+    var layerAccentNonOpaque: UIColor = FXColors.Blue50.withAlphaComponent(0.3)
+    var layerAccentPrivate: UIColor = FXColors.Purple60
+    var layerAccentPrivateNonOpaque: UIColor = FXColors.Purple60.withAlphaComponent(0.1)
+    var layerSepia: UIColor = FXColors.Orange05
+    var layerHomepage = Gradient(colors: [
+        FXColors.LightGrey10.withAlphaComponent(1),
+        FXColors.LightGrey10.withAlphaComponent(1),
+        FXColors.LightGrey10.withAlphaComponent(1)
+    ])
+    var layerInformation: UIColor = FXColors.Blue50.withAlphaComponent(0.44)
+    var layerSuccess: UIColor = FXColors.Green20
+    var layerWarning: UIColor = FXColors.Yellow20
+    var layerCritical: UIColor = FXColors.Red10
+    var layerCriticalSubdued: UIColor = FXColors.Red05.withAlphaComponent(0.7)
+    var layerSelectedText: UIColor = FXColors.Blue50
+    var layerAutofillText: UIColor = FXColors.DarkGrey05.withAlphaComponent(0.43)
+    var layerEmphasis: UIColor = FXColors.LightGrey30
+    var layerGradientURL = Gradient(colors: [
+        FXColors.LightGrey30.withAlphaComponent(0),
+        FXColors.LightGrey30.withAlphaComponent(1)
+    ])
+    var layerSurfaceLow = FXColors.LightGrey20
+    var layerSurfaceMedium = FXColors.White
+    var layerSurfaceMediumAlpha = FXColors.White.withAlphaComponent(0.8)
+    var layerSurfaceMediumAlt = FXColors.LightGrey40
+    var layerSurfaceMediumAltGlass = FXColors.LightGrey40
+    var layerGradientSummary = Gradient(colors: [
+        FXColors.Red70,
+        FXColors.Orange50
+    ])
+    var layerToolbarGlass: UIColor = FXColors.LightGrey10
+
+    // MARK: - Actions
+    var actionPrimary: UIColor = FXColors.Blue50
+    var actionPrimaryHover: UIColor = FXColors.Blue60
+    var actionPrimaryDisabled: UIColor = FXColors.Blue50.withAlphaComponent(0.5)
+    var actionSecondary: UIColor = FXColors.LightGrey30
+    var actionSecondaryDisabled: UIColor = FXColors.LightGrey30.withAlphaComponent(0.5)
+    var actionSecondaryHover: UIColor = FXColors.LightGrey40
+    var formSurfaceOff: UIColor = FXColors.LightGrey30
+    var formKnob: UIColor = FXColors.White
+    var indicatorActive: UIColor = FXColors.LightGrey50
+    var indicatorInactive: UIColor = FXColors.LightGrey30
+    var actionSuccess: UIColor = FXColors.Green60
+    var actionWarning: UIColor = FXColors.Yellow60.withAlphaComponent(0.4)
+    var actionCritical: UIColor = FXColors.Red30
+    var actionInformation: UIColor = FXColors.Blue50
+    var actionTabActive: UIColor = FXColors.White
+    var actionTabInactive: UIColor = FXColors.LightGrey20
+    var actionCloseButton: UIColor = FXColors.White
+
+    // MARK: - Text
+    var textPrimary: UIColor = FXColors.DarkGrey90
+    var textSecondary: UIColor = FXColors.DarkGrey05
+    var textDisabled: UIColor = FXColors.DarkGrey90.withAlphaComponent(0.4)
+    var textCritical: UIColor = FXColors.Red70
+    var textAccent: UIColor = FXColors.Blue50
+    var textOnDark: UIColor = FXColors.LightGrey05
+    var textOnLight: UIColor = FXColors.DarkGrey90
+    var textInverted: UIColor = FXColors.LightGrey05
+    var textInvertedDisabled: UIColor = FXColors.LightGrey05.withAlphaComponent(0.8)
+
+    // MARK: - Icons
+    var iconPrimary: UIColor = FXColors.DarkGrey90
+    var iconSecondary: UIColor = FXColors.DarkGrey05
+    var iconDisabled: UIColor = FXColors.DarkGrey90.withAlphaComponent(0.4)
+    var iconAccent: UIColor = FXColors.Blue50
+    var iconOnColor: UIColor = FXColors.LightGrey05
+    var iconCritical: UIColor = FXColors.Red70
+    var iconSpinner: UIColor = FXColors.LightGrey80
+    var iconAccentViolet: UIColor = FXColors.Violet70
+    var iconAccentBlue: UIColor = FXColors.Blue60
+    var iconAccentPink: UIColor = FXColors.Pink60
+    var iconAccentGreen: UIColor = FXColors.Green60
+    var iconAccentYellow: UIColor = FXColors.Yellow60
+    var iconRatingNeutral: UIColor = FXColors.LightGrey40
+
+    // MARK: - Border
+    var borderPrimary: UIColor = FXColors.LightGrey30
+    var borderSecondary: UIColor = FXColors.LightGrey20
+    var borderAccent: UIColor = FXColors.Blue50
+    var borderAccentNonOpaque: UIColor = FXColors.Blue50.withAlphaComponent(0.1)
+    var borderAccentPrivate: UIColor = FXColors.Purple60
+    var borderInverted: UIColor = FXColors.LightGrey05
+    var borderToolbarDivider: UIColor = FXColors.LightGrey10
+
+    // MARK: - Shadow
+    var shadowSubtle: UIColor = FXColors.DarkGrey40.withAlphaComponent(0.10)
+    var shadowDefault: UIColor = FXColors.DarkGrey40.withAlphaComponent(0.12)
+    var shadowStrong: UIColor = FXColors.DarkGrey40.withAlphaComponent(0.16)
+
+    // MARK: - Gradient
+    var gradientOnboardingStop1: UIColor = FXColors.Yellow50
+    var gradientOnboardingStop2: UIColor = FXColors.Blue50
+    var gradientOnboardingStop3: UIColor = FXColors.Red60
+    var gradientOnboardingStop4: UIColor = FXColors.Orange50
+    var gradientAIStrongStop1: UIColor = FXColors.Violet50
+    var gradientAIStrongStop2: UIColor = FXColors.Pink40
+    var gradientAIStrongStop3: UIColor = FXColors.Yellow50
+
+    var shadowBorder: UIColor = FXColors.DarkGrey50.withAlphaComponent(0.50)
+
+    var faviconLetterColorSet: FaviconLetterColorSet = StandardFaviconColorSet()
+
+    // MARK: - Nova tokens
+    var layerAccentSubtle: UIColor { NovaMissingToken.color("layerAccentSubtle") }
+    var layerInverse: UIColor { NovaMissingToken.color("layerInverse") }
+    var layerGlassTintNova: UIColor { NovaMissingToken.color("layerGlassTintNova") }
+    var layerGlassSelectedFill: UIColor { NovaMissingToken.color("layerGlassSelectedFill") }
+    var textToast: UIColor { NovaMissingToken.color("textToast") }
+    var iconInverted: UIColor { NovaMissingToken.color("iconInverted") }
+    var iconOnColorDisabled: UIColor { NovaMissingToken.color("iconOnColorDisabled") }
+    var iconPrivate: UIColor { NovaMissingToken.color("iconPrivate") }
+    var borderStrong: UIColor { NovaMissingToken.color("borderStrong") }
+    var borderAccentToast: UIColor { NovaMissingToken.color("borderAccentToast") }
+    var borderRadioButtonDefault: UIColor { NovaMissingToken.color("borderRadioButtonDefault") }
+    var gradient: Gradient { NovaMissingToken.gradient("gradient") }
+    var gradientAccent: Gradient { NovaMissingToken.gradient("gradientAccent") }
+    var gradientAccentSubtle: Gradient { NovaMissingToken.gradient("gradientAccentSubtle") }
+    var gradientAIStrong: Gradient { NovaMissingToken.gradient("gradientAIStrong") }
+    var gradientBorder: Gradient { NovaMissingToken.gradient("gradientBorder") }
+    var gradientPrivacy: Gradient { NovaMissingToken.gradient("gradientPrivacy") }
+    var gradientPrivacyMask: Gradient { NovaMissingToken.gradient("gradientPrivacyMask") }
+    var gradientWidgetSurface: Gradient { NovaMissingToken.gradient("gradientWidgetSurface") }
+    var gradientWidgetSurfaceStandard: Gradient { NovaMissingToken.gradient("gradientWidgetSurfaceStandard") }
+    var gradientWidgetSurfacePrivate: Gradient { NovaMissingToken.gradient("gradientWidgetSurfacePrivate") }
+}

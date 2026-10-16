@@ -1,0 +1,54 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Glean
+import XCTest
+
+@testable import Client
+
+final class AppIconSelectionTelemetryTests: XCTestCase {
+    // For telemetry extras
+    let nameIdentifierKey = "name"
+
+    var mockGleanWrapper: MockGleanWrapper!
+
+    override func setUp() {
+        super.setUp()
+
+        mockGleanWrapper = MockGleanWrapper()
+    }
+
+    override func tearDown() {
+        mockGleanWrapper = nil
+        super.tearDown()
+    }
+
+    func testSelectedIcon_firesSelected() throws {
+        // The event and event extras type under test
+        let event = GleanMetrics.SettingsAppIcon.selected
+        typealias EventExtrasType = GleanMetrics.SettingsAppIcon.SelectedExtra
+
+        let subject = createSubject()
+        let expectedNewAppIcon = AppIcon.darkPurple
+        let expectedOldAppIcon = AppIcon.regular
+
+        subject.selectedIcon(expectedNewAppIcon, previousIcon: expectedOldAppIcon)
+
+        let savedExtras = try XCTUnwrap(
+            mockGleanWrapper.savedExtras.first as? EventExtrasType
+        )
+        let savedMetric = try XCTUnwrap(
+            mockGleanWrapper.savedEvents.first as? EventMetricType<EventExtrasType>
+        )
+
+        XCTAssertEqual(mockGleanWrapper.recordEventCalled, 1)
+        XCTAssertEqual(savedExtras.newName, expectedNewAppIcon.telemetryName)
+        XCTAssertEqual(savedExtras.oldName, expectedOldAppIcon.telemetryName)
+        XCTAssert(savedMetric === event, "Received \(savedMetric) instead of \(event)")
+    }
+
+    func createSubject() -> AppIconSelectionTelemetry {
+        return AppIconSelectionTelemetry(gleanWrapper: mockGleanWrapper)
+    }
+}

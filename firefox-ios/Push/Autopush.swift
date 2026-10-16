@@ -1,0 +1,143 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Shared
+import Storage
+
+import class MozillaAppServices.PushManager
+import protocol MozillaAppServices.PushManagerProtocol
+import struct MozillaAppServices.DecryptResponse
+import struct MozillaAppServices.SubscriptionResponse
+
+public protocol AutopushProtocol {
+    /// Updates the APNS token `Autopush` is using to send notifications to the device
+    ///
+    ///  - Parameter withDeviceToken: The APNS token the push servers should use to communicate with this device
+    ///
+    ///  - Throws: If the underlying native call to update the push servers fails
+    func updateToken(withDeviceToken deviceToken: Data) async throws
+
+    /// Creates a subscription with the `Autopush` servers with the given scope,
+    /// returns the subscription if it already exists
+    ///
+    ///  - Parameter scope: A consumer controlled string. When push notifications are decrypted,
+    ///                     the scope will be broadcased so consumers can handle the notification
+    ///  - Returns: A `SubscriptionResponse` that includes:
+    ///         - Encryption keys to be used to encrypt any push notifications that will be sent to this device
+    ///         - A URL that consumer can use to send push notifications to this device
+    ///  - Throws: If the underlying native call to subscribe with the autopush servers fails
+    func subscribe(scope: String) async throws -> SubscriptionResponse
+
+    /// Unsubscribes a push subscription with the given scope.
+    ///
+    /// - Parameter scope: A consumer controlled string. When push notifications are decrypted,
+    ///                    the scope will be broadcased so consumers can handle the notification
+    /// - Returns: `true` if the subscription was unsubscribed, `false` if the subscription did not exist
+    /// - Throws: If the underlying native call to unsubscribe with the autopush servers fails
+    func unsubscribe(scope: String) async throws -> Bool
+
+    /// Unsubscribes from all scopes
+    ///
+    /// - Throws: If the underlying native call to unsubscribe with the autopush servers fails
+    func unsubscribeAll() async throws
+
+    /// Decrypts an incoming push payload from `Autopush` server
+    ///
+    /// - Parameter payload: A map of String keys and String values representing payload as sent by the push servers
+    ///
+    /// - Returns: `DecryptResponse`, which includes both the decrypted payload,
+    ///            and the scope the push notification was for
+    /// - Throws: If the native push client was unable to decrypt the payload
+    func decrypt(payload: [String: String]) async throws -> DecryptResponse
+
+    /// Verifies active subscriptions and re-subscribes any that were dropped by the push servers.
+    /// Callers should check `Autopush.shouldVerifySubscriptions(prefs:now:)` first to avoid creating an
+    /// `Autopush` instance when verification isn't due.
+    ///
+    /// - Parameters:
+    ///   - forceVerify: A boolean value indicating whether the PushManager's rate limiting should be circumvented
+    ///   - prefs: A set of prefs associated with the user's profile, used to store the verification timestamp
+    /// - Returns: The new subscriptions keyed by scope, empty if the PushManager rate limited the verification,
+    ///            nothing changed, or the PushManager does not have a UAID yet.
+    ///            Consumers must forward new endpoints to their servers (e.g. FxA)
+    /// - Throws: In the following scenarios:
+    ///     - An error occurred sending an channel list retrieval request to the autopush server
+    ///     - An error occurred accessing the PushManager's persisted storage
+    ///     - An error occurred re-subscribing a changed subscription
+    @discardableResult
+    func verifyActiveSubscriptions(forceVerify: Bool, prefs: Prefs) async throws -> [String: SubscriptionResponse]
+}
+
+public actor Autopush {
+    private let pushManager: PushManagerProtocol
+
+    public init(files: FileAccessor) async throws {
+        let pushDB = URL(
+            fileURLWithPath: try files.getAndEnsureDirectory(),
+            isDirectory: true
+        ).appendingPathComponent("push.db").path
+
+        let pushManagerConfig = try PushConfigurationLabel
+            .fromScheme(scheme: AppConstants.scheme)
+            .toConfiguration(dbPath: pushDB)
+        self.pushManager = try PushManager(config: pushManagerConfig)
+    }
+
+    /// Initializer for tests that want to inject a mock push manager
+    public init(withPushManager pushManager: PushManagerProtocol) {
+        self.pushManager = pushManager
+    }
+
+    /// Whether enough time has passed since the last successful verification to verify subscriptions again
+    ///
+    /// - Parameters:
+    ///   - prefs: A set of prefs associated with the user's profile
+    ///   - now: The current timestamp, in milliseconds
+    public static func shouldVerifySubscriptions(prefs: Prefs, now: Timestamp = Date.now()) -> Bool {
+        guard let lastVerification = prefs.timestampForKey(PrefsKeys.AutopushVerificationTimestamp),
+              lastVerification <= now else {
+            return true
+        }
+        return now - lastVerification >= AppConstants.autopushVerificationInterval
+    }
+}
+
+extension Autopush: AutopushProtocol {
+    public func updateToken(withDeviceToken deviceToken: Data) async throws {
+        try pushManager.update(registrationToken: deviceToken.hexEncodedString)
+    }
+
+    public func subscribe(scope: String) async throws -> SubscriptionResponse {
+        return try pushManager.subscribe(scope: scope, appServerSey: nil)
+    }
+
+    public func unsubscribe(scope: String) async throws -> Bool {
+        return try pushManager.unsubscribe(scope: scope)
+    }
+
+    public func unsubscribeAll() async throws {
+        try pushManager.unsubscribeAll()
+    }
+
+    public func decrypt(payload: [String: String]) async throws -> DecryptResponse {
+        return try pushManager.decrypt(payload: payload)
+    }
+
+    @discardableResult
+    public func verifyActiveSubscriptions(
+        forceVerify: Bool = false,
+        prefs: Prefs
+    ) async throws -> [String: SubscriptionResponse] {
+        let subscriptionChanges = try pushManager.verifyConnection(forceVerify: forceVerify)
+        prefs.setTimestamp(Date.now(), forKey: PrefsKeys.AutopushVerificationTimestamp)
+
+        // Re-subscribe the returned `subscriptionChanges`
+        var newSubscriptions = [String: SubscriptionResponse]()
+        for change in subscriptionChanges {
+            newSubscriptions[change.scope] = try pushManager.subscribe(scope: change.scope, appServerSey: nil)
+        }
+        return newSubscriptions
+    }
+}

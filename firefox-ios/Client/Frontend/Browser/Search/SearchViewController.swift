@@ -1,0 +1,1067 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import UIKit
+import Shared
+import Storage
+import Common
+import SiteImageView
+
+protocol SearchViewControllerDelegate: AnyObject {
+    @MainActor
+    func searchViewController(
+        _ searchViewController: SearchViewController,
+        didSelectURL url: URL,
+        searchTerm: String?
+    )
+    @MainActor
+    func searchViewController(_ searchViewController: SearchViewController, uuid: String)
+    @MainActor
+    func presentSearchSettingsController()
+    @MainActor
+    func searchViewController(
+        _ searchViewController: SearchViewController,
+        didHighlightText text: String,
+        search: Bool
+    )
+    @MainActor
+    func searchViewController(
+        _ searchViewController: SearchViewController,
+        didAppend text: String
+    )
+    @MainActor
+    func searchViewControllerWillHide(_ searchViewController: SearchViewController)
+}
+
+class SearchViewController: SiteTableViewController,
+                            KeyboardHelperDelegate,
+                            SearchViewDelegate,
+                            FeatureFlaggable,
+                            UserFeaturePreferenceProvider,
+                            Notifiable {
+    typealias ExtraKey = TelemetryWrapper.EventExtraKey
+
+    private struct UX {
+        static let buttonsHeight: CGFloat = 44 // Equivalent to toolbar height, fixed at the moment
+        static let engineButtonWidth: CGFloat = buttonsHeight * 1.4
+        static let EngineButtonBackgroundColor = UIColor.clear.cgColor
+
+        static let SearchImage = StandardImageIdentifiers.Large.search
+        static let SearchEngineTopBorderWidth = 0.5
+        static let suggestionMargin: CGFloat = 8
+
+        static let IconSize: CGFloat = 23
+        static let SearchIconSize: CGFloat = 20
+        static let faviconSize: CGFloat = 29
+        static let IconBorderColor = UIColor(white: 0, alpha: 0.1)
+        static let IconBorderWidth: CGFloat = 0.5
+
+        static let AppendButtonSize: CGFloat = 44
+
+        static let resultsAnnouncementDelay: TimeInterval = 2
+    }
+
+    var searchDelegate: SearchViewControllerDelegate?
+    let viewModel: SearchViewModel
+    private var tabManager: TabManager
+    private let logger: Logger
+
+    var searchTelemetry: SearchTelemetry?
+
+    private var selectedIndexPath: IndexPath?
+    private let resultsAnnouncementDebouncer = MainActorDebouncer(delay: UX.resultsAnnouncementDelay)
+
+    // Views for displaying the bottom scrollable search engine list. searchEngineScrollView is the
+    // scrollable container; searchEngineScrollViewContent contains the actual set of search engine buttons.
+    private let searchEngineContainerView: UIView = .build()
+    private let searchEngineScrollView: ButtonScrollView = .build()
+    private var bottomConstraintWithKeyboard: NSLayoutConstraint?
+    private var bottomConstraintWithoutKeyboard: NSLayoutConstraint?
+
+    private var isCompact: Bool {
+        return UIScreen.main.traitCollection.horizontalSizeClass == .compact
+    }
+
+    private let searchEngineStackView: UIStackView = .build { stackView in
+        stackView.axis = .horizontal
+        stackView.alignment = .fill
+    }
+
+    private lazy var bookmarkedBadge: UIImage = {
+        return UIImage(named: StandardImageIdentifiers.Medium.bookmarkBadgeFillViolet50)!
+    }()
+
+    private lazy var openAndSyncTabBadge: UIImage = {
+        return UIImage(named: ImageIdentifiers.syncOpenTab)!
+    }()
+
+    private lazy var searchButton: UIButton = .build { button in
+        let image = UIImage(named: StandardImageIdentifiers.Large.search)?.withRenderingMode(.alwaysTemplate)
+        button.setImage(image, for: [])
+        button.imageView?.contentMode = .scaleAspectFit
+        button.addTarget(self, action: #selector(self.didClickSearchButton), for: .touchUpInside)
+        button.accessibilityLabel = String(format: .SearchSettingsAccessibilityLabel)
+    }
+
+    init(profile: Profile,
+         viewModel: SearchViewModel,
+         tabManager: TabManager,
+         logger: Logger = DefaultLogger.shared) {
+        self.viewModel = viewModel
+        self.tabManager = tabManager
+        self.searchTelemetry = SearchTelemetry(tabManager: tabManager)
+        self.logger = logger
+        super.init(profile: profile, windowUUID: tabManager.windowUUID)
+        viewModel.delegate = self
+
+        tableView.sectionHeaderTopPadding = 0
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Override keyboardDismissMode to `.none` to avoid bug where the address bar is behind the raise keyboard
+        // when dismissed by scrolling the search results because the keyboard reports stale keyboard frame
+        // This change matches Safari behaviour where keyboard doesn't dismissed when scrolling in results page
+        tableView.keyboardDismissMode = .none
+        getCachedTabs()
+        KeyboardHelper.defaultHelper.addDelegate(self)
+
+        searchEngineContainerView.layer.shadowRadius = 0
+        searchEngineContainerView.layer.shadowOpacity = 100
+        searchEngineContainerView.layer.shadowOffset = CGSize(
+            width: 0,
+            height: -UX.SearchEngineTopBorderWidth
+        )
+        searchEngineContainerView.clipsToBounds = false
+
+        searchEngineScrollView.decelerationRate = UIScrollView.DecelerationRate.fast
+        searchEngineContainerView.addSubview(searchEngineScrollView)
+        view.addSubview(searchEngineContainerView)
+
+        searchEngineScrollView.addSubview(searchEngineStackView)
+
+        layoutTable()
+        setupSearchEngineScrollViewConstraints()
+        layoutSearchEngineScrollView()
+        layoutSearchEngineScrollViewContent()
+
+        NSLayoutConstraint.activate([
+            searchEngineContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            searchEngineContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            searchEngineContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        startObservingNotifications(
+            withNotificationCenter: notificationCenter,
+            forObserver: self,
+            observing: [UIContentSizeCategory.didChangeNotification,
+                        .SearchSettingsChanged,
+                        .SponsoredAndNonSponsoredSuggestionsChanged]
+        )
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        reloadSearchEngines()
+        reloadData()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Sometimes `viewModel.searchQuery` is not set yet, so we wait to check if we want to
+        // show load zero search in `viewDidAppear` `instead of viewWillAppear`.
+        // i.e. we enter a search term in the address bar and land on the google web page for the term,
+        // then we tap on the address bar, we should see that search term and avoid loading zero search.
+        loadZeroSearchData()
+        viewModel.searchFeature.recordExposure()
+
+        searchTelemetry?.startImpressionTimer()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        searchDelegate?.searchViewControllerWillHide(self)
+        searchTelemetry?.stopImpressionTimer()
+        resultsAnnouncementDebouncer.cancel()
+        super.viewWillDisappear(animated)
+    }
+
+    private func setupSearchEngineScrollViewConstraints() {
+        NSLayoutConstraint.activate([
+            searchEngineScrollView.leadingAnchor.constraint(equalTo: searchEngineContainerView.leadingAnchor),
+            searchEngineScrollView.trailingAnchor.constraint(equalTo: searchEngineContainerView.trailingAnchor),
+            searchEngineScrollView.topAnchor.constraint(equalTo: searchEngineContainerView.topAnchor)
+        ])
+    }
+
+    private func layoutSearchEngineScrollView() {
+        let keyboardHeight = KeyboardHelper.defaultHelper.currentState?.intersectionHeightForView(self.view) ?? 0
+
+        // Remove existing keyboard-related bottom constraints (if any)
+        bottomConstraintWithKeyboard?.isActive = false
+        bottomConstraintWithoutKeyboard?.isActive = false
+
+        if keyboardHeight == 0 {
+            bottomConstraintWithoutKeyboard = searchEngineScrollView.bottomAnchor.constraint(
+                equalTo: view.safeAreaLayoutGuide.bottomAnchor
+            )
+            bottomConstraintWithoutKeyboard?.isActive = true
+        } else {
+            let offset = viewModel.isBottomSearchBar ? 0 : keyboardHeight
+            bottomConstraintWithKeyboard = searchEngineScrollView.bottomAnchor.constraint(
+                equalTo: view.bottomAnchor,
+                constant: -offset
+            )
+            bottomConstraintWithKeyboard?.isActive = true
+        }
+    }
+
+    private func layoutSearchEngineScrollViewContent() {
+        let scrollContentGuide = searchEngineScrollView.contentLayoutGuide
+        let scrollFrameGuide = searchEngineScrollView.frameLayoutGuide
+
+        NSLayoutConstraint.activate([
+            searchEngineStackView.topAnchor.constraint(equalTo: scrollContentGuide.topAnchor),
+            searchEngineStackView.bottomAnchor.constraint(equalTo: scrollContentGuide.bottomAnchor),
+            searchEngineStackView.heightAnchor.constraint(equalTo: scrollFrameGuide.heightAnchor)
+        ])
+
+        if isCompact {
+            // iPhone setup: left aligned and scroll enabled
+            searchEngineStackView.alignment = .leading
+            NSLayoutConstraint.activate([
+                searchEngineStackView.leadingAnchor.constraint(equalTo: scrollContentGuide.leadingAnchor),
+                searchEngineStackView.trailingAnchor.constraint(equalTo: scrollContentGuide.trailingAnchor)
+            ])
+        } else {
+            // iPad setup: centered
+            searchEngineStackView.alignment = .center
+            NSLayoutConstraint.activate([
+                searchEngineStackView.leadingAnchor.constraint(greaterThanOrEqualTo: scrollContentGuide.leadingAnchor),
+                searchEngineStackView.trailingAnchor.constraint(lessThanOrEqualTo: scrollContentGuide.trailingAnchor),
+                searchEngineStackView.centerXAnchor.constraint(equalTo: scrollFrameGuide.centerXAnchor)
+            ])
+        }
+    }
+
+    /// Information to record in telemetry for the currently visible
+    /// suggestions.
+    var visibleSuggestionsTelemetryInfo: [SearchViewVisibleSuggestionTelemetryInfo] {
+        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
+        return visibleIndexPaths.enumerated().compactMap { (position, indexPath) in
+            switch SearchListSection(rawValue: indexPath.section)! {
+            case .firefoxSuggestions:
+                let firefoxSuggestion = viewModel.firefoxSuggestions[safe: indexPath.row]
+                guard let telemetryInfo = firefoxSuggestion?.telemetryInfo else {
+                    return nil
+                }
+                return .firefoxSuggestion(
+                    telemetryInfo,
+                    position: position + 1,
+                    didTap: indexPath == selectedIndexPath
+                )
+
+            default:
+                return nil
+            }
+        }
+    }
+
+    override func reloadData() {
+        viewModel.querySuggestClient()
+    }
+
+    private func layoutTable() {
+        // Note: We remove and re-add tableview from superview so that we can update
+        // the constraints to be aligned with Search Engine Scroll View top anchor
+        tableView.removeFromSuperview()
+        view.addSubviews(tableView)
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: searchEngineScrollView.topAnchor)
+        ])
+    }
+
+    // MARK: SearchViewDelegate
+    var searchData: Cursor<Site> {
+        get { data }
+        set { data = newValue }
+    }
+
+    func reloadTableView() {
+        tableView.reloadData()
+        scheduleResultsAnnouncement()
+    }
+
+    private func scheduleResultsAnnouncement() {
+        guard UIAccessibility.isVoiceOverRunning, !viewModel.searchQuery.isEmpty else {
+            resultsAnnouncementDebouncer.cancel()
+            return
+        }
+
+        resultsAnnouncementDebouncer.call { [weak self] in
+            self?.announceResultsCount()
+        }
+    }
+
+    private func announceResultsCount() {
+        let resultsCount = (0..<tableView.numberOfSections).reduce(0) { count, section in
+            count + tableView.numberOfRows(inSection: section)
+        }
+        guard resultsCount > 0 else { return }
+
+        let format: String = viewModel.isBottomSearchBar
+            ? .Search.ResultsAboveA11yAnnouncement
+            : .Search.ResultsBelowA11yAnnouncement
+        let announcement = NSAttributedString(
+            string: String(format: format, resultsCount),
+            attributes: [.accessibilitySpeechQueueAnnouncement: true]
+        )
+        UIAccessibility.post(notification: .announcement, argument: announcement)
+    }
+
+    func reloadSearchEngines() {
+        searchEngineStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+
+        // Add search button first
+        searchEngineStackView.addArrangedSubview(searchButton)
+        searchButton.widthAnchor.constraint(equalToConstant: UX.buttonsHeight).isActive = true
+        searchButton.heightAnchor.constraint(equalToConstant: UX.buttonsHeight).isActive = true
+
+        if let imageView = searchButton.imageView {
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            imageView.widthAnchor.constraint(equalToConstant: UX.SearchIconSize).isActive = true
+            imageView.heightAnchor.constraint(equalToConstant: UX.SearchIconSize).isActive = true
+        }
+
+        guard !viewModel.isZeroSearchState else { return }
+
+        for engine in viewModel.quickSearchEngines {
+            let engineButton: UIButton = .build()
+            engineButton.setImage(engine.image, for: [])
+            engineButton.imageView?.contentMode = .scaleAspectFit
+
+            engineButton.imageView?.layer.cornerRadius = 4
+            engineButton.layer.backgroundColor = UX.EngineButtonBackgroundColor
+            engineButton.addTarget(self, action: #selector(didSelectEngine), for: .touchUpInside)
+            engineButton.accessibilityLabel = String(format: .SearchSearchEngineAccessibilityLabel, engine.shortName)
+
+            if let imageView = engineButton.imageView {
+                imageView.translatesAutoresizingMaskIntoConstraints = false
+                imageView.widthAnchor.constraint(equalToConstant: UX.faviconSize).isActive = true
+                imageView.heightAnchor.constraint(equalToConstant: UX.faviconSize).isActive = true
+            }
+
+            engineButton.widthAnchor.constraint(equalToConstant: UX.engineButtonWidth).isActive = true
+            engineButton.heightAnchor.constraint(equalToConstant: UX.buttonsHeight).isActive = true
+
+            searchEngineStackView.addArrangedSubview(engineButton)
+        }
+    }
+
+    /// Loads data for the zero search state (when the user hasn't typed anything yet, but address url bar is highlighted).
+    /// In this state, we surface two types of content:
+    /// - Trending searches: popular or curated terms shown to inspire discovery.
+    /// - Recent searches: the user’s own past searches for quick re-access.
+    private func loadZeroSearchData() {
+        viewModel.loadTrendingSearches()
+        viewModel.retrieveRecentSearches()
+    }
+
+    func didSelectEngine(_ sender: UIButton) {
+        // The UIButtons are the same cardinality and order as the array of quick search engines.
+        // Subtract 1 from index to account for magnifying glass accessory.
+        guard let index = searchEngineStackView.subviews.firstIndex(of: sender) else {
+            assertionFailure()
+            return
+        }
+
+        let engine = viewModel.quickSearchEngines[index - 1]
+
+        guard let url = engine.searchURLForQuery(viewModel.searchQuery) else {
+            assertionFailure()
+            return
+        }
+
+        let extras = [
+            ExtraKey.recordSearchLocation.rawValue: SearchLocation.quickSearch,
+            ExtraKey.recordSearchEngineID.rawValue: engine.telemetryID as Any
+        ] as [String: Any]
+        TelemetryWrapper.gleanRecordEvent(category: .action,
+                                          method: .tap,
+                                          object: .recordSearch,
+                                          extras: extras)
+
+        searchDelegate?.searchViewController(self, didSelectURL: url, searchTerm: "")
+    }
+
+    func didClickSearchButton() {
+        self.searchDelegate?.presentSearchSettingsController()
+    }
+
+    func keyboardHelper(
+        _ keyboardHelper: KeyboardHelper,
+        keyboardWillShowWithState state: KeyboardState
+    ) {
+        layoutSearchEngineScrollView()
+    }
+
+    func keyboardHelper(
+        _ keyboardHelper: KeyboardHelper,
+        keyboardWillHideWithState state: KeyboardState
+    ) {
+        layoutSearchEngineScrollView()
+    }
+
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        // The height of the suggestions row may change, so call reloadData() to recalculate cell heights.
+        coordinator.animate(alongsideTransition: { [self] _ in
+            layoutSearchEngineScrollViewContent()
+        }, completion: { [weak self] _ in
+            self?.tableView.reloadData()
+        })
+    }
+
+    private func getCachedTabs() {
+        // Short circuit if the user is not logged in
+        guard profile.hasSyncableAccount() else { return }
+
+        ensureMainThread {
+            // Get cached tabs
+            self.profile.getCachedClientsAndTabs()
+                .uponQueue(.main) { result in
+                    // FXIOS-13228 It should be safe to assumeIsolated here because of `.main` queue above
+                    MainActor.assumeIsolated {
+                        guard let clientAndTabs = result.successValue else { return }
+                        self.viewModel.remoteClientTabs.removeAll()
+                        // Update UI with cached data.
+                        clientAndTabs.forEach { value in
+                            value.tabs.forEach { (tab) in
+                                self.viewModel.remoteClientTabs.append(
+                                    ClientTabsSearchWrapper(client: value.client, tab: tab)
+                                )
+                            }
+                        }
+                    }
+                }
+        }
+    }
+
+    // MARK: - Table view delegate
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        searchTelemetry?.engagementType = .tap
+        switch SearchListSection(rawValue: indexPath.section)! {
+        case .recentSearches:
+            guard let defaultEngine = viewModel.searchEnginesManager?.defaultEngine else { return }
+
+            guard let recentSearch = viewModel.recentSearches[safe: indexPath.row],
+                  let url = defaultEngine.searchURLForQuery(recentSearch)
+            else { return }
+            searchDelegate?.searchViewController(self, didSelectURL: url, searchTerm: recentSearch)
+            searchTelemetry?.recentSearchesTapped(at: indexPath.row)
+
+        case .trendingSearches:
+            guard let defaultEngine = viewModel.searchEnginesManager?.defaultEngine else { return }
+
+            guard let trendingSearch = viewModel.trendingSearches[safe: indexPath.row],
+                  let url = defaultEngine.searchURLForQuery(trendingSearch)
+            else { return }
+            searchDelegate?.searchViewController(self, didSelectURL: url, searchTerm: trendingSearch)
+            searchTelemetry?.trendingSearchesTapped(at: indexPath.row)
+
+        case .searchSuggestions:
+            guard let defaultEngine = viewModel.searchEnginesManager?.defaultEngine else { return }
+
+            searchTelemetry?.selectedResult = .searchSuggest
+            // Assume that only the default search engine can provide search suggestions.
+            guard let suggestions = viewModel.suggestions,
+                  let suggestion = suggestions[safe: indexPath.row],
+                  let url = defaultEngine.searchURLForQuery(suggestion)
+            else { return }
+
+            let extras = [
+                ExtraKey.recordSearchLocation.rawValue: SearchLocation.suggestion,
+                ExtraKey.recordSearchEngineID.rawValue: defaultEngine.telemetryID as Any
+            ] as [String: Any]
+            TelemetryWrapper.gleanRecordEvent(category: .action,
+                                              method: .tap,
+                                              object: .recordSearch,
+                                              extras: extras)
+            selectedIndexPath = indexPath
+            searchDelegate?.searchViewController(self, didSelectURL: url, searchTerm: suggestion)
+        case .openedTabs:
+            searchTelemetry?.selectedResult = .tab
+            let tab = viewModel.filteredOpenedTabs[indexPath.row]
+            selectedIndexPath = indexPath
+            searchDelegate?.searchViewController(self, uuid: tab.tabUUID)
+        case .remoteTabs:
+            searchTelemetry?.selectedResult = .remoteTab
+            let remoteTab = viewModel.filteredRemoteClientTabs[indexPath.row].tab
+            selectedIndexPath = indexPath
+            searchDelegate?.searchViewController(self, didSelectURL: remoteTab.URL, searchTerm: nil)
+        case .history:
+            let site = viewModel.historySites[indexPath.row]
+            searchTelemetry?.selectedResult = .history
+            if let url = URL(string: site.url) {
+                selectedIndexPath = indexPath
+                searchDelegate?.searchViewController(self, didSelectURL: url, searchTerm: nil)
+            }
+        case .bookmarks:
+            let site = viewModel.bookmarkSites[indexPath.row]
+            searchTelemetry?.selectedResult = .bookmark
+            if let url = URL(string: site.url) {
+                selectedIndexPath = indexPath
+                searchDelegate?.searchViewController(self, didSelectURL: url, searchTerm: nil)
+            }
+        case .firefoxSuggestions:
+            let firefoxSuggestion = viewModel.firefoxSuggestions[indexPath.row]
+            searchTelemetry?.selectedResult = firefoxSuggestion.isSponsored ? .suggestSponsor : .suggestNonSponsor
+            selectedIndexPath = indexPath
+            searchDelegate?.searchViewController(
+                self,
+                didSelectURL: firefoxSuggestion.url,
+                searchTerm: nil
+            )
+        }
+    }
+
+    override func tableView(
+        _ tableView: UITableView,
+        heightForHeaderInSection section: Int
+    ) -> CGFloat {
+        guard viewModel.shouldShowHeader(for: section) else { return 0 }
+
+        return UITableView.automaticDimension
+    }
+
+    override func tableView(
+        _ tableView: UITableView,
+        viewForHeaderInSection section: Int
+    ) -> UIView? {
+        guard viewModel.shouldShowHeader(for: section),
+              let headerView = tableView.dequeueReusableHeaderFooterView(
+                withIdentifier: SiteTableViewHeader.cellIdentifier) as? SiteTableViewHeader
+        else { return nil }
+
+        var title: String
+        var accessory: SiteTableHeaderAccessory = .none
+        switch section {
+        case SearchListSection.recentSearches.rawValue:
+            guard !viewModel.recentSearches.isEmpty else { return nil }
+            title = .SearchZero.RecentSearchesSectionTitle
+            accessory = .clear(action: { [weak self] in
+                self?.viewModel.clearRecentSearches()
+            })
+
+        case SearchListSection.trendingSearches.rawValue:
+            guard !viewModel.trendingSearches.isEmpty else { return nil }
+            if let engineName = viewModel.searchEnginesManager?.defaultEngine?.shortName {
+                title = String(
+                    format: .SearchZero.TrendingSearchesSectionTitle,
+                    engineName
+                )
+            } else {
+                title = ""
+            }
+
+        case SearchListSection.firefoxSuggestions.rawValue:
+            title = .Search.SuggestSectionTitle
+        case SearchListSection.searchSuggestions.rawValue:
+            title = viewModel.searchEnginesManager?.defaultEngine?.headerSearchTitle ?? ""
+        default:  title = ""
+        }
+
+        let viewModel = SiteTableViewHeaderModel(
+            title: title,
+            accessory: accessory
+        )
+        headerView.configure(viewModel)
+        headerView.applyTheme(theme: currentTheme())
+        return headerView
+    }
+
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let twoLineImageOverlayCell = tableView.dequeueReusableCell(
+            withIdentifier: TwoLineImageOverlayCell.cellIdentifier,
+            for: indexPath
+        ) as? TwoLineImageOverlayCell else {
+            logger.log("Failed to dequeue TwoLineImageOverlayCell",
+                       level: .fatal,
+                       category: .lifecycle,
+                       extra: ["indexPath": "\(indexPath)"])
+            return UITableViewCell()
+        }
+        guard let oneLineTableViewCell = tableView.dequeueReusableCell(
+            withIdentifier: OneLineTableViewCell.cellIdentifier,
+            for: indexPath
+        ) as? OneLineTableViewCell else {
+            logger.log("Failed to dequeue OneLineTableViewCell",
+                       level: .fatal,
+                       category: .lifecycle,
+                       extra: ["indexPath": "\(indexPath)"])
+            return UITableViewCell()
+        }
+        return getCellForSection(twoLineImageOverlayCell,
+                                 oneLineCell: oneLineTableViewCell,
+                                 for: SearchListSection(rawValue: indexPath.section)!,
+                                 indexPath)
+    }
+
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if let section = SearchListSection(rawValue: indexPath.section) {
+            switch section {
+            case .recentSearches:
+                viewModel.recordRecentSearchesDisplayedEvent()
+            case .trendingSearches:
+                viewModel.recordTrendingSearchesDisplayedEvent()
+            case .searchSuggestions:
+                if let site = viewModel.suggestions?[indexPath.row] {
+                    if searchTelemetry?.visibleSuggestions.contains(site) == false {
+                        searchTelemetry?.visibleSuggestions.append(site)
+                    }
+                }
+            case .openedTabs:
+                if viewModel.filteredOpenedTabs.count > indexPath.row {
+                    let openedTab = viewModel.filteredOpenedTabs[indexPath.row]
+                    if searchTelemetry?.visibleFilteredOpenedTabs.contains(openedTab) == false {
+                        searchTelemetry?.visibleFilteredOpenedTabs.append(openedTab)
+                    }
+                }
+            case .remoteTabs:
+                if viewModel.filteredRemoteClientTabs.count > indexPath.row {
+                    let remoteTab = viewModel.filteredRemoteClientTabs[indexPath.row]
+                    if searchTelemetry?.visibleFilteredRemoteClientTabs.contains(where: { $0 == remoteTab }) == false {
+                        searchTelemetry?.visibleFilteredRemoteClientTabs.append(remoteTab)
+                    }
+                }
+            case .history:
+                if viewModel.shouldShowBrowsingHistorySuggestions {
+                    let site = viewModel.historySites[indexPath.row]
+                    if searchTelemetry?.visibleData.contains(site) == false {
+                        searchTelemetry?.visibleData.append(site)
+                    }
+                }
+            case .bookmarks:
+                if viewModel.shouldShowBookmarksSuggestions {
+                    let site = viewModel.bookmarkSites[indexPath.row]
+                    if searchTelemetry?.visibleData.contains(site) == false {
+                        searchTelemetry?.visibleData.append(site)
+                    }
+                }
+            case .firefoxSuggestions:
+                if featureFlagsProvider.isEnabled(.firefoxSuggestFeature)
+                    && userPreferences.getPreferenceFor(.firefoxSuggestFeature) {
+                    let firefoxSuggestion = viewModel.firefoxSuggestions[indexPath.row]
+                    if searchTelemetry?.visibleFirefoxSuggestions
+                        .contains(where: { $0.url == firefoxSuggestion.url }) == false {
+                        searchTelemetry?.visibleFirefoxSuggestions.append(firefoxSuggestion)
+                    }
+                }
+            }
+        }
+    }
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        switch SearchListSection(rawValue: section)! {
+        case .recentSearches:
+            return viewModel.shouldShowRecentSearches ? viewModel.recentSearches.count : 0
+        case .trendingSearches:
+            return viewModel.shouldShowTrendingSearches ? viewModel.trendingSearches.count : 0
+        case .searchSuggestions:
+            guard let count = viewModel.suggestions?.count else { return 0 }
+            return count < 4 ? count : 4
+        case .openedTabs:
+            return !viewModel.isZeroSearchState ? viewModel.filteredOpenedTabs.count : 0
+        case .remoteTabs:
+            return viewModel.shouldShowSyncedTabsSuggestions ? viewModel.filteredRemoteClientTabs.count : 0
+        case .history:
+            return viewModel.shouldShowBrowsingHistorySuggestions ? viewModel.historySites.count : 0
+        case .bookmarks:
+            return viewModel.shouldShowBookmarksSuggestions ? viewModel.bookmarkSites.count : 0
+        case .firefoxSuggestions:
+            return !viewModel.isZeroSearchState ? viewModel.firefoxSuggestions.count : 0
+        }
+    }
+
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return SearchListSection.allCases.count
+    }
+
+    func tableView(_ tableView: UITableView, didHighlightRowAt indexPath: IndexPath) {
+        guard let section = SearchListSection(rawValue: indexPath.section) else { return }
+
+        switch section {
+        case .bookmarks:
+            let suggestion = viewModel.bookmarkSites[indexPath.item]
+            searchDelegate?.searchViewController(self, didHighlightText: suggestion.url, search: false)
+        case .history:
+            let suggestion = viewModel.historySites[indexPath.item]
+            searchDelegate?.searchViewController(self, didHighlightText: suggestion.url, search: false)
+        case .searchSuggestions:
+            guard let suggestion = viewModel.suggestions?[indexPath.item] else { return }
+            searchDelegate?.searchViewController(self, didHighlightText: suggestion, search: false)
+        case .remoteTabs:
+            let suggestion = viewModel.remoteClientTabs[indexPath.item]
+            searchDelegate?.searchViewController(self, didHighlightText: suggestion.tab.URL.absoluteString, search: false)
+        case .firefoxSuggestions:
+            let suggestion = viewModel.firefoxSuggestions[indexPath.item]
+            searchDelegate?.searchViewController(self, didHighlightText: suggestion.url.absoluteString, search: false)
+        default: return
+        }
+    }
+
+    override func applyTheme() {
+        super.applyTheme()
+        view.backgroundColor = currentTheme().colors.layer5
+
+        // search settings icon
+        searchButton.layer.backgroundColor = UX.EngineButtonBackgroundColor
+        searchButton.tintColor = currentTheme().colors.iconPrimary
+
+        searchEngineContainerView.layer.backgroundColor = currentTheme().colors.layer1.cgColor
+        searchEngineContainerView.layer.shadowColor = currentTheme().colors.shadowDefault.cgColor
+        reloadData()
+    }
+
+    func getAttributedBoldSearchSuggestions(searchPhrase: String, query: String) -> NSAttributedString? {
+        // the search term (query) stays normal weight
+        // everything past the search term (query) will be bold
+        let range = searchPhrase.range(of: query)
+        guard searchPhrase != query, let upperBound = range?.upperBound else { return nil }
+
+        let attributedString = searchPhrase.attributedText(
+            boldIn: upperBound..<searchPhrase.endIndex,
+            font: FXFontStyles.Regular.body.scaledFont(),
+            boldFont: FXFontStyles.Bold.body.scaledFont()
+        )
+        return attributedString
+    }
+
+    private func getCellForSection(_ twoLineCell: TwoLineImageOverlayCell,
+                                   oneLineCell: OneLineTableViewCell,
+                                   for section: SearchListSection,
+                                   _ indexPath: IndexPath) -> UITableViewCell {
+        var cell = UITableViewCell()
+        switch section {
+        case .recentSearches:
+            if let recentSearch = viewModel.recentSearches[safe: indexPath.row] {
+                let oneLineCellViewModel = oneLineCellModelForSearch(
+                    with: recentSearch,
+                    and: StandardImageIdentifiers.Large.history
+                )
+                oneLineCell.configure(viewModel: oneLineCellViewModel)
+                cell = oneLineCell
+            }
+
+        case .trendingSearches:
+            if let trendingSearch = viewModel.trendingSearches[safe: indexPath.row] {
+                let arrowImageName = StandardImageIdentifiers.Large.arrowTrending
+                let oneLineCellViewModel = oneLineCellModelForSearch(with: trendingSearch, and: arrowImageName)
+                oneLineCell.configure(viewModel: oneLineCellViewModel)
+                cell = oneLineCell
+            }
+
+        case .searchSuggestions:
+            if let site = viewModel.suggestions?[indexPath.row] {
+                let oneLineCellViewModel = oneLineCellModelForSearch(
+                    with: site,
+                    shouldShowAccessoryView: indexPath.row > 0
+                )
+                oneLineCell.configure(viewModel: oneLineCellViewModel)
+                if Locale.current.languageCode == "en",
+                   let attributedString = getAttributedBoldSearchSuggestions(
+                    searchPhrase: site,
+                    query: viewModel.savedQuery
+                   ) {
+                    oneLineCell.titleLabel.attributedText = attributedString
+                }
+                cell = oneLineCell
+            }
+        case .openedTabs:
+            if viewModel.filteredOpenedTabs.count > indexPath.row {
+                let openedTab = viewModel.filteredOpenedTabs[indexPath.row]
+                configureOpenedTabsCell(
+                    cell: twoLineCell,
+                    title: openedTab.title ?? openedTab.lastTitle,
+                    urlString: openedTab.url?.absoluteString
+                )
+                cell = twoLineCell
+            }
+        case .remoteTabs:
+            if viewModel.shouldShowSyncedTabsSuggestions,
+               viewModel.filteredRemoteClientTabs.count > indexPath.row {
+                let remoteTab = viewModel.filteredRemoteClientTabs[indexPath.row].tab
+                let remoteClient = viewModel.filteredRemoteClientTabs[indexPath.row].client
+                let urlString = remoteTab.URL.absoluteString
+                configureRemoteTabsCell(
+                    cell: twoLineCell,
+                    title: remoteTab.title,
+                    description: remoteClient.name,
+                    urlString: urlString
+                )
+                cell = twoLineCell
+            }
+        case .history:
+            if viewModel.shouldShowBrowsingHistorySuggestions {
+                let site = viewModel.historySites[indexPath.row]
+                configureBookmarksAndHistoryCell(
+                    twoLineCell,
+                    site.title,
+                    site.url
+                )
+                cell = twoLineCell
+            }
+
+        case .bookmarks:
+            if viewModel.shouldShowBookmarksSuggestions {
+                let site = viewModel.bookmarkSites[indexPath.row]
+                configureBookmarksAndHistoryCell(
+                    twoLineCell,
+                    site.title,
+                    site.url,
+                    site.isBookmarked ?? false
+                )
+                cell = twoLineCell
+            }
+
+        case .firefoxSuggestions:
+            let firefoxSuggestion = viewModel.firefoxSuggestions[indexPath.row]
+            configureFirefoxSuggestionsCell(
+                cell: twoLineCell,
+                title: firefoxSuggestion.title,
+                isSponsored: firefoxSuggestion.isSponsored,
+                iconImage: firefoxSuggestion.iconImage ?? UIImage()
+            )
+            cell = twoLineCell
+        }
+
+        // We need to set the correct theme on the cells when the initial display happens
+        oneLineCell.applyTheme(theme: currentTheme())
+        twoLineCell.applyTheme(theme: currentTheme())
+        return cell
+    }
+
+    private func oneLineCellModelForSearch(
+        with text: String,
+        and imageName: String = UX.SearchImage,
+        shouldShowAccessoryView: Bool = true
+    ) -> OneLineTableViewCellViewModel {
+        let appendButton = UIButton(type: .roundedRect)
+        appendButton.setImage(searchAppendImage?.withRenderingMode(.alwaysTemplate), for: .normal)
+        appendButton.adjustsImageSizeForAccessibilityContentSizeCategory = true
+        let action = UIAction { [weak self] _ in
+            self?.appendSearch(with: text)
+        }
+        appendButton.addAction(action, for: .touchUpInside)
+        let viewModel = OneLineTableViewCellViewModel(
+            title: text,
+            leftImageView: UIImage(named: imageName)?.withRenderingMode(.alwaysTemplate),
+            accessoryView: shouldShowAccessoryView ? appendButton : nil,
+            accessoryType: .none,
+            editingAccessoryView: nil)
+        return viewModel
+    }
+
+    private func configureOpenedTabsCell(
+        cell: TwoLineImageOverlayCell,
+        title: String?,
+        urlString: String?
+    ) {
+        cell.descriptionLabel.isHidden = false
+        cell.titleLabel.text = title
+        cell.descriptionLabel.text = String.SearchSuggestionCellSwitchToTabLabel
+        cell.leftOverlayImageView.image = openAndSyncTabBadge
+        cell.leftImageView.layer.borderColor = UX.IconBorderColor.cgColor
+        cell.leftImageView.layer.borderWidth = UX.IconBorderWidth
+        if let urlString = urlString {
+            cell.leftImageView.setFavicon(FaviconImageViewModel(siteURLString: urlString))
+        }
+        cell.accessoryView = nil
+    }
+
+    private func configureRemoteTabsCell(
+        cell: TwoLineImageOverlayCell,
+        title: String,
+        description: String,
+        urlString: String
+    ) {
+        cell.descriptionLabel.isHidden = false
+        cell.titleLabel.text = title
+        cell.descriptionLabel.text = description
+        cell.leftOverlayImageView.image = openAndSyncTabBadge
+        cell.leftImageView.layer.borderColor = UX.IconBorderColor.cgColor
+        cell.leftImageView.layer.borderWidth = UX.IconBorderWidth
+        cell.leftImageView.setFavicon(FaviconImageViewModel(siteURLString: urlString))
+        cell.accessoryView = nil
+    }
+
+    private func configureBookmarksAndHistoryCell(
+        _ cell: TwoLineImageOverlayCell,
+        _ title: String,
+        _ description: String,
+        _ isBookmark: Bool = false
+    ) {
+        cell.descriptionLabel.isHidden = false
+        cell.titleLabel.text = title
+        cell.descriptionLabel.text = description
+        cell.leftOverlayImageView.image = isBookmark ? bookmarkedBadge : nil
+        cell.leftImageView.layer.borderColor = UX.IconBorderColor.cgColor
+        cell.leftImageView.layer.borderWidth = UX.IconBorderWidth
+        cell.leftImageView.setFavicon(FaviconImageViewModel(siteURLString: description))
+        cell.accessoryView = nil
+    }
+
+    private func configureFirefoxSuggestionsCell(
+        cell: TwoLineImageOverlayCell,
+        title: String,
+        isSponsored: Bool,
+        iconImage: UIImage
+    ) {
+        cell.titleLabel.text = title
+        if isSponsored {
+            cell.descriptionLabel.isHidden = false
+            cell.descriptionLabel.text = .Search.SponsoredSuggestionDescription
+        } else {
+            cell.descriptionLabel.isHidden = true
+        }
+        cell.leftOverlayImageView.image = nil
+        cell.leftImageView.contentMode = .scaleAspectFit
+        cell.leftImageView.layer.borderColor = UX.IconBorderColor.cgColor
+        cell.leftImageView.layer.borderWidth = UX.IconBorderWidth
+        cell.leftImageView.manuallySetImage(iconImage)
+        cell.accessoryView = nil
+    }
+
+    func appendSearch(with newQuery: String) {
+        searchDelegate?.searchViewController(self, didAppend: newQuery + " ")
+        viewModel.searchQuery = newQuery + " "
+        searchTelemetry?.searchQuery = viewModel.searchQuery
+    }
+
+    private var searchAppendImage: UIImage? {
+        let searchAppendImage = if viewModel.isBottomSearchBar {
+            UIImage(named: StandardImageIdentifiers.Large.appendDownLeft)
+        } else {
+            UIImage(named: StandardImageIdentifiers.Large.appendUpLeft)
+        }
+        return searchAppendImage?.imageFlippedForRightToLeftLayoutDirection()
+    }
+
+    // MARK: - Notifiable
+
+    func handleNotifications(_ notification: Notification) {
+        let name = notification.name
+        ensureMainThread {
+            switch name {
+            case UIContentSizeCategory.didChangeNotification:
+                self.reloadData()
+            case .SearchSettingsChanged:
+                self.reloadSearchEngines()
+                // We fetch new list since trending searches are specific to the search engine.
+                self.viewModel.loadTrendingSearches()
+            case .SponsoredAndNonSponsoredSuggestionsChanged:
+                guard !self.viewModel.searchQuery.isEmpty else { return }
+                Task {
+                    await self.viewModel.loadFirefoxSuggestions()
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    // MARK: - Internal Utilities
+
+    private func firstNonEmptySection(before: Int? = nil, after: Int? = nil) -> Int? {
+        let allSections = SearchListSection.allCases
+        let sectionsOrdered = before != nil ? allSections.reversed() : allSections
+        for section in sectionsOrdered {
+            let sectionValue = section.rawValue
+            guard before == nil || sectionValue < before! else { continue }
+            guard after == nil || sectionValue > after! else { continue }
+            guard tableView(tableView, numberOfRowsInSection: sectionValue) > 0 else { continue }
+            return sectionValue
+        }
+        return nil
+    }
+}
+
+// MARK: - Keyboard shortcuts
+extension SearchViewController {
+    func handleKeyCommands(sender: UIKeyCommand) {
+        let initialSection: Int = firstNonEmptySection() ?? 0
+        guard let current = tableView.indexPathForSelectedRow else {
+            let initialSectionCount = tableView(tableView, numberOfRowsInSection: initialSection)
+            if sender.input == UIKeyCommand.inputDownArrow, initialSectionCount > 0 {
+                let next = IndexPath(item: 0, section: initialSection)
+                self.tableView(tableView, didHighlightRowAt: next)
+                tableView.selectRow(at: next, animated: false, scrollPosition: .top)
+            }
+            return
+        }
+
+        let nextSection: Int
+        let nextItem: Int
+        guard let input = sender.input else { return }
+        switch input {
+        case UIKeyCommand.inputUpArrow:
+            // we're going down, we should check if we've reached the first item in this section.
+            if current.item == 0 {
+                // We have, so check if we can decrement the section.
+                if current.section == initialSection {
+                    // We've reached the first item in the first section.
+                    searchDelegate?.searchViewController(self, didHighlightText: viewModel.searchQuery, search: false)
+                    return
+                } else {
+                    let currentSection = current.section
+                    guard let next = firstNonEmptySection(before: currentSection) else { return }
+                    nextSection = next
+                    nextItem = tableView(tableView, numberOfRowsInSection: next) - 1
+                }
+            } else {
+                nextSection = current.section
+                nextItem = current.item - 1
+            }
+        case UIKeyCommand.inputDownArrow:
+            let currentSectionItemsCount = tableView(tableView, numberOfRowsInSection: current.section)
+            if current.item == currentSectionItemsCount - 1 {
+                if current.section == tableView.numberOfSections - 1 {
+                    // We've reached the last item in the last section
+                    return
+                } else {
+                    // We can go to the next section.
+                    let currentSection = current.section
+                    guard let next = firstNonEmptySection(after: currentSection) else { return }
+                    nextSection = next
+                    nextItem = 0
+                }
+            } else {
+                nextSection = current.section
+                nextItem = current.item + 1
+            }
+        default:
+            return
+        }
+        guard nextItem >= 0 else { return }
+        let next = IndexPath(item: nextItem, section: nextSection)
+        self.tableView(tableView, didHighlightRowAt: next)
+        tableView.selectRow(at: next, animated: false, scrollPosition: .middle)
+    }
+}
+
+/**
+ * UIScrollView that prevents buttons from interfering with scroll.
+ */
+private class ButtonScrollView: UIScrollView {
+    override func touchesShouldCancel(in view: UIView) -> Bool {
+        return true
+    }
+}

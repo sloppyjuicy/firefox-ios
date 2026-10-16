@@ -1,0 +1,699 @@
+/* Button on About screen */
+"About.learnMoreButton" = "Més informació";
+
+/* Label on About screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"About.missionLabel" = "El %@ està creat per Mozilla. La nostra missió és fomentar un Internet obert i saludable.";
+
+/* Label on About screen */
+"About.privateBullet1" = "Cercar i navegar directament des de l'aplicació";
+
+/* Label on About screen */
+"About.privateBullet2" = "Blocar els elements de seguiment (o canviar els paràmetres per permetre'ls)";
+
+/* Label on About screen */
+"About.privateBullet3" = "Esborrar les galetes i l'historial de cerques i de navegació";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "Com a navegador privat, us permet:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "Ajuda";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Avís de privadesa";
+
+/* Label for row in About screen */
+"About.rowRights" = "Els vostres drets";
+
+/* Label for row in About screen */
+"About.rowTerms" = "Condicions d’ús";
+
+/* Label on About screen */
+"About.safariBullet1" = "Blocar els elements de seguiment per millorar la privadesa";
+
+/* Label on About screen */
+"About.safariBullet2" = "Bloca els tipus de lletra web per a reduir la mida de la pàgina";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Com a extensió del Safari, us permet:";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Title displayed in the settings screen that, when tapped, takes the user to a page with information about the product. Also displayed as a header for the About page. */
+"About.title" = "Quant al %@";
+
+/* Label on About screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"About.topLabel" = "El %@ us dóna el control.";
+
+/* Title for action sheet item to open the current page in another application. %@ is the name of the application to open the current page. */
+"actionSheet.openIn" = "Obre amb el %@";
+
+/* Button to dismiss the 'Add Pass Failed' alert. */
+"AddPass.Error.Dismiss" = "D'acord";
+
+/* Message of the 'Add Pass Failed' alert. */
+"AddPass.Error.Message" = "S'ha produït un error en afegir la targeta al Wallet. Torneu-ho a provar més tard.";
+
+/* Title of the 'Add Pass Failed' alert. */
+"AddPass.Error.Title" = "No s'ha pogut afegir la targeta";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Prompt shown to ask the user to use Touch ID, Face ID, or passcode to continue browsing after returning to the app. */
+"Authentication.reason" = "Autentiqueu-vos per tornar a %@";
+
+/* Label for button to add a custom URL */
+"Autocomplete.addCustomUrl" = "Afegeix URL personalitzat";
+
+/* Label for error state when entering an invalid URL */
+"Autocomplete.addCustomUrlError" = "Reviseu l'URL que heu introduït.";
+
+/* A label displaying an example URL */
+"Autocomplete.addCustomUrlExample" = "Exemple: example.com";
+
+/* Label for the input to add a custom URL */
+"Autocomplete.addCustomUrlLabel" = "URL per afegir";
+
+/* Placeholder for the input field to add a custom URL */
+"Autocomplete.addCustomUrlPlaceholder" = "Enganxeu o escriviu un URL";
+
+/* Label for button to add a custom URL with the + prefix */
+"Autocomplete.addCustomUrlWithPlus" = "+ Afegeix URL personalitzat";
+
+/* Label for toast alerting a custom URL has been added */
+"Autocomplete.customUrlAdded" = "S'ha afegit un URL personalitzat nou.";
+
+/* Description for enabling or disabling the default list. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Autocomplete.defaultDescriptoin" = "Activeu-lo per fer que el %@ empleni automàticament més de 450 URL populars a la barra d'adreces.";
+
+/* label describing URL Autocomplete as disabled */
+"Autocomplete.disabled" = "Desactivat";
+
+/* Label for toast alerting that the custom URL being added is a duplicate */
+"Autocomplete.duplicateUrl" = "L'URL ja existeix";
+
+/* Label for button to add a custom URL */
+"Autocomplete.emptyState" = "No hi ha cap URL personalitzat per mostrar";
+
+/* label describing URL Autocomplete as enabled */
+"Autocomplete.enabled" = "Activat";
+
+/* Label for button taking you to your custom Autocomplete URL list */
+"Autocomplete.manageSites" = "Gestiona els llocs";
+
+/* Label for enabling or disabling autocomplete */
+"Autocomplete.mySites" = "Els meus llocs";
+
+/* Description for adding and managing custom autocomplete URLs. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Autocomplete.mySitesDesc" = "Activeu-ho per fer que el %@ empleni automàticament els vostres URL preferits.";
+
+/* Label for enabling or disabling top sites */
+"Autocomplete.topSites" = "Llocs principals";
+
+/* Title for the action button shown on the Splash Screen which gives the user the ability to log in with biometrics. */
+"BiometricAuthentication.UnlockButton.Title" = "Desbloca";
+
+/* Create a new session after failing a biometric check */
+"BiometricPrompt.newSession" = "Sessió nova";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "Enrere";
+
+/* Toast displayed after a URL has been copied to the clipboard */
+"browser.copyAddressToast" = "S'ha copiat l'URL al porta-retalls";
+
+/* Copy URL button in URL long press menu */
+"Browser.copyMenuLabel" = "Copia";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "Endavant";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "Torna a carregar";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "Paràmetres";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "Atura";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "Selecciona la barra d'ubicació";
+
+/* Label on button to complete edits */
+"Done" = "Fet";
+
+/* Label on button to allow edits */
+"Edit" = "Edita";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "Torna-ho a provar";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Cancel·la";
+
+/* Dialog title used for opening an external app from Focus. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ExternalAppLink.messageTitle" = "El %@ vol obrir una altra aplicació";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Obre";
+
+/* Dialog title used for opening an external app from Focus. %1$@ is the app name (for example “Firefox Focus” or ”Firefox Klar”), %2$@ is the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "El %1$@ vol obrir %2$@";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "Cancel·la";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "Correu electrònic";
+
+/* Accessibility label for done button in Find in Page Toolbar. */
+"FindInPage.Done" = "Cerca a la pàgina acabada";
+
+/* Accessibility label for next result button in Find in Page Toolbar. */
+"FindInPage.NextResult" = "Cerca el següent a la pàgina";
+
+/* Accessibility label for previous result button in Find in Page Toolbar. */
+"FindInPage.PreviousResult" = "Cerca l'anterior a la pàgina";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.lastSlide.buttonLabel" = "Entesos";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "Navegueu sense sentir-vos observat.";
+
+/* Button label used to close a menu that displays as a popup. */
+"Menu.Close" = "Tanca";
+
+/* Error message shown when no internet connection is available */
+"Network.Offline.ErrorMessage" = "Sembla que esteu sense connexió a Internet.";
+
+/* Button text for retrying network connection */
+"Network.Offline.RetryButton" = "Torna-ho a provar";
+
+/* Text for a label that indicates the title of button from onboarding screen version 2. */
+"NewOnboarding.Button.Title.V2" = "Inicia";
+
+/* Text for a label that indicates the subtitle for the onboarding screen version 2. */
+"NewOnboarding.Subtitle.V2" = "Ràpid. Privat. Sense distraccions.";
+
+/* Text for a label that indicates the title of button from onboarding screen */
+"Onboarding.Button.Title" = "Comença a navegar";
+
+/* Text for a label that indicates the title of the bottom button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.BottomButtonTitle.V2" = "Omet";
+
+/* Text for a label that indicates the first subtitle for the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.FirstSubtitle.V2" = "Esborrem el vostre historial quan tanqueu l’aplicació per garantir la privadesa.";
+
+/* Text for a label that indicates the second subtitle for the default browser onboarding screen version 2. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.DefaultBrowser.SecondSubtitle.V2" = "Feu que el %@ sigui el navegador per defecte i protegiu les vostres dades cada vegada que obriu un enllaç.";
+
+/* Text for a label that indicates the title for the default browser onboarding screen version 2. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.DefaultBrowser.Title.V2" = "El %@ no és com els altres navegadors";
+
+/* Text for a label that indicates the title of the top button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.TopButtonTitle.V2" = "Defineix com a navegador per defecte";
+
+/* Text for a label that indicates the description of history section from onboarding screen. */
+"Onboarding.History.Description" = "Elimineu l'historial de navegació, contrasenyes i galetes i eviteu que anuncis no desitjats us segueixin amb un sol clic!";
+
+/* Text for a label that indicates the title of history section from onboarding screen. */
+"Onboarding.History.Title" = "El vostre historial no us segueix";
+
+/* Text for a label that indicates the description of incognito section from onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.Incognito.Description" = "El %@ és un navegador dedicat a la privadesa amb protecció contra seguiment i bloqueig de contingut.";
+
+/* Text for a label that indicates the title of incognito section from onboarding screen. */
+"Onboarding.Incognito.Title" = "Més que d'incògnit";
+
+/* Used as a text for the link in Onboarding.PrivacyNotice.Text. */
+"Onboarding.PrivacyNotice.LinkText" = "avís de privadesa";
+
+/* Text that describes Firefox's commitment to privacy. %@ is a link using Onboarding.PrivacyNotice.LinkText as text. */
+"Onboarding.PrivacyNotice.Text" = "El Firefox prioritza la vostra privadesa. Més informació en l’%@.";
+
+/* Text for a label that indicates the description of protection section from onboarding screen. */
+"Onboarding.Protection.Description" = "Configureu els paràmetres per decidir si voleu compartir molt o poc.";
+
+/* Text for a label that indicates the title of protection section from onboarding screen. */
+"Onboarding.Protection.Title" = "Protecció a la vostra discreció";
+
+/* Text for a label that indicates the subtitle for onboarding screen. */
+"Onboarding.Subtitle" = "Porteu la navegació privada a un altre nivell.";
+
+/* Label for the agreement button in the Terms of Use screen. */
+"Onboarding.TermsOfUse.ButtonText" = "Accepta i continua";
+
+/* Label for the agreement button in the Terms of Use screen. */
+"Onboarding.TermsOfUse.ButtonTextV2" = "Continua";
+
+/* Button label to dismiss the Privacy Policy and Terms of Use screen. */
+"Onboarding.TermsOfUse.Done.ButtonText" = "Fet";
+
+/* Used as a text for the link in Onboarding.TermsOfUse.Text. */
+"Onboarding.TermsOfUse.LinkText" = "condicions d’ús del Firefox";
+
+/* Subtitle for the Terms of Use screen during onboarding. */
+"Onboarding.TermsOfUse.Subtitle" = "Ràpid. Privat. Sense distraccions.";
+
+/* Text that describes the agreement to the Firefox Terms of Use. %@ is a link using Onboarding.TermsOfUse.LinkText as text. */
+"Onboarding.TermsOfUse.Text" = "En continuar, accepteu les %@.";
+
+/* Title for the Terms of Use screen during onboarding. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.TermsOfUse.Title" = "Us donem la benvinguda al %@";
+
+/* Text for a label that indicates the title for onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.Title" = "Us donem la benvinguda al Firefox %@";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Toqueu «Safari» i trieu «Bloquejadors de contingut»";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Safari.instructionsEnable" = "Activeu el %@";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsExtentions" = "Seleccioneu Safari i, a continuació, seleccioneu Extensions";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Safari.instructionsNotEnabled" = "El %@ no està activat.";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "Obriu l'aplicació «Configuració»";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.openInstruction" = "Obriu els paràmetres del dispositiu";
+
+/* Save button label */
+"Save" = "Desa";
+
+/* Label for error state when entering an invalid search engine URL. %s is a search term in a URL. */
+"SearchEngine.addEngineError" = "No ha funcionat. Proveu-ho substituint els termes de cerca per això: %s.";
+
+/* Label for disable option on search suggestions prompt */
+"SearchSuggestions.promptDisable" = "No";
+
+/* Label for enable option on search suggestions prompt */
+"SearchSuggestions.promptEnable" = "Sí";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Label for search suggestions prompt message */
+"SearchSuggestions.promptMessage" = "Per veure els suggeriments, el %@ ha d'enviar al motor de cerca tot allò que escriviu a la barra d'adreces.";
+
+/* Title for search suggestions prompt */
+"SearchSuggestions.promptTitle" = "Voleu veure suggeriments de cerca?";
+
+/* Title for the URL Autocomplete row */
+"Settings.autocompleteSection" = "Emplenament automàtic d'URL";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "Si bloqueu altres elements de seguiment de contingut, és possible que alguns vídeos i pàgines web no funcionin correctament.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo2" = "Cancel·la";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes2" = "Bloca els elements de seguiment de contingut";
+
+/* On the Settings screen, this is the subtitle text for a toggle which controls sending daily usage ping. */
+"Settings.DailyUsagePing.Message" = "Això ajuda a Mozilla a estimar els usuaris actius.";
+
+/* On the Settings screen, this is the title text for a toggle which controls automatically sending daily usage ping. */
+"Settings.DailyUsagePing.Title" = "Ping d’ús diari";
+
+/* Dark theme option in settings menu */
+"Settings.darkTheme" = "Fosc";
+
+/* Description associated with the Crash Reports toggle on settings screen */
+"Settings.detailTextCrashReports.V2" = "Ajuden a diagnosticar i solucionar problemes del navegador.";
+
+/* Description associated to the Rollouts toggle on the settings screen. %@ is the app name (for example "Firefox Focus" or "Firefox Klar"). */
+"Settings.detailTextRollouts" = "El %@ millorarà les funcions, el rendiment i l’estabilitat entre actualitzacions. Els canvis apliquen de forma remota.";
+
+/* Description associated to the Search Suggestions toggle on main screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Settings.detailTextSearchSuggestion" = "El %@ enviarà al motor de cerca tot allò que escriviu a la barra d'adreces.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example "Firefox Focus" or "Firefox Klar"). */
+"Settings.detailTextSendUsageData" = "Mozilla s'esforça per recollir només les dades necessàries per oferir i millorar el %@ per a tothom.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example "Firefox Focus" or "Firefox Klar"). */
+"Settings.detailTextSendUsageData.v2" = "Mozilla s'esforça per recollir només les dades necessàries per oferir i millorar el %@ per a tothom.";
+
+/* Title for section in settings menu */
+"Settings.general" = "General";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Més informació.";
+
+/* Lincese option in settings menu. Tapping the cell will take the user to a list of licences for the 3rd parties used in the app. */
+"Settings.licenses" = "Llicències";
+
+/* Light theme option in settings menu */
+"Settings.lightTheme" = "Clar";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Title displayed in the settings screen that, when tapped, allows the user to leave a review for the app on the app store. */
+"Settings.rate" = "Valora el %@";
+
+/* Label for Safari integration section */
+"Settings.safariTitle" = "INTEGRACIÓ AMB EL SAFARI";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "Paràmetres";
+
+/* Text for button to add another search engine in settings */
+"Settings.Search.AddSearchEngineButton" = "Afegeix un altre motor de cerca";
+
+/* Title on add search engine settings screen */
+"Settings.Search.AddSearchEngineTitle" = "Afegeix un motor de cerca";
+
+/* Header for rows of installed search engines */
+"Settings.Search.InstalledSearchEngines" = "MOTORS DE CERCA INSTAL·LATS";
+
+/* Label for input field for the name of the search engine to be added */
+"Settings.Search.NameToDisplay" = "Nom per mostrar";
+
+/* Toast displayed after adding a search engine */
+"Settings.Search.NewSearchEngineAdded" = "S'ha afegit un motor de cerca nou.";
+
+/* Label for button to bring deleted default engines back */
+"Settings.Search.RestoreEngine" = "Restaura els motors de cerca per defecte";
+
+/* Placeholder text for input of new search engine name */
+"Settings.Search.SearchEngineName" = "Nom del motor de cerca";
+
+/* Label for input of search engine template */
+"Settings.Search.SearchTemplate" = "Cadena de cerca que s'utilitzarà";
+
+/* Text displayed as an example of the template to add a search engine. */
+"settings.Search.SearchTemplateExample" = "Exemple: exemple.motorcerca.com/search/?q=%s";
+
+/* Placeholder text for input of new search engine template */
+"Settings.Search.SearchTemplatePlaceholder" = "Enganxeu o escriviu una cadena de cerca. Si és necessari, substituïu el terme de cerca per «%s».";
+
+/* Label for the search engine in the search screen */
+"Settings.searchLabel" = "Motor de cerca";
+
+/* Label for the Search Suggestions toggle row */
+"Settings.searchSuggestions" = "Mostra suggeriments de cerca";
+
+/* Title for the search selection screen */
+"Settings.searchTitle2" = "CERCA";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "PRIVADESA";
+
+/* Label title for set as default browser row */
+"Settings.setAsDefaultBrowser" = "Defineix com a navegador per defecte";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for set as default browser option. */
+"Settings.setAsDefaultBrowserDescription" = "Feu que els enllaços dels llocs web, del correu electrònic i dels missatges s’obrin automàticament en el %@.";
+
+/* System value for theme section in settings menu */
+"Settings.systemTheme" = "Tema del sistema";
+
+/* Theme section in settings menu */
+"Settings.theme" = "Tema";
+
+/* Header for manual theme section in settings menu */
+"Settings.themePicker" = "Selector de tema";
+
+/* Label for the checkbox to toggle Advertising trackers */
+"Settings.toggleBlockAds2" = "Anuncis";
+
+/* Label for the checkbox to toggle Analytics trackers */
+"Settings.toggleBlockAnalytics2" = "Anàlisis";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "Bloca tipus de lletra web";
+
+/* Label for the checkbox to toggle Other trackers */
+"Settings.toggleBlockOther2" = "Contingut";
+
+/* Label for the checkbox to toggle Social trackers */
+"Settings.toggleBlockSocial2" = "Xarxes socials";
+
+/* Label for Crash Reports toggle on settings screen */
+"Settings.toggleCrashReports" = "Envia automàticament informes de fallada";
+
+/* Label for toggle on settings screen */
+"Settings.toggleFaceID" = "Utilitza el Face ID per desblocar l'aplicació";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for 'Enable Face ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleFaceIDDescription" = "El Face ID pot desblocar el %@ si ja hi ha un URL obert en l'aplicació";
+
+/* Show home screen tips toggle label on settings screen */
+"Settings.toggleHomeScreenTips" = "Mostra consells a la pantalla d'inici";
+
+/* Label for Rollouts toggle on the settings screen */
+"Settings.toggleRollouts" = "Permet les millores remotes";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Envia dades d'ús";
+
+/* Label for toggle on settings screen */
+"Settings.toggleTouchID" = "Utilitza el Touch ID per desblocar l'aplicació";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for 'Enable Touch ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleTouchIDDescription" = "El Touch ID pot desblocar el %@ si ja hi ha un URL obert en l'aplicació";
+
+/* Status off for tracking protection in settings screen */
+"Settings.trackingProtectionOff" = "Desactivada";
+
+/* Status on for tracking protection in settings screen */
+"Settings.trackingProtectionOn" = "Activada";
+
+/* Value for theme toggle in settings menu */
+"Settings.useSystemTheme" = "Usa el mode clar/fosc del sistema";
+
+/* Title for settings section to enable different Siri Shortcuts. */
+"Settinsg.siriShortcutsTitle" = "DRECERES DE SIRI";
+
+/* Text for a share button */
+"share" = "Comparteix";
+
+/* Text for the share menu option when a user wants to add the site to Shortcuts */
+"ShareMenu.AddToShortcuts" = "Afegeix a les dreceres";
+
+/* Toast displayed to the user after adding the item to the Shortcuts. */
+"ShareMenu.AddToShortcuts.Confirm" = "S'ha afegit a les dreceres";
+
+/* Text for the share menu when a user wants to copy a URL. */
+"shareMenu.copyAddress" = "Copia l'adreça";
+
+/* Text for the share menu option when a user wants to open the find in page menu */
+"ShareMenu.FindInPage" = "Cerca a la pàgina";
+
+/* Text for the share menu option when a user wants to remove the site from Shortcuts */
+"ShareMenu.RemoveFromShortcuts" = "Elimina de les dreceres";
+
+/* Toast displayed to the user after removing the item from the Shortcuts. */
+"ShareMenu.RemoveShortcut.Confirm" = "S'ha eliminat la drecera";
+
+/* Text for the share menu option when a user wants to reload the site as a desktop */
+"ShareMenu.RequestDesktop" = "Mostra el lloc d'escriptori";
+
+/* Text for the share menu option when a user wants to reload the site as a mobile device */
+"ShareMenu.RequestMobile" = "Mostra la versió mòbil";
+
+/* Text for the share menu option when a user wants to open the current website in the Chrome app. */
+"ShareMenu.ShareOpenChrome" = "Obre al Chrome";
+
+/* Text for the share menu option when a user wants to open the current website in the default browser. */
+"ShareMenu.ShareOpenDefaultBrowser" = "Obre al navegador per defecte";
+
+/* Text for the share menu option when a user wants to open the current website in the Firefox app. */
+"ShareMenu.ShareOpenFirefox" = "Obre al Firefox";
+
+/* Text for the share menu option when a user wants to open the current website inside the app. */
+"ShareMenu.ShareOpenLink" = "Obre l'enllaç";
+
+/* Text for the share menu option when a user wants to share the current website they are on through another app. */
+"ShareMenu.SharePage" = "Comparteix la pàgina amb…";
+
+/* Text for the long press on a shortcut option in context menu. */
+"ShortcutView.RemoveFromShortcuts" = "Elimina de les dreceres";
+
+/* Text for the long press on a shortcut rename option in context menu. */
+"ShortcutView.Rename" = "Canvia el nom de la drecera";
+
+/* Text for the placeholder textfield on rename shortcut alert. */
+"ShortcutView.RenameShortcutAlertPlaceholder" = "Nom de la drecera";
+
+/* Text for the rename shortcut alert primary action. */
+"ShortcutView.RenameShortcutAlertPrimaryAction" = "Desa";
+
+/* Text for the rename shortcut alert secondary action. */
+"ShortcutView.RenameShortcutAlertSecondaryAction" = "Cancel·la";
+
+/* This is the button text that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.ButtonText.V2" = "Fet";
+
+/* This is the subtitle text for step one that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepOne.V2" = "Manteniu premuda la pantalla d’inici fins que les icones comencin a bellugar-se.";
+
+/* This is the subtitle text for step three that is displayed in the Show Me How onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ShowMeHowOnboarding.SubtitleStepThree.V2" = "Cerqueu el %@. A continuació, trieu un giny.";
+
+/* This is the subtitle text for step two that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepTwo.V2" = "Toqueu la icona amb el signe de més.";
+
+/* This is the title text that is displayed in the Show Me How Onboarding Screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ShowMeHowOnboarding.Title.V2" = "Afegiu un giny del %@";
+
+/* Button to add a favorite URL to Siri. */
+"Siri.add" = "Afegeix";
+
+/* Button to add a specified shortcut option to Siri. */
+"Siri.addTo" = "Afegeix a Siri";
+
+/* Label for button to edit the Siri phrase or delete the Siri functionality. */
+"Siri.editOpenUrl" = "Torna a enregistrar o suprimeix la drecera";
+
+/* Title of option in settings to set up Siri to erase */
+"Siri.erase" = "Esborra";
+
+/* Title of option in settings to set up Siri to erase and then open the app. */
+"Siri.eraseAndOpen" = "Esborra i obre";
+
+/* Title for screen to add a favorite URL to Siri. */
+"Siri.favoriteUrl" = "Obre un lloc preferit";
+
+/* Title of option in settings to set up Siri to open a specified URL in Focus/Klar. */
+"Siri.openURL" = "Obre un lloc preferit";
+
+/* Label for input to set a favorite URL to be opened by Siri. */
+"Siri.urlToOpen" = "URL que s'obrirà";
+
+/* Text for a label that indicates the title for biometric tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.Biometric.Title" = "Bloca el %@ quan un lloc és obert:";
+
+/* Text for a label that indicates the description for biometric Face ID tip. */
+"Tip.BiometricFaceId.Description" = "Activa el Face ID";
+
+/* Text for a label that indicates the description for biometric Touch ID tip. */
+"Tip.BiometricTouchId.Description" = "Activa el Touch ID";
+
+/* Text for a label that indicates the description for request desktop tip. */
+"Tip.RequestDesktop.Description" = "Accions de la pàgina > Mostra el lloc d'escriptori";
+
+/* Text for a label that indicates the title for request desktop tip. */
+"Tip.RequestDesktop.Title" = "Voleu veure la versió completa d'escriptori d'un lloc web?";
+
+/* Text for a label that indicates the description for share trackers tip. %@ is the number of trackers blocked. Only shown when there are more than 10 trackers blocked. For locales where we would need plural support, please feel free to translate this string as `Trackers blocked so far: %@` instead. */
+"Tip.ShareTrackers.Description" = "%@ elements de seguiment blocats fins ara";
+
+/* Text for a label that indicates the title for share trackers tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.ShareTrackers.Title" = "Navegueu sense por, que el %@ ho bloca.";
+
+/* Text for a label that indicates the description for shortcuts tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.Shortcuts.Description" = "Seleccioneu «Afegeix a les dreceres» en el menú del %@";
+
+/* Text for a label that indicates the title for shortcuts tip. */
+"Tip.Shortcuts.Title" = "Creeu dreceres als llocs que visiteu més:";
+
+/* Text for a label that indicates the description for siri erase tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriErase.Description" = "Afegeix una drecera de Siri";
+
+/* Text for a label that indicates the title for siri erase tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.SiriErase.Title" = "«Siri, esborra la meva sessió del %@.»";
+
+/* Text for a label that indicates the description for siri favorite tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriFavorite.Description" = "Afegeix una drecera de Siri";
+
+/* Text for a label that indicates the title for siri favorite tip. */
+"Tip.SiriFavorite.Title" = "«Siri, obre el meu lloc preferit.»";
+
+/* Text for a label that indicates the description for sites not working tip. */
+"Tip.SitesNotWorking.Description" = "Proveu de desactivar la protecció contra el seguiment";
+
+/* Text for a label that indicates the title for sites not working tip. */
+"Tip.SitesNotWorking.Title" = "Hi falta contingut al lloc o actua de forma estranya?";
+
+/* Text shown on quick action widget inviting the user to browse in the app. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"TodayWidget.SearchInApp.Instruction" = "Cerca en el %@";
+
+/* This is the body text that is displayed for the Context Menu icon tooltip */
+"TooltipBodyText.ContextMenu" = "Aneu als paràmetres per gestionar les opcions específiques de privadesa i seguretat.";
+
+/* This is the body text that is displayed for the Privacy tooltip */
+"TooltipBodyText.Privacy" = "Aquest paràmetre per defecte ofereix una protecció sòlida. Però és fàcil ajustar els paràmetres per satisfer les vostres necessitats específiques.";
+
+/* This is the body text that is displayed for the Search Bar tooltip */
+"TooltipBodyText.SearchBar" = "Inicieu la vostra sessió de navegació privada i blocarem els elements de seguiment i altres males herbes a mesura que navegueu.";
+
+/* This is the body text that is displayed for the Shield icon tooltip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"TooltipBodyText.ShieldIcon" = "El %@ ha impedit que aquest lloc us espiï. Toqueu l’escut en qualsevol moment per veure què hem blocat.";
+
+/* This is the body text that is displayed for the Shield icon tooltip when we block trackers for the first time on a website */
+"TooltipBodyText.ShieldIconTrackerBlocked.V2" = "Enxampats! Hem impedit que aquest lloc us espiï. Toqueu l’escut en qualsevol moment per veure què hem blocat.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon" = "Toqueu la paperera en qualsevol moment per eliminar qualsevol rastre de la vostra sessió actual.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon.V2" = "Toqueu aquí per eliminar-ho tot (historial, galetes, tot!) i tornar a començar en una pestanya nova.";
+
+/* This is the title text that is displayed for the Privacy tooltip */
+"TooltipTitleText.Privacy" = "Esteu protegit!";
+
+/* Text for tracking protection screen showing the connection is not secure */
+"trackingProtection.connectionNotSecureLabel" = "La connexió no és segura";
+
+/* Text for tracking protection screen showing the connection is secure */
+"trackingProtection.connectionSecureLabel" = "La connexió és segura";
+
+/* Title for the tracking settings page to change what trackers are blocked. */
+"trackingProtection.label" = "Protecció contra el seguiment";
+
+/* Text for the status off from Tracking Protection. */
+"trackingProtection.statusOff" = "S’han desactivat les proteccions per a aquesta sessió";
+
+/* Text for the status on from Tracking Protection. */
+"trackingProtection.statusOn" = "S’han activat les proteccions per a aquesta sessió";
+
+/* Text for the toggle that enables/disables tracking protection. */
+"trackingProtection.toggleLabel2" = "Protecció contra el seguiment millorada";
+
+/* Text for tracking protection screen showing the number of trackers blocked since the app install. %@ is replaced with the install date of the application. */
+"trackingProtection.trackersBlockedLabel" = "Elements de seguiment blocats des de %@";
+
+/* Text for the header of trackers section from Tracking Protection. */
+"trackingProtection.trackersHeader" = "Elements de seguiment i scripts que es blocaran";
+
+/* Label displayed for button used as a shortcut to add a link to the list of URLs to autocomplete. */
+"URL.addToAutocompleteLabel" = "Afegeix l'enllaç a l'emplenament automàtic";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Enganxa i vés-hi";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "ESBORRA";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel2" = "S’ha esborrat l’historial de navegació";
+
+/* Label displayed for find in page button when typing in the URL Bar. %@ is any text the user has typed into the URL bar that they want to find on the current page. */
+"URL.findOnPageLabel" = "Cerca a la pàgina: %@";
+
+/* Text for a menu displayed from the bottom of the screen when a user long presses on the URL bar with clipboard contents. */
+"URL.paste" = "Enganxa";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "Escriviu una cerca o adreça";
+
+/* Label displayed for search button when typing in the URL bar. %@ is the text type by the user. */
+"URL.searchLabel" = "Cerca %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Elements blocats";
+
+/* Title for the action button shown on card view that will take the user to a tutorial explaining the user how to add an widget */
+"WidgetOnboardingCard.ActionButton" = "Mostra’m com es fa";
+
+/* Subtitle shown on card view explaining the app has a widget option. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"WidgetOnboardingCard.Subtitle" = "Us deixem en la vostra navegació privada, però si la pròxima vegada voleu anar més de pressa, afegiu el giny del %@ a la pantalla d’inici.";
+
+/* Title shown on card view explaining the app has a widget option */
+"WidgetOnboardingCard.Title" = "S’ha esborrat l’historial de navegació! 🎉";
+

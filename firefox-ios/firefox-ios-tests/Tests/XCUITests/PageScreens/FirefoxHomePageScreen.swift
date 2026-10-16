@@ -1,0 +1,50 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+
+@MainActor
+final class FirefoxHomePageScreen {
+    private let app: XCUIApplication
+    private let sel: FirefoxHomePageSelectorsSet
+
+    init(app: XCUIApplication, selectors: FirefoxHomePageSelectorsSet = FirefoxHomePageSelectors()) {
+        self.app = app
+        self.sel = selectors
+    }
+
+    /// Dismisses the "new changes" popup on Home, if present.
+    func dismissNewChangesPopupIfNeeded() {
+        // Dismiss "new changes" popup if present
+        let closePopup = app.buttons["Close"]
+        if closePopup.exists { closePopup.tap() }
+    }
+
+    func assertTopSitesItemCellExist(timeout: TimeInterval = TIMEOUT) {
+        let topSites_ItemCell = sel.TOPSITES_ITEMCELL.element(in: app)
+
+        BaseTestCase().mozWaitForElementToExist(topSites_ItemCell, timeout: timeout)
+    }
+
+    func assertBookmarksItemCellToNotExist(timeout: TimeInterval = TIMEOUT) {
+        let bookmarks_ItemCell = sel.BOOKMARKS_ITEMCELL.element(in: app)
+        BaseTestCase().mozWaitForElementToNotExist(bookmarks_ItemCell, timeout: timeout)
+    }
+
+    func assertBookmarksItemCellExist(timeout: TimeInterval = TIMEOUT) {
+        let bookmarks_ItemCell = sel.BOOKMARKS_ITEMCELL.element(in: app)
+        BaseTestCase().mozWaitForElementToExist(bookmarks_ItemCell, timeout: timeout)
+    }
+
+    func tapBookmarksShowAll() {
+        sel.BOOKMARKS_SHOW_ALL_BUTTON.element(in: app).waitAndTap()
+    }
+
+    /// Unlike `assertBookmarksItemCellToNotExist`, this checks a single entry rather than the whole
+    /// section, so it can be used while the section holds other bookmarks.
+    func assertBookmarkItemNotExists(title: String, timeout: TimeInterval = TIMEOUT) {
+        let bookmarkTitle = sel.BOOKMARKS_ITEMCELL.query(in: app).staticTexts[title].firstMatch
+        BaseTestCase().mozWaitForElementToNotExist(bookmarkTitle, timeout: timeout)
+    }
+}

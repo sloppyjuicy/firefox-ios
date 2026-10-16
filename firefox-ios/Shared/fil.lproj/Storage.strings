@@ -1,0 +1,15 @@
+/* The title of the folder that contains mobile bookmarks. */
+"Bookmarks" = "Mga Bookmark";
+
+/* The name of the folder that contains desktop bookmarks in the menu. */
+"Bookmarks Menu" = "Talaan ng mga Bookmark";
+
+/* The name of the folder that contains desktop bookmarks in the toolbar. */
+"Bookmarks Toolbar" = "Bookmarks Toolbar";
+
+/* The legacy title of the folder that contains mobile bookmarks. */
+"Mobile Bookmarks" = "Mobile Bookmarks";
+
+/* The name of the folder that contains unsorted desktop bookmarks. */
+"Unsorted Bookmarks" = "Mga Bookmark na Hindi Ayos.";
+

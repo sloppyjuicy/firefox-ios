@@ -1,0 +1,197 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+
+@MainActor
+final class LoginSettingsScreen {
+    private let app: XCUIApplication
+    private let sel: LoginSettingsSelectorsSet
+
+    init(app: XCUIApplication, selectors: LoginSettingsSelectorsSet = LoginSettingsSelectors()) {
+        self.app = app
+        self.sel = selectors
+    }
+
+    func waitForLoginList() {
+        let table = sel.LOGIN_LIST.element(in: app)
+        BaseTestCase().mozWaitForElementToExist(table)
+    }
+
+    func assertLoginCount(is expected: Int) {
+        let table = sel.LOGIN_LIST.element(in: app)
+        BaseTestCase().mozWaitForElementToExist(table)
+        let count = table.cells.count
+        XCTAssertEqual(count, expected, "Expected \(expected) rows in login list but found \(count)")
+    }
+
+    func tapSaveButtonIfExists() {
+        sel.SAVE_BUTTON_CELL.element(in: app).tapIfExists()
+    }
+
+    func assertDomainVisible(_ domain: String) {
+        let domainText = sel.domainLabel(domain).element(in: app)
+        BaseTestCase().mozWaitForElementToExist(domainText)
+    }
+
+    func assertLoginListExist() {
+        BaseTestCase().mozWaitForElementToExist(sel.LOGIN_LIST.element(in: app))
+    }
+
+    func tapOnSubmitButton() {
+        sel.SUBMIT_BUTTON.element(in: app).waitAndTap()
+    }
+
+    func tapOnSaveButton() {
+        sel.SAVE_BUTTON.element(in: app).waitAndTap()
+    }
+
+    func waitForInitialState() {
+        BaseTestCase().mozWaitForElementToExist(sel.LOGIN_LIST.element(in: app))
+        BaseTestCase().mozWaitForElementToExist(sel.NAVBAR_PASSWORDS.element(in: app))
+        BaseTestCase().mozWaitForElementToExist(sel.EMPTY_STATE_LABEL.element(in: app))
+        BaseTestCase().mozWaitForElementToExist(sel.ADD_BUTTON.element(in: app))
+        BaseTestCase().mozWaitForElementToExist(sel.EDIT_BUTTON.element(in: app))
+    }
+
+    func assertInitialButtonStates() {
+        XCTAssertFalse(sel.EDIT_BUTTON.element(in: app).isEnabled, "Expected Edit button to be disabled")
+        XCTAssertTrue(sel.ADD_BUTTON.element(in: app).isEnabled, "Expected Add button to be enabled")
+    }
+
+    func assertLoginCreated(for domain: String) {
+        let loginCell = sel.createdLoginCell(domain).element(in: app)
+        BaseTestCase().mozWaitForElementToExist(loginCell)
+    }
+
+    func createLoginManually(site: String = "testweb", username: String = "foo", password: String = "bar") {
+        sel.ADD_BUTTON.element(in: app).waitAndTap()
+
+        BaseTestCase().waitForElementsToExist([
+            sel.ADD_CREDENTIAL_TABLE.element(in: app),
+            sel.WEBSITE_FIELD_CELL.element(in: app),
+            sel.USERNAME_FIELD_CELL.element(in: app),
+            sel.PASSWORD_FIELD_CELL.element(in: app)
+        ])
+
+        sel.WEBSITE_FIELD_CELL.element(in: app).waitAndTap()
+        enterTextInField(typedText: site)
+
+        sel.USERNAME_FIELD_CELL.element(in: app).waitAndTap()
+        enterTextInField(typedText: username)
+
+        sel.PASSWORD_FIELD_CELL.element(in: app).waitAndTap()
+        enterTextInField(typedText: password)
+
+        sel.SAVE_BUTTON_ADD_LOGIN.element(in: app).waitAndTap()
+
+        BaseTestCase().mozWaitForElementToExist(sel.SAVED_PASSWORDS_LABEL.element(in: app))
+    }
+
+    func enterTextInField(typedText: String) {
+        if app.keyboards.element.exists {
+            if app.keyboards.buttons["Continue"].exists {
+                app.keyboards.buttons["Continue"].waitAndTap()
+                BaseTestCase().mozWaitForElementToNotExist(app.keyboards.buttons["Continue"])
+                BaseTestCase().mozWaitForElementToExist(app.keyboards.keys.firstMatch)
+            }
+            for letter in typedText {
+                app.keyboards.keys["\(letter)"].waitAndTap()
+            }
+        } else {
+            // Without visual keyboard (hardware connected), use typeText
+            app.typeText(typedText)
+        }
+    }
+
+    func assertSavePasswordsToggleIsEnabled() {
+        let toggle = sel.SAVE_PASSWORDS_TOGGLE.element(in: app)
+        BaseTestCase().mozWaitForElementToExist(toggle)
+        XCTAssertEqual(toggle.value as? String, "1", "Save passwords toggle is not enabled by default")
+    }
+
+    /// The row sits under the first-run sheet, whose dismissal animation swallows a tap sent as soon
+    /// as the sheet leaves the hierarchy, so the row is re-tapped until the detail screen pushes.
+    func openLoginAtIndex(_ index: Int, attempts: Int = 3) {
+        let base = BaseTestCase()
+        let cell = sel.LOGIN_LIST.element(in: app).cells.element(boundBy: index)
+        let detailList = sel.LOGIN_DETAIL_LIST.element(in: app)
+        base.mozWaitForElementToExist(cell)
+        for _ in 0..<attempts {
+            // Re-tapping once the push has started would force-tap a coordinate that by then sits
+            // over the detail screen, so a landed tap is waited out rather than repeated.
+            if detailList.exists { return }
+            guard cell.exists else { break }
+            cell.tap(force: true)
+            if detailList.mozWaitForElementToExist(timeout: 5, failOnTimeout: false) { return }
+        }
+        if detailList.mozWaitForElementToExist(timeout: TIMEOUT, failOnTimeout: false) { return }
+        XCTFail("The login detail screen did not open after \(attempts) taps")
+    }
+
+    func assertLoginDetailListExists() {
+        BaseTestCase().mozWaitForElementToExist(sel.LOGIN_DETAIL_LIST.element(in: app))
+    }
+
+    func tapLoginDetailCellContaining(_ text: String) {
+        assertLoginDetailListExists()
+        sel.LOGIN_DETAIL_LIST.element(in: app).cells.elementContainingText(text).waitAndTap()
+    }
+
+    func revealPassword() {
+        sel.PASSWORD_FIELD_CELL.element(in: app).waitAndTap()
+        sel.REVEAL_BUTTON.element(in: app).waitAndTap()
+    }
+
+    func assertPasswordVisible(_ value: String) {
+        let match = app.tables.cells.containing(NSPredicate(format: "label CONTAINS %@", value)).firstMatch
+        BaseTestCase().mozWaitForElementToExist(match)
+    }
+
+    func assertPasswordNotVisible(_ value: String) {
+        let match = app.tables.cells.containing(NSPredicate(format: "label CONTAINS %@", value)).firstMatch
+        BaseTestCase().mozWaitForElementToNotExist(match)
+    }
+
+    /// Dismisses the system device-passcode prompt guarding the Passwords/Credit Cards screens.
+    ///
+    /// On CI the springboard passcode overlay is intermittently not presented — the authentication
+    /// grace period may still be active (no prompt shown) — and when it is presented the first
+    /// keystrokes are occasionally dropped, leaving the screen locked. This types the passcode and
+    /// retries until the prompt is dismissed, which is the "unlocked" signal for every screen this
+    /// guards, so it stays agnostic to the destination (Passwords list, Credit Cards list, …).
+    /// Callers assert their own destination screen afterwards. If the grace period is active the
+    /// prompt never appears and this returns immediately.
+    func unlockLoginsView() {
+        let passcodeValue = "foo\n"
+        let base = BaseTestCase()
+        if sel.ONBOARDING_CONTINUE_BUTTON.element(in: app).exists {
+            sel.ONBOARDING_CONTINUE_BUTTON.element(in: app).waitAndTap()
+        }
+
+        let passcode = sel.PASSCODE_FIELD.element(in: springboard)
+        // First detection uses the long timeout because the prompt can be slow to present on CI.
+        guard base.mozWaitForElementToExist(passcode, timeout: TIMEOUT_LONG, failOnTimeout: false) else {
+            return
+        }
+        var attempts = 3
+        repeat {
+            passcode.tapAndTypeTextWhenFocused(passcodeValue)
+            if base.mozWaitForElementToNotExist(passcode, timeout: TIMEOUT, failOnTimeout: false) {
+                return
+            }
+            attempts -= 1
+        } while passcode.exists && attempts > 0
+    }
+
+    /// The simulator has no Face ID enrolled, so device owner authentication always asks for the passcode.
+    func assertPasscodePromptShown(timeout: TimeInterval = TIMEOUT_LONG) {
+        BaseTestCase().mozWaitForElementToExist(sel.PASSCODE_FIELD.element(in: springboard), timeout: timeout)
+    }
+
+    func assertLoginCreatedFirstMatch() {
+        let firstStaticText = sel.LOGIN_LIST.element(in: app).staticTexts.firstMatch
+        BaseTestCase().mozWaitForElementToExist(firstStaticText)
+    }
+}

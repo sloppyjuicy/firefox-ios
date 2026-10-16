@@ -1,0 +1,322 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+@testable import Common
+
+@MainActor
+final class DefaultThemeManagerTests: XCTestCase {
+    let windowUUID: WindowUUID = .XCTestDefaultUUID
+
+    // MARK: - Variables
+
+    private var userDefaults: MockUserDefaults!
+
+    // MARK: - Test lifecycle
+    override func setUp() async throws {
+        try await super.setUp()
+        userDefaults = MockUserDefaults()
+        DependencyHelperMock().bootstrapDependencies()
+    }
+
+    override func tearDown() async throws {
+        userDefaults = nil
+        DependencyHelperMock().reset()
+        try await super.tearDown()
+    }
+
+    // MARK: - Initialization tests
+    func test_mockDefaultsInitializesEmpty() {
+        XCTAssert(
+            userDefaults.savedData.isEmpty,
+            "savedData should be empty when initializing object"
+        )
+
+        XCTAssert(
+            userDefaults.registrationDictionary.isEmpty,
+            "registrationDictionary should be empty when initializing object"
+        )
+    }
+
+    func test_sutInitializesWithExpectedRegisteredValues() {
+        _ = createSubject(with: userDefaults)
+        let expectedSystemResult = true
+        let expectedNightModeResult = false
+
+        XCTAssertEqual(userDefaults.registrationDictionary.count, 2)
+
+        guard let systemResult = userDefaults.registrationDictionary["prefKeySystemThemeSwitchOnOff"] as? Bool,
+              let nightModeResult = userDefaults.registrationDictionary["profile.NightModeStatus"] as? Bool
+        else {
+            XCTFail("Failed to fetch one or more expected keys")
+            return
+        }
+
+        XCTAssertEqual(systemResult, expectedSystemResult)
+        XCTAssertEqual(nightModeResult, expectedNightModeResult)
+    }
+
+    func testDTM_onInitialization_hasLightTheme() {
+        let sut = createSubject(with: userDefaults)
+
+        let expectedResult = ThemeType.light
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedResult)
+    }
+
+    // MARK: - Changing current theme tests
+
+    func testDTM_changeToDarkTheme_changesToDarkTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.dark
+
+        sut.setManualTheme(to: .dark)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedResult)
+        XCTAssertEqual(
+            userDefaults.string(forKey: DefaultThemeManager.ThemeKeys.themeName),
+            expectedResult.rawValue
+        )
+    }
+
+    func testDTM_changeToLightTheme_changesToLightTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.light
+
+        sut.setManualTheme(to: .dark)
+        sut.setManualTheme(to: .light)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedResult)
+        XCTAssertEqual(
+            userDefaults.string(forKey: DefaultThemeManager.ThemeKeys.themeName),
+            expectedResult.rawValue
+        )
+    }
+
+    // MARK: - resolveTheme
+    func testDTM_inNormalMode_withForcePrivate_retrievesPrivateTheme() {
+        let sut = createSubject(with: userDefaults)
+        let theme = sut.resolvedTheme(with: true)
+
+        XCTAssertEqual(theme.type, ThemeType.privateMode)
+        XCTAssertEqual(userDefaults.string(forKey: DefaultThemeManager.ThemeKeys.themeName), ThemeType.light.rawValue)
+    }
+
+    func testDTM_inNormalMode_withoutForcePrivate_retrievesLightTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.light
+
+        let theme = sut.resolvedTheme(with: false)
+
+        XCTAssertEqual(theme.type, expectedResult)
+        XCTAssertEqual(userDefaults.string(forKey: DefaultThemeManager.ThemeKeys.themeName), expectedResult.rawValue)
+    }
+
+    // MARK: - System theme tests
+
+    func testDTM_systemThemeTurnedOff_returnsDefaultTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.light
+
+        sut.setSystemTheme(isOn: false)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedResult)
+    }
+
+    func testDTM_systemThemeTurnedOffThenOn_returnsDefaultTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.light
+
+        sut.setSystemTheme(isOn: false)
+        sut.setSystemTheme(isOn: true)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedResult)
+    }
+
+    // MARK: - Private theme tests
+
+    func testDTM_privateModeEnabled_returnsPrivateTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.privateMode
+
+        sut.setPrivateTheme(isOn: true, for: windowUUID)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedResult)
+    }
+
+    func testDTM_privateModeEnabledAndThenDisabled_returnsOriginalTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.light
+
+        sut.setPrivateTheme(isOn: true, for: windowUUID)
+        sut.setPrivateTheme(isOn: false, for: windowUUID)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedResult)
+    }
+
+    func testDTM_privateModeEnabled_originalThemeRemainsSaved() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.dark.rawValue
+
+        sut.setManualTheme(to: .dark)
+        sut.setPrivateTheme(isOn: true, for: windowUUID)
+
+        XCTAssertEqual(
+            userDefaults.string(forKey: DefaultThemeManager.ThemeKeys.themeName),
+            expectedResult
+        )
+    }
+
+    // MARK: - Getting non-special themes
+
+    func testDTM_privateModeEnabled_originalThemeRemainsAccessibleAfterChange() {
+        let sut = createSubject(with: userDefaults)
+        let expectedResult = ThemeType.light
+        let currentThemeExpectedResult = ThemeType.privateMode
+
+        sut.setManualTheme(to: .dark)
+        sut.setPrivateTheme(isOn: true, for: windowUUID)
+        sut.setManualTheme(to: .light)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, currentThemeExpectedResult)
+        XCTAssertEqual(sut.getUserManualTheme(), expectedResult)
+    }
+
+    // MARK: - Brightness Tests
+
+    func testDTM_autoBrightnessIsOn_returnsExpectedThemeAndBrightness() {
+        let sut = createSubject(with: userDefaults)
+        let expectedBrightnessState = true
+        let expectedBrightnessValue = Float(0.0)
+        let expectedTheme = ThemeType.light
+
+        sut.setSystemTheme(isOn: false)
+        sut.setAutomaticBrightness(isOn: true)
+
+        XCTAssertEqual(
+            userDefaults.bool(forKey: DefaultThemeManager.ThemeKeys.AutomaticBrightness.isOn),
+            expectedBrightnessState
+        )
+        XCTAssertEqual(
+            userDefaults.float(forKey: DefaultThemeManager.ThemeKeys.AutomaticBrightness.thresholdValue),
+            expectedBrightnessValue
+        )
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedTheme)
+    }
+
+    func testDTM_settingAutoBrightnessThresholdValue_changesToNewValue() {
+        let sut = createSubject(with: userDefaults)
+        let firstExpectedResult = Float(42.0)
+        let secondExpectedResult = Float(68.0)
+
+        sut.setAutomaticBrightnessValue(firstExpectedResult)
+        XCTAssertEqual(
+            userDefaults.float(forKey: DefaultThemeManager.ThemeKeys.AutomaticBrightness.thresholdValue),
+            firstExpectedResult
+        )
+
+        sut.setAutomaticBrightnessValue(secondExpectedResult)
+        XCTAssertEqual(
+            userDefaults.float(forKey: DefaultThemeManager.ThemeKeys.AutomaticBrightness.thresholdValue),
+            secondExpectedResult
+        )
+    }
+
+    func testDTM_autoBrightnessOnThresholdLowerThanScreenBrigthness_returnsLightTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedTheme = ThemeType.light
+
+        testBrightnessWith(threshold: 0.25, in: sut)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedTheme)
+    }
+
+    func testDTM_autoBrightnessOnThresholdEqualToScreenBrigthness_returnsLightTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedTheme = ThemeType.light
+
+        testBrightnessWith(threshold: 0.50, in: sut)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedTheme)
+    }
+
+    func testDTM_autoBrightnessOnThresholdGreaterThanScreenBrigthness_returnsDarkTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedTheme = ThemeType.dark
+
+        testBrightnessWith(threshold: 0.75, in: sut)
+
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedTheme)
+    }
+
+    func testDTM_autoBrightnessOn_changeValues_thenOff_returnsToExpectedSystemTheme() {
+        let sut = createSubject(with: userDefaults)
+        let expectedThemeInBrightnessMode = ThemeType.dark
+        let expectedThemeInSystemMode = ThemeType.light
+
+        testBrightnessWith(threshold: 0.75, in: sut)
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedThemeInBrightnessMode)
+
+        sut.setSystemTheme(isOn: true)
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).type, expectedThemeInSystemMode)
+    }
+
+    func testDTM_novaDesignOn_returnsNovaLightThemeForLightMode() {
+        let sut = createSubject(with: userDefaults, isNovaDesignOn: true)
+
+        XCTAssertTrue(sut.getCurrentTheme(for: windowUUID) is NovaLightTheme)
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).colors.layer1, NovaColors.Gray5)
+    }
+
+    func testDTM_novaDesignOn_returnsNovaDarkThemeForDarkMode() {
+        let sut = createSubject(with: userDefaults, isNovaDesignOn: true)
+        sut.setSystemTheme(isOn: false)
+        sut.setManualTheme(to: .dark)
+
+        XCTAssertTrue(sut.getCurrentTheme(for: windowUUID) is NovaDarkTheme)
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).colors.layer1, NovaColors.Gray75)
+    }
+
+    func testDTM_novaDesignOn_returnsNovaPrivateThemeForPrivateMode() {
+        let sut = createSubject(with: userDefaults, isNovaDesignOn: true)
+        sut.setPrivateTheme(isOn: true, for: windowUUID)
+
+        XCTAssertTrue(sut.getCurrentTheme(for: windowUUID) is NovaPrivateTheme)
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).colors.layer1, NovaColors.VioletDesaturated90)
+    }
+
+    func testDTM_novaDesignOff_returnsLegacyLightThemeForLightMode() {
+        let sut = createSubject(with: userDefaults, isNovaDesignOn: false)
+
+        XCTAssertTrue(sut.getCurrentTheme(for: windowUUID) is LightTheme)
+        XCTAssertEqual(sut.getCurrentTheme(for: windowUUID).colors.layer1, LightTheme().colors.layer1)
+    }
+
+    // MARK: - Helper methods
+
+    private func createSubject(with userDefaults: UserDefaultsInterface,
+                               isNovaDesignOn: Bool = false,
+                               file: StaticString = #filePath,
+                               line: UInt = #line) -> DefaultThemeManager {
+        let subject = DefaultThemeManager(
+            userDefaults: userDefaults,
+            sharedContainerIdentifier: "",
+            isNovaDesignOnClosure: { isNovaDesignOn }
+        )
+        subject.setWindow(UIWindow(frame: .zero), for: windowUUID)
+        trackForMemoryLeaks(subject, file: file, line: line)
+
+        return subject
+    }
+
+    private func testBrightnessWith(
+        threshold: Double,
+        in sut: DefaultThemeManager
+    ) {
+        sut.setSystemTheme(isOn: false)
+        sut.setAutomaticBrightness(isOn: true)
+        UIScreen.main.brightness = 0.5
+        sut.setAutomaticBrightnessValue(Float(threshold))
+    }
+}

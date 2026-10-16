@@ -1,0 +1,27 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "Кушымта логотибы";
+
+/* (No Comment) */
+"New Private Tab" = "Яңа хосусый таб";
+
+/* (No Comment) */
+"New Tab" = "Яңа таб";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox can use your camera to scan QR codes or take photos and video.";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "Сакланган серсүзләрегезгә һәм түләү ысулларыгызга ирешү өчен Firefox Face ID таләп итә.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "Зиярат ителгән вебсайтлар урнашуыгызны сорый ала.";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "Firefox uses your microphone to record and upload audio.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "Фотоларны саклау өчен сез моны куллана аласыз.";
+
+/* (No Comment) */
+"Scan QR Code" = "QR кодны сканерлау";
+

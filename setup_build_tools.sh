@@ -4,7 +4,7 @@
 # Install all the required dependencies for building and deploying Firefox for iOS
 # Assumes you already have git otherwise you wouldn't have this setup script
 #
-# run ./setup.sh from the command line to run
+# run ./setup_build_tools.sh from the command line to run
 #
 
 #
@@ -28,18 +28,8 @@ if [[ $? != 0 ]] ; then
 	echo "Installing Homebrew"
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 else
-	echo "Homebrew already installed"
-fi
-
-#
-# Check if python is installed
-#
-if [ ! -e $(python -c 'from distutils.sysconfig import get_makefile_filename as m; print m()') ]; then
-	# Install python
-	echo "Installing python"
-	brew install python
-else
-	echo "python already installed"
+	echo "Homebrew already installed, but will update to get latest"
+	brew update
 fi
 
 #
@@ -48,29 +38,10 @@ fi
 which -s virtualenv
 if [[ $? != 0 ]] ; then
     # Install virtualenv
-	echo "Installing vitualenv"
-    pip install virtualenv
+	echo "Installing virtualenv"
+    pip3 install virtualenv
 else
 	echo "virtualenv already installed"
-fi
-
-if [ ! -d /usr/local/Cellar/imagemagick ] ; then
-	echo "installing imagemagick"
-	brew install imagemagick
-else
-	echo "imagemagick already installed"
-fi
-
-#
-# Check if Carthage is installed
-#
-which -s carthage
-if [[ $? != 0 ]] ; then
-    # Install Carthage
-    echo "Installing Carthage"
-    brew install carthage
-else
-	echo "Carthage already installed"
 fi
 
 #
@@ -86,14 +57,8 @@ else
 fi
 
 #
-# Check if fastlane is installed
+# Install the swiftlint version pinned in .swiftlint-version. Deliberately not
+# installed through Homebrew so that every engineer and CI run lint with the
+# same version.
 #
-which -s fastlane
-if [[ $? != 0 ]] ; then
-    # Install fastlane
-	echo "Installing fastlane."
-    sudo gem install fastlane
-    fastlane init
-else
-	echo "fastlane already installed"
-fi
+"$(dirname "$0")/scripts/install-swiftlint.sh" > /dev/null

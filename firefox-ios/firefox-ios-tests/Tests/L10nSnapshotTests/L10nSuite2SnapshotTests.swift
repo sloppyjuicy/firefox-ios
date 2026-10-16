@@ -1,0 +1,192 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+import Common
+
+class L10nSuite2SnapshotTests: L10nBaseSnapshotTests {
+    @MainActor
+    let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+    @MainActor
+    func testPanelsEmptyState() {
+        mozWaitForElementToExist(app.buttons[AccessibilityIdentifiers.Toolbar.settingsMenuButton])
+        navigator.nowAt(NewTabScreen)
+        navigator.goto(LibraryPanel_Bookmarks)
+        snapshot("PanelsEmptyState-LibraryPanels.Bookmarks")
+        // Tap on each of the library buttons
+        if #unavailable(iOS 26) {
+            for i in 1...3 {
+                app.segmentedControls["librarySegmentControl"].buttons.element(boundBy: i).waitAndTap()
+                snapshot("PanelsEmptyState-\(i)")
+            }
+        } else {
+            // iOS 26: Unable to tap buttons under toolbar
+            app.navigationBars.buttons[AccessibilityIdentifiers.LibraryPanels.topRightButton].waitAndTap()
+            navigator.nowAt(NewTabScreen)
+            navigator.goto(LibraryPanel_History)
+            snapshot("PanelsEmptyState-1")
+            app.navigationBars.buttons[AccessibilityIdentifiers.LibraryPanels.topRightButton].waitAndTap()
+            navigator.nowAt(NewTabScreen)
+            navigator.goto(LibraryPanel_Downloads)
+            snapshot("PanelsEmptyState-2")
+        }
+    }
+
+    // From here on it is fine to load pages
+    @MainActor
+    func testLongPressOnTextOptions() {
+        navigator.openURL(loremIpsumURL)
+        waitUntilPageLoad()
+        mozWaitForElementToNotExist(app.staticTexts["XCUITests-Runner pasted from Fennec"])
+
+        // Select some text and long press to find the option
+        mozWaitForElementToExist(app.webViews.element(boundBy: 0).staticTexts.element(boundBy: 0))
+        app.webViews.element(boundBy: 0).staticTexts.element(boundBy: 0).press(forDuration: 1)
+        snapshot("LongPressTextOptions-01")
+        if app.menuItems["show.next.items.menu.button"].exists {
+            app.menuItems["show.next.items.menu.button"].waitAndTap()
+            snapshot("LongPressTextOptions-02")
+        }
+    }
+
+    @MainActor
+    func testURLBar() {
+        navigator.goto(URLBarOpen)
+        snapshot("URLBar-01")
+
+        userState.url = "moz"
+        navigator.performAction(Action.SetURLByTyping)
+        snapshot("URLBar-02")
+    }
+
+    @MainActor
+    func testURLBarContextMenu() {
+        if #unavailable(iOS 16.0) {
+        // Long press with nothing on the clipboard
+        navigator.goto(URLBarLongPressMenu)
+        snapshot("LocationBarContextMenu-01-no-url")
+            // Skip from here on iOS 16 due to the AllowPaste API message
+            navigator.back()
+
+            // Long press with a URL on the clipboard
+            UIPasteboard.general.string = "https://www.mozilla.com"
+            navigator.goto(URLBarLongPressMenu)
+            snapshot("LocationBarContextMenu-02-with-url")
+        }
+    }
+
+    @MainActor
+    func testMenuOnWebPage() {
+        navigator.openURL(loremIpsumURL)
+        mozWaitForElementToNotExist(app.staticTexts["XCUITests-Runner pasted from Fennec"])
+        navigator.goto(BrowserTabMenu)
+        snapshot("MenuOnWebPage-01")
+
+        navigator.toggleOn(userState.nightMode, withAction: Action.ToggleNightMode)
+
+        navigator.nowAt(BrowserTab)
+        navigator.goto(BrowserTabMenu)
+        snapshot("MenuOnWebPage-02")
+    }
+
+    @MainActor
+    func testPageMenuOnWebPage() {
+        navigator.openURL(loremIpsumURL)
+        mozWaitForElementToNotExist(app.staticTexts["XCUITests-Runner pasted from Fennec"])
+        mozWaitForElementToExist(app.buttons[AccessibilityIdentifiers.Toolbar.settingsMenuButton])
+        navigator.goto(BrowserTabMenu)
+        snapshot("MenuOnWebPage-03")
+        navigator.goto(BrowserTabMenuMore)
+        snapshot("MenuOnWebPage-04")
+    }
+
+    @MainActor
+    func testFxASignInPage() {
+        navigator.openURL(loremIpsumURL)
+        mozWaitForElementToExist(app.buttons[AccessibilityIdentifiers.Toolbar.settingsMenuButton])
+        navigator.nowAt(NewTabScreen)
+        navigator.goto(Intro_FxASignin)
+        mozWaitForElementToExist(app.navigationBars.staticTexts["FxASingin.navBar"])
+        snapshot("FxASignInScreen-01")
+    }
+
+    private func typePasscode(n: Int, keyNumber: Int) {
+        for _ in 1...n {
+            app.keys.element(boundBy: keyNumber).waitAndTap()
+            sleep(1)
+        }
+    }
+
+    @MainActor
+    private func pasteText(_ text: String, intoCellAt index: Int) {
+        UIPasteboard.general.string = text
+        let cell = app.tables["Add Credential"].cells.element(boundBy: index)
+        cell.waitAndTap(timeout: 15)
+        cell.press(forDuration: 1.0)
+        // The system edit-menu items expose no accessibility identifiers and have localized labels,
+        // but "Paste" is consistently the first item when the clipboard has content, so tap by
+        // position to stay locale-independent.
+        app.menuItems.element(boundBy: 0).waitAndTap(timeout: 5)
+    }
+
+    @MainActor
+    func testLoginDetails() {
+        navigator.nowAt(NewTabScreen)
+        navigator.goto(SettingsScreen)
+        navigator.goto(LoginsSettings)
+
+        // Press continue button on the password onboarding if it's shown
+        if app.buttons[AccessibilityIdentifiers.Settings.Passwords.onboardingContinue].exists {
+            app.buttons[AccessibilityIdentifiers.Settings.Passwords.onboardingContinue].waitAndTap()
+        }
+
+        // Use a numeric passcode so entry is keyboard-layout independent (non-Latin keyboards
+        // can't type Latin characters, which previously broke authentication on RTL/non-Latin locales).
+        let passcodeInput = springboard.secureTextFields.firstMatch
+        mozWaitForElementToExist(passcodeInput)
+        passcodeInput.tapAndTypeText("1234\n")
+        mozWaitForElementToNotExist(passcodeInput)
+
+        mozWaitForElementToExist(app.tables["Login List"], timeout: 25)
+        mozWaitForElementToExist(app.buttons["addCredentialButton"], timeout: 20)
+        snapshot("CreateLogin")
+        app.buttons["addCredentialButton"].waitAndTap()
+
+        // Paste explicit, valid credentials (keyboard-independent). Typing is unreliable here: these
+        // cells aggregate accessibility (typeText finds no focus), and on non-ASCII .URL keyboards a
+        // positional key tap yields an invalid hostname (FXIOS-16021).
+        app.tables["Add Credential"].cells.element(boundBy: 0).waitAndTap(timeout: 15)
+        // Dismiss the one-time keyboard onboarding overlay if shown.
+        if app.buttons["Continue"].isHittable {
+            app.buttons.staticTexts["Continue"].waitAndTap()
+        }
+        pasteText("https://mozilla.org", intoCellAt: 0)
+        pasteText("firefox", intoCellAt: 1)
+        pasteText("challenge-the-default", intoCellAt: 2)
+        app.navigationBars["Client.AddCredentialView"].buttons.element(boundBy: 1).waitAndTap(timeout: 5)
+
+        mozWaitForElementToExist(app.tables["Login List"], timeout: 15)
+        // The "Save password?" sheet ([Not Now / Save]) can be tapped before it finishes animating
+        // in, so the tap is ignored and the sheet lingers, timing out the test. Wait until the
+        // dismiss button is actually hittable before tapping it.
+        let saveSheet = app.sheets.firstMatch
+        mozWaitForElementToExist(saveSheet)
+        let dismissButton = saveSheet.buttons.firstMatch
+        mozWaitForElementToExist(dismissButton)
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"),
+                                                 object: dismissButton)
+        _ = XCTWaiter().wait(for: [hittable], timeout: TIMEOUT)
+        dismissButton.tap()
+        mozWaitForElementToNotExist(saveSheet)
+        snapshot("CreatedLoginView")
+
+        // Tap the saved login (row 0 is the "Save passwords" toggle; the entry is the next row).
+        // Selecting by index is keyboard/URL independent, unlike matching the website text.
+        app.tables["Login List"].cells.element(boundBy: 1).waitAndTap()
+        snapshot("CreatedLoginDetailedView")
+
+        app.tables["Login Detail List"].cells.element(boundBy: 4).waitAndTap()
+        snapshot("RemoveLoginDetailedView")
+    }
+}

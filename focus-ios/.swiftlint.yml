@@ -1,0 +1,18 @@
+# Swiftlint configuration overloads that will be applied to all files
+# in this folder and all its children recursively, unless another
+# nested configuration takes over.
+# https://github.com/realm/SwiftLint#nested-configurations.
+
+# Those rules currently trigger some violations in focus-ios.
+# Once those violations are resolved, rules can be removed from this configuration overload.
+disabled_rules:
+  - line_length
+  - file_header
+  - force_cast
+  - accessibility_label_for_image
+  - accessibility_trait_for_button
+  - attributes
+  - trailing_whitespace
+  - vertical_whitespace
+  - implicitly_unwrapped_optional
+  

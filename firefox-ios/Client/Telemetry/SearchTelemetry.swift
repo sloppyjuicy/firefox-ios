@@ -1,0 +1,561 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+import WebKit
+import Glean
+import Storage
+import Common
+
+/// Type-specific information to record in telemetry about a visible search
+/// suggestion.
+enum SearchViewVisibleSuggestionTelemetryInfo {
+    /// Information to record in telemetry about a visible sponsored or
+    /// non-sponsored suggestion from Firefox Suggest.
+    ///
+    /// `position` is the 1-based position of this suggestion relative to the
+    /// top of the search results view. `didTap` indicates if the user
+    /// tapped on this suggestion.
+    case firefoxSuggestion(
+        RustFirefoxSuggestionTelemetryInfo,
+        position: Int,
+        didTap: Bool
+    )
+}
+
+// Search Partner Codes
+// https://docs.google.com/spreadsheets/d/1HMm9UXjfJv-uHhGU1pJlbP4ILkdpSD9w_Fd-3yOd8oY/
+struct SearchPartner {
+    // Google partner code for US and ROW (rest of the world)
+    private static let google = ["US": "firefox-b-1-m",
+                                 "ROW": "firefox-b-m"]
+
+    static func getCode(searchEngine: SearchEngine, region: String) -> String {
+        switch searchEngine {
+        case .google:
+            return google[region] ?? "none"
+        case .none:
+            return "none"
+        }
+    }
+}
+
+// Our default search engines
+enum SearchEngine: String, CaseIterable {
+    case google
+    case none
+
+    @MainActor
+    static func providerFrom(url: URL?) -> SearchEngine {
+        guard let url else { return .none }
+
+        for provider in SearchEngine.allCases where url.absoluteString.contains(provider.rawValue) {
+            return provider
+        }
+
+        return .none
+    }
+}
+
+// all the values explained: https://mozilla-hub.atlassian.net/browse/FXIOS-8109
+enum SearchTelemetryValues {
+    enum Sap: String {
+        case urlbar
+        case urlbarNewtab = "urlbar_newtab"
+    }
+
+    enum SearchMode: String {
+        case actions
+        case bookmarks
+        case history
+        case tabs // the only one that's valid for iOS at the moment
+        case unknown
+        case inactive = "" // Empty string for inactive search mode
+    }
+
+    enum Reason: String {
+        case pause
+    }
+
+    enum Interaction: String {
+        case typed
+        case pasted
+        case returned
+        case restarted
+        case refined
+        case persistedSearchTerms = "persisted_search_terms"
+        case persistedSearchTermsRestarted = "persisted_search_terms_restarted"
+        case persistedSearchTermsRefined = "persisted_search_terms_refined"
+    }
+
+    enum EngagementType: String {
+        case tap
+        case enter
+        case dropGo = "drop_go"
+        case pasteGo = "paste_go"
+        case dismiss
+        case help
+    }
+
+    enum Groups: String {
+        case heuristic
+        case adaptiveHistory = "adaptive_history"
+        case searchSuggest = "search_suggest"
+        case topPick = "top_pick"
+        case topSite = "top_site"
+        case remoteTab = "remote_tab"
+        case general
+        case suggest
+    }
+
+    enum Results: String {
+        case unknown
+        case bookmark
+        case history
+        case keyword
+        case searchEngine = "search_engine"
+        case searchSuggest = "search_suggest"
+        case searchHistory = "search_history"
+        case url
+        case action
+        case tab
+        case remoteTab = "remote_tab"
+        case tabToSearch = "tab_to_search"
+        case topSite = "top_site"
+        case suggestSponsor = "suggest_sponsor"
+        case suggestNonSponsor = "suggest_non_sponsor"
+    }
+
+    enum SelectedResult: String {
+        case unknown
+        case bookmark
+        case history
+        case keyword
+        case searchEngine = "search_engine"
+        case searchSuggest = "search_suggest"
+        case searchHistory = "search_history"
+        case url
+        case action
+        case tab
+        case remoteTab = "remote_tab"
+        case tabToSearch = "tab_to_search"
+        case topSite = "top_site"
+        case suggestSponsor = "suggest_sponsor"
+        case suggestNonSponsor = "suggest_non_sponsor"
+    }
+}
+
+// TODO: FXIOS-13477 Make SearchTelemetry actually sendable
+class SearchTelemetry: @unchecked Sendable {
+    var code = ""
+    var provider: SearchEngine = .none
+    var shouldSetGoogleTopSiteSearch = false
+    var shouldSetUrlTypeSearch = false
+    private var tabManager: TabManager
+    private let gleanWrapper: GleanWrapper
+
+    var interactionType: SearchTelemetryValues.Interaction = .typed
+    var selectedResult: SearchTelemetryValues.SelectedResult = .unknown
+    var engagementType: SearchTelemetryValues.EngagementType = .tap
+    var impressionTelemetryTimer: Timer?
+
+    var visibleRemoteClientTabs = [ClientTabsSearchWrapper]()
+    var visibleFilteredOpenedTabs = [Tab]()
+    var visibleFilteredRemoteClientTabs = [ClientTabsSearchWrapper]()
+    var visibleSuggestions = [String]()
+    var visibleFirefoxSuggestions = [RustFirefoxSuggestion]()
+    var hasSeenRecentSearches = false
+    var hasSeenTrendingSearches = false
+    var visibleData = [Site]()
+
+    var searchQuery = ""
+    var savedQuery = ""
+
+    init(tabManager: TabManager, gleanWrapper: GleanWrapper = DefaultGleanWrapper()) {
+        self.tabManager = tabManager
+        self.gleanWrapper = gleanWrapper
+    }
+
+    // MARK: Searchbar SAP
+
+    // sap: directly from search access point
+    func trackSAP() {
+        GleanMetrics.Search.inContent["\(provider).in-content.sap.\(code)"].add()
+    }
+
+    // sap-follow-on: user continues to search from an existing sap search
+    func trackSAPFollowOn() {
+        GleanMetrics.Search.inContent["\(provider).in-content.sap-follow-on.\(code)"].add()
+    }
+
+    // organic: search that didn't come from a SAP
+    func trackOrganic() {
+        GleanMetrics.Search.inContent["\(provider).organic.none"].add()
+    }
+
+    // MARK: Google Top Site SAP
+
+    // Note: This tracks google top site tile tap which opens a google search page
+    func trackGoogleTopSiteTap() {
+        GleanMetrics.Search.googleTopsitePressed["\(SearchEngine.google).\(code)"].add()
+    }
+
+    // Note: This tracks SAP follow-on search. Also, the first search that the user performs is considered
+    // a follow-on where OQ query item in google url is present but has no data in it
+    // Flow: User taps google top site tile -> google page opens -> user types item to search in the page
+    func trackGoogleTopSiteFollowOn() {
+        GleanMetrics.Search.inContent["\(SearchEngine.google).in-content.google-topsite-follow-on.\(code)"].add()
+    }
+
+    // MARK: Track Regular and Follow-on SAP from Tab and TopSite
+    @MainActor
+    func trackTabAndTopSiteSAP(_ tab: Tab, webView: WKWebView) {
+        let provider = SearchEngine.providerFrom(url: tab.webView?.url)
+        let code = SearchPartner.getCode(
+            searchEngine: provider,
+            region: SystemLocaleProvider().regionCode() == "US" ? "US" : "ROW"
+        )
+        self.code = code
+        self.provider = provider
+
+        if shouldSetGoogleTopSiteSearch {
+            tab.urlType = .googleTopSite
+            shouldSetGoogleTopSiteSearch = false
+            self.trackGoogleTopSiteTap()
+        } else if shouldSetUrlTypeSearch {
+            tab.urlType = .search
+            shouldSetUrlTypeSearch = false
+            self.trackSAP()
+        } else if let webUrl = webView.url {
+            let components = URLComponents(url: webUrl, resolvingAgainstBaseURL: false)!
+            let clientValue = components.valueForQuery("client")
+            let sClientValue = components.valueForQuery("sclient")
+            // Special case google followOn search
+            if (tab.urlType == .googleTopSite || tab.urlType == .googleTopSiteFollowOn) && clientValue == code {
+                tab.urlType = .googleTopSiteFollowOn
+                self.trackGoogleTopSiteFollowOn()
+            // Check if previous tab type is search
+            } else if (tab.urlType == .search || tab.urlType == .followOnSearch) && clientValue == code {
+                tab.urlType = .followOnSearch
+                self.trackSAPFollowOn()
+            } else if provider == .google && sClientValue != nil {
+                tab.urlType = .organicSearch
+                self.trackOrganic()
+            } else {
+                tab.urlType = .regular
+            }
+        }
+    }
+
+    // MARK: Impression Telemetry
+    func startImpressionTimer() {
+        impressionTelemetryTimer?.invalidate()
+        impressionTelemetryTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false, block: { [weak self] _ in
+            guard let self = self else { return }
+            ensureMainThread {
+                self.recordURLBarSearchImpressionTelemetryEvent()
+            }
+        })
+    }
+
+    func stopImpressionTimer() {
+        impressionTelemetryTimer?.invalidate()
+    }
+
+    @MainActor
+    func recordURLBarSearchImpressionTelemetryEvent() {
+        guard let tab = tabManager.selectedTab else { return }
+        let reasonKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.reason.rawValue
+        let reason = SearchTelemetryValues.Reason.pause.rawValue
+
+        let sapKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.sap.rawValue
+        let sap = checkSAP(for: tab).rawValue
+
+        let interactionKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.interaction.rawValue
+        let interaction = interactionType.rawValue
+
+        let searchModeKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.searchMode.rawValue
+        let searchMode = SearchTelemetryValues.SearchMode.tabs.rawValue
+
+        let nCharsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nChars.rawValue
+        let nChars = Int32(searchQuery.count)
+
+        let nWordsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nWords.rawValue
+        let nWords = searchQuery.numberOfWords
+
+        let nResultsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nResults.rawValue
+        let nResults = Int32(numberOfSearchResults())
+
+        let groupsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.groups.rawValue
+        let groups = listGroupTypes()
+
+        let resultsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.results.rawValue
+        let results = listResultTypes()
+
+        let extraDetails = [
+            reasonKey: reason,
+            sapKey: sap,
+            interactionKey: interaction,
+            searchModeKey: searchMode,
+            nCharsKey: nChars,
+            nWordsKey: nWords,
+            nResultsKey: nResults,
+            groupsKey: groups,
+            resultsKey: results]
+        as [String: Any]
+
+        TelemetryWrapper.recordEvent(category: .information,
+                                     method: .view,
+                                     object: .urlbarImpression,
+                                     extras: extraDetails)
+    }
+
+    // MARK: Engagement Telemetry
+    @MainActor
+    func recordURLBarSearchEngagementTelemetryEvent() {
+        guard let tab = tabManager.selectedTab else { return }
+
+        let sapKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.sap.rawValue
+        let sap = checkSAP(for: tab).rawValue
+
+        let interactionKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.interaction.rawValue
+        let interaction = interactionType.rawValue
+
+        let searchModeKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.searchMode.rawValue
+        let searchMode = SearchTelemetryValues.SearchMode.tabs.rawValue
+
+        let nCharsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nChars.rawValue
+        let nChars = Int32(searchQuery.count)
+
+        let nWordsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nWords.rawValue
+        let nWords = searchQuery.numberOfWords
+
+        let nResultsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nResults.rawValue
+        let nResults = Int32(numberOfSearchResults())
+
+        let selectedResultKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.selectedResult.rawValue
+        let selectedResult = selectedResult.rawValue
+
+        let selectedResultSubtypeKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.selectedResultSubtype.rawValue
+        let selectedResultSubtype = selectedResult
+
+        let providerKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.provider.rawValue
+        let provider = SearchEngine.providerFrom(url: tab.webView?.url).rawValue
+
+        let engagementTypeKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.engagementType.rawValue
+        let engagementType = engagementType.rawValue
+
+        let groupsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.groups.rawValue
+        let groups = listGroupTypes()
+
+        let resultsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.results.rawValue
+        let results = listResultTypes()
+
+        let extraDetails = [
+            sapKey: sap,
+            interactionKey: interaction,
+            searchModeKey: searchMode,
+            nCharsKey: nChars,
+            nWordsKey: nWords,
+            nResultsKey: nResults,
+            selectedResultKey: selectedResult,
+            selectedResultSubtypeKey: selectedResultSubtype,
+            providerKey: provider,
+            engagementTypeKey: engagementType,
+            groupsKey: groups,
+            resultsKey: results
+        ] as [String: Any]
+
+        TelemetryWrapper.recordEvent(category: .action,
+                                     method: .tap,
+                                     object: .urlbarEngagement,
+                                     extras: extraDetails)
+    }
+
+    @MainActor
+    func recordURLBarSearchAbandonmentTelemetryEvent() {
+        guard let tab = tabManager.selectedTab else { return }
+
+        let sapKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.sap.rawValue
+        let sap = checkSAP(for: tab).rawValue
+
+        let interactionKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.interaction.rawValue
+        let interaction = interactionType.rawValue
+
+        let searchModeKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.searchMode.rawValue
+        let searchMode = SearchTelemetryValues.SearchMode.tabs.rawValue
+
+        let nCharsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nChars.rawValue
+        let nChars = Int32(searchQuery.count)
+
+        let nWordsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nWords.rawValue
+        let nWords = searchQuery.numberOfWords
+
+        let nResultsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.nResults.rawValue
+        let nResults = Int32(numberOfSearchResults())
+
+        let groupsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.groups.rawValue
+        let groups = listGroupTypes()
+
+        let resultsKey = TelemetryWrapper.EventExtraKey.UrlbarTelemetry.results.rawValue
+        let results = listResultTypes()
+
+        let extraDetails = [
+            sapKey: sap,
+            interactionKey: interaction,
+            searchModeKey: searchMode,
+            nCharsKey: nChars,
+            nWordsKey: nWords,
+            nResultsKey: nResults,
+            groupsKey: groups,
+            resultsKey: results
+        ] as [String: Any]
+
+        TelemetryWrapper.recordEvent(category: .action,
+                                     method: .close,
+                                     object: .urlbarAbandonment,
+                                     extras: extraDetails)
+    }
+
+    @MainActor
+    func checkSAP(for tab: Tab?) -> SearchTelemetryValues.Sap {
+        guard let tab = tab else { return .urlbar }
+        if tab.isFxHomeTab || tab.isCustomHomeTab {
+            return .urlbarNewtab
+        }
+        return .urlbar
+    }
+
+    func determineInteractionType() {
+        if searchQuery.count - savedQuery.count == 1 {
+            interactionType = .typed
+        } else if searchQuery.count - savedQuery.count > 1 {
+            interactionType = .pasted
+        }
+    }
+
+    func numberOfSearchResults() -> Int {
+        return visibleSuggestions.count + visibleData.count
+        + visibleFilteredOpenedTabs.count + visibleFirefoxSuggestions.count
+        + visibleFilteredRemoteClientTabs.count
+    }
+
+    func clearVisibleResults() {
+        visibleSuggestions.removeAll()
+        visibleData.removeAll()
+        visibleFilteredOpenedTabs.removeAll()
+        visibleFirefoxSuggestions.removeAll()
+        visibleFilteredRemoteClientTabs.removeAll()
+    }
+
+    func clearZeroSearchSectionSeen() {
+        hasSeenRecentSearches = false
+        hasSeenTrendingSearches = false
+    }
+
+    // Comma separated list of result types in order.
+    func listResultTypes() -> String {
+        var resultTypes: [String] = []
+
+        if !visibleSuggestions.isEmpty {
+            resultTypes += Array(repeating: SearchTelemetryValues.Results.searchSuggest.rawValue,
+                                 count: visibleSuggestions.count)
+        }
+
+        if !visibleFilteredOpenedTabs.isEmpty {
+            resultTypes += Array(repeating: SearchTelemetryValues.Results.tab.rawValue,
+                                 count: visibleFilteredOpenedTabs.count)
+        }
+
+        if !visibleFilteredRemoteClientTabs.isEmpty {
+            resultTypes += Array(repeating: SearchTelemetryValues.Results.remoteTab.rawValue,
+                                 count: visibleFilteredRemoteClientTabs.count)
+        }
+
+        for clientTab in visibleData {
+            if let isBookmarked = clientTab.isBookmarked {
+                resultTypes.append(isBookmarked
+                                   ? SearchTelemetryValues.Results.bookmark.rawValue
+                                   : SearchTelemetryValues.Results.history.rawValue)
+            }
+        }
+
+        for suggestion in visibleFirefoxSuggestions {
+            resultTypes.append(suggestion.isSponsored ?
+                               SearchTelemetryValues.Results.suggestSponsor.rawValue :
+                                SearchTelemetryValues.Results.suggestNonSponsor.rawValue)
+        }
+
+        return resultTypes.joined(separator: ",")
+    }
+
+    // Comma separated list of result groups in order, groups may be
+    // repeated, since the list will match 1:1 the results list, so we
+    // Can link each result to a group
+    func listGroupTypes() -> String {
+        var groupTypes: [String] = []
+
+        if !visibleSuggestions.isEmpty {
+            groupTypes += Array(repeating: SearchTelemetryValues.Groups.searchSuggest.rawValue,
+                                count: visibleSuggestions.count)
+        }
+
+        if !visibleFilteredOpenedTabs.isEmpty {
+            groupTypes += Array(repeating: SearchTelemetryValues.Groups.heuristic.rawValue,
+                                count: visibleFilteredOpenedTabs.count)
+        }
+
+        if !visibleFilteredRemoteClientTabs.isEmpty {
+            groupTypes += Array(repeating: SearchTelemetryValues.Groups.remoteTab.rawValue,
+                                count: visibleFilteredRemoteClientTabs.count)
+        }
+
+        if !visibleRemoteClientTabs.isEmpty {
+            groupTypes += Array(repeating: SearchTelemetryValues.Groups.general.rawValue,
+                                count: visibleRemoteClientTabs.count)
+        }
+
+        if !visibleFirefoxSuggestions.isEmpty {
+            groupTypes += Array(repeating: SearchTelemetryValues.Groups.suggest.rawValue,
+                                count: visibleFirefoxSuggestions.count)
+        }
+
+        return groupTypes.joined(separator: ",")
+    }
+
+    // MARK: Trending Searches
+    func trendingSearchesShown(count: Int) {
+        let countExtra = GleanMetrics.SearchTrendingSearches.SuggestionsShownExtra(count: Int32(count))
+        gleanWrapper.recordEvent(for: GleanMetrics.SearchTrendingSearches.suggestionsShown, extras: countExtra)
+    }
+
+    func trendingSearchesTapped(at index: Int) {
+        let position = "\(index + 1)"
+        let positionExtra = GleanMetrics.SearchTrendingSearches.SuggestionTappedExtra(position: Int32(position))
+        gleanWrapper.recordEvent(for: GleanMetrics.SearchTrendingSearches.suggestionTapped, extras: positionExtra)
+    }
+
+    // MARK: Recent Searches
+    func recentSearchesShown(count: Int) {
+        let countExtra = GleanMetrics.SearchRecentSearches.SuggestionsShownExtra(count: Int32(count))
+        gleanWrapper.recordEvent(for: GleanMetrics.SearchRecentSearches.suggestionsShown, extras: countExtra)
+    }
+
+    func recentSearchesTapped(at index: Int) {
+        let position = "\(index + 1)"
+        let positionExtra = GleanMetrics.SearchRecentSearches.SuggestionTappedExtra(position: Int32(position))
+        gleanWrapper.recordEvent(for: GleanMetrics.SearchRecentSearches.suggestionTapped, extras: positionExtra)
+    }
+
+    func recentSearchesClearButtonTapped() {
+        gleanWrapper.recordEvent(for: GleanMetrics.SearchRecentSearches.clearButtonTapped)
+    }
+}
+
+private extension URLComponents {
+    // Return the first query parameter that matches
+    func valueForQuery(_ param: String) -> String? {
+        return self.queryItems?.first { $0.name == param }?.value
+    }
+}

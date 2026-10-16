@@ -1,0 +1,30 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "Ikona aplikacije";
+
+/* (No Comment) */
+"New Private Tab" = "Nova privatna kartica";
+
+/* (No Comment) */
+"New Tab" = "Nova kartica";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox može koristiti tvoju kameru za skeniranje QR kodova ili snimanje fotografija i videa.";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "Firefox zahtijeva Face ID za pristup tvojim spremljenim lozinkama i načinima plaćanja.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "Web stranice koje posjećuješ mogu zatražiti tvoju lokaciju.";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "Firefox koristi tvoj mikrofon za snimanje i prijenos audiosnimaka.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "Ovo omogućuje spremanje fotografija.";
+
+/* Privacy - Speech Recognition Usage Description */
+"NSSpeechRecognitionUsageDescription" = "Ovo omogućuje Firefoxu transkribirati audio snimku.";
+
+/* (No Comment) */
+"Scan QR Code" = "Snimi QR kod";
+

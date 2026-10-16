@@ -1,0 +1,67 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import LLMKit
+import MLPAKit
+import Shared
+import Testing
+import TestKit
+
+@testable import QuickAnswersKit
+
+struct ResultsServiceFactoryTests {
+    @Test
+    func test_make_withValidClient_returnsConfiguredService() throws {
+        let mockLLMCreator = MockLLMClientCreator()
+        mockLLMCreator.clientToReturn = MockLiteLLMClient()
+        let prefs = MockProfilePrefs()
+        let configFetcher = MockQuickAnswersConfigFetcher()
+        let subject = createSubject(liteLLMCreator: mockLLMCreator)
+
+        let result = try subject.make(prefs: prefs, configFetcher: configFetcher)
+
+        #expect(result is DefaultResultsService, "Factory should return configured service when LLM client is available")
+        #expect(mockLLMCreator.createAppAttestLiteLLMCallCount == 1, "Should call createAppAttestLiteLLM once")
+    }
+
+    @Test
+    func test_make_withNilLLMClient_throwsError() {
+        let mockLLMCreator = MockLLMClientCreator()
+        mockLLMCreator.shouldReturnNil = true
+        let prefs = MockProfilePrefs()
+        let configFetcher = MockQuickAnswersConfigFetcher()
+        let subject = createSubject(liteLLMCreator: mockLLMCreator)
+
+        #expect(throws: ResultsServiceError.unableToCreateService) {
+            try subject.make(prefs: prefs, configFetcher: configFetcher)
+        }
+        #expect(mockLLMCreator.createAppAttestLiteLLMCallCount == 1, "Should attempt to create LLM client")
+    }
+
+    @Test(arguments: [
+        (QuickAnswersModel.exa, MLPAServiceType.quickAnswersExa),
+        (QuickAnswersModel.liner, MLPAServiceType.quickAnswersLiner)
+    ])
+    func test_make_usesTheServiceTypeOfTheConfiguredModel(
+        model: QuickAnswersModel,
+        expectedServiceType: MLPAServiceType
+    ) throws {
+        let mockLLMCreator = MockLLMClientCreator()
+        mockLLMCreator.clientToReturn = MockLiteLLMClient()
+        let configFetcher = MockQuickAnswersConfigFetcher()
+        configFetcher.model = model
+        let subject = createSubject(liteLLMCreator: mockLLMCreator)
+
+        _ = try subject.make(prefs: MockProfilePrefs(), configFetcher: configFetcher)
+
+        #expect(mockLLMCreator.lastServiceType == expectedServiceType)
+    }
+
+    // MARK: - Helper
+    private func createSubject(
+        liteLLMCreator: LiteLLMCreating = MockLLMClientCreator(),
+    ) -> DefaultResultsServiceFactory {
+        return DefaultResultsServiceFactory(liteLLMCreator: liteLLMCreator)
+    }
+}

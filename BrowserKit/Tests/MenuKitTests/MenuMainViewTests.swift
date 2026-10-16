@@ -1,0 +1,139 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+@testable import MenuKit
+
+@MainActor
+final class MenuMainViewTests: XCTestCase {
+    var menuView: MenuMainView!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        menuView = MenuMainView()
+        menuView.frame = CGRect(x: 0, y: 0, width: 375, height: 812)
+    }
+
+    override func tearDown() async throws {
+        menuView = nil
+        try await super.tearDown()
+    }
+
+    func testShouldNotDisplayBanner_onSiteMenu() {
+        setupDetails(isBrowserDefault: false, bannerShown: false)
+
+        let homepageSection = MenuSection(isExpanded: false, isHomepage: false, options: [])
+        menuView.reloadDataView(with: [homepageSection])
+
+        XCTAssertFalse(menuView.subviews.contains(where: { $0 is HeaderBanner }))
+    }
+
+    func testShouldNotDisplayBanner_ifBrowserIsDefault() {
+        setupDetails(isBrowserDefault: true, bannerShown: false)
+
+        let homepageSection = MenuSection(isExpanded: false, isHomepage: true, options: [])
+        menuView.reloadDataView(with: [homepageSection])
+
+        XCTAssertFalse(menuView.subviews.contains(where: { $0 is HeaderBanner }))
+    }
+
+    func testShouldNotDisplayBanner_ifWasShown() {
+        setupDetails(isBrowserDefault: false, bannerShown: true)
+
+        let homepageSection = MenuSection(isExpanded: false, isHomepage: true, options: [])
+        menuView.reloadDataView(with: [homepageSection])
+
+        XCTAssertFalse(menuView.subviews.contains(where: { $0 is HeaderBanner }))
+    }
+
+    func testShouldDisplayBanner() {
+        setupDetails(isBrowserDefault: false, bannerShown: false)
+
+        let homepageSection = MenuSection(isExpanded: false, isHomepage: true, options: [])
+        menuView.reloadDataView(with: [homepageSection])
+
+        XCTAssertTrue(menuView.subviews.contains(where: { $0 is HeaderBanner }))
+    }
+
+    func testCloseBannerCallback() {
+        let homepageSection = MenuSection(isExpanded: false, isHomepage: true, options: [])
+        setupDetails(isBrowserDefault: false, bannerShown: false)
+        menuView.reloadDataView(with: [homepageSection])
+
+        let expectation = XCTestExpectation(description: "Close banner callback should be called")
+        menuView.closeBannerButtonCallback = {
+            expectation.fulfill()
+        }
+
+        menuView.headerBanner.closeButtonCallback?()
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testHeightCalculation_forExpandedSection() {
+        let expandedSection = MenuSection(isExpanded: true, isHomepage: false, options: [])
+        let expectation = XCTestExpectation(description: "Height should be calculated")
+
+        menuView.onCalculatedHeight = { height in
+            XCTAssertGreaterThan(height, 0)
+            expectation.fulfill()
+        }
+
+        menuView.reloadDataView(with: [expandedSection])
+        menuView.layoutIfNeeded()
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testBannerButtonCallbackCalled() {
+        let expectation = XCTestExpectation(description: "Banner button callback")
+        setupDetails(isBrowserDefault: false, bannerShown: false)
+
+        menuView.bannerButtonCallback = {
+            expectation.fulfill()
+        }
+
+        menuView.reloadDataView(with: [MenuSection(isExpanded: false, isHomepage: true, options: [])])
+        menuView.headerBanner.bannerButtonCallback?()
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testAnnounceAccessibility_whenOptionalRowIsNotVisible() {
+        menuView.frame = CGRect(x: 0, y: 0, width: 375, height: 100)
+        let options = (0..<10).map { menuElement(a11yId: "option\($0)", isOptional: $0 == 9) }
+        menuView.reloadDataView(with: [MenuSection(isExpanded: true, isHomepage: false, options: options)])
+        menuView.layoutIfNeeded()
+
+        let expectation = XCTestExpectation(description: "Announcement completes without trapping")
+        menuView.announceAccessibility(expandedHint: "expanded")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { expectation.fulfill() }
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    private func menuElement(a11yId: String, isOptional: Bool) -> MenuElement {
+        MenuElement(
+            title: a11yId,
+            iconName: "",
+            isEnabled: true,
+            isActive: false,
+            a11yLabel: a11yId,
+            a11yHint: "",
+            a11yId: a11yId,
+            isOptional: isOptional,
+            action: nil
+        )
+    }
+
+    private func setupDetails(isBrowserDefault: Bool, bannerShown: Bool) {
+        menuView.setupDetails(
+            title: "",
+            subtitle: "",
+            image: nil,
+            isBrowserDefault: isBrowserDefault,
+            bannerShown: bannerShown
+        )
+    }
+}

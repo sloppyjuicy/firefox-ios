@@ -1,0 +1,193 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+import WebKit
+import Common
+import TabDataStore
+import XCTest
+
+@testable import Client
+
+class MockTabManager: TabManager {
+    let windowUUID: WindowUUID
+    var isRestoringTabs = false
+    var tabRestoreHasFinished = false
+    var selectedIndex = 0
+    var selectedTab: Tab?
+    var selectedTabUUID: UUID?
+    // Use to return in getTabForUUID()
+    var tabForUUID: Tab?
+    // Maps tabUUID → Tab; takes precedence over `tabForUUID` for callers that need per-UUID lookups.
+    var tabsByUUID: [TabUUID: Tab] = [:]
+
+    var recentlyAccessedNormalTabs = [Tab]()
+
+    var tabs = [Tab]()
+
+    var lastSelectedTabs = [Tab]()
+    var lastSelectedPreviousTabs = [Tab]()
+
+    var count = 0
+    var normalTabs = [Tab]()
+    var privateTabs = [Tab]()
+
+    var addTabsForURLsCalled = 0
+    var addTabsURLs: [URL] = []
+
+    var removeTabsByURLCalled = 0
+
+    var addTabWasCalled = false
+    var notifyCurrentTabDidFinishLoadingCalled = 0
+    var commitChangesCalled = 0
+    var selectTabExpectation: XCTestExpectation?
+
+    nonisolated init(
+        windowUUID: WindowUUID = WindowUUID.XCTestDefaultUUID
+    ) {
+        self.windowUUID = windowUUID
+    }
+
+    subscript(index: Int) -> Tab? {
+        return tabs[index]
+    }
+
+    subscript(webView: WKWebView) -> Tab? {
+        return tabs.first {
+            $0.webView === webView
+        }
+    }
+
+    func selectTab(_ tab: Tab?, previous: Tab?, immediatePreservation: Bool) {
+        if let tab = tab {
+            lastSelectedTabs.append(tab)
+            selectedTab = tab
+        }
+
+        if let previous = previous {
+            lastSelectedPreviousTabs.append(previous)
+        }
+
+        selectTabExpectation?.fulfill()
+    }
+
+    func addDelegate(_ delegate: TabManagerDelegate) {}
+
+    func setNavigationDelegate(_ delegate: WKNavigationDelegate) {}
+
+    func removeDelegate(_ delegate: TabManagerDelegate, completion: (() -> Void)?) {}
+
+    func addTabsForURLs(_ urls: [URL], zombie: Bool, shouldSelectTab: Bool, isPrivate: Bool) {
+        addTabsForURLsCalled += 1
+        addTabsURLs = urls
+    }
+
+    func reAddTabs(tabsToAdd: [Tab], previousTabUUID: String) {}
+
+    func removeTabs(_ tabs: [Tab]) {}
+
+    func removeTab(_ tabUUID: TabUUID) {}
+
+    func removeAllTabs(isPrivateMode: Bool) {}
+
+    func removeTabs(by urls: [URL]) {
+        removeTabsByURLCalled += 1
+    }
+
+    func removeNormalTabsOlderThan(period: TabsDeletionPeriod, currentDate: Date) {}
+
+    func clearAllTabsHistory() {}
+
+    func commitChanges() {
+        commitChangesCalled += 1
+    }
+
+    func willSwitchTabMode(leavingPBM: Bool) {}
+
+    func reorderTabs(isPrivate privateMode: Bool, fromIndex visibleFromIndex: Int, toIndex visibleToIndex: Int) {}
+
+    func preserveTabs(immediate: Bool) {}
+
+    func restoreTabs() {}
+
+    func getTabForUUID(uuid: String) -> Tab? {
+        if let match = tabsByUUID[uuid] { return match }
+        return tabForUUID
+    }
+
+    func getTabForURL(_ url: URL) -> Tab? {
+        return nil
+    }
+
+    func expireLoginAlerts() {}
+
+    func addPopupForParentTab(profile: Profile, parentTab: Tab, configuration: WKWebViewConfiguration) -> Tab {
+        return Tab(profile: profile, windowUUID: windowUUID)
+    }
+
+    func makeToastFromRecentlyClosedUrls(_ recentlyClosedTabs: [Tab],
+                                         isPrivate: Bool,
+                                         previousTabUUID: String) {}
+
+    @discardableResult
+    func addTab(_ request: URLRequest?,
+                afterTab: Tab?,
+                zombie: Bool,
+                isPrivate: Bool,
+                groupID: TabGroupID?
+    ) -> Tab {
+        addTabWasCalled = true
+        let isHomePage = request?.url?.absoluteString == "internal://local/about/home"
+        return MockTab(
+            profile: MockProfile.unmanaged(),
+            isPrivate: isPrivate,
+            groupID: groupID,
+            windowUUID: windowUUID,
+            isHomePage: isHomePage
+        )
+    }
+
+    func backgroundRemoveAllTabs(isPrivate: Bool,
+                                 didClearTabs: @escaping (_ tabsToRemove: [Tab],
+                                                          _ isPrivate: Bool,
+                                                          _ previousTabUUID: String) -> Void) {}
+
+    func findRightOrLeftTab(forRemovedTab removedTab: Tab, withDeletedIndex deletedIndex: Int) -> Tab? {
+        return nil
+    }
+
+    func notifyCurrentTabDidFinishLoading() {
+        notifyCurrentTabDidFinishLoadingCalled += 1
+    }
+
+    var tabDidSetScreenshotCalls = 0
+    func tabDidSetScreenshot(_ tab: Client.Tab) {
+        tabDidSetScreenshotCalls += 1
+    }
+    func offloadBackgroundWebViews() async {}
+
+    var restoreScreenshotCalls: [Tab] = []
+    func restoreScreenshot(for tab: Tab) {
+        restoreScreenshotCalls.append(tab)
+    }
+
+    var tabDataForWindowMergeResult: [TabData] = []
+    var tabDataForWindowMergeCalled = 0
+    func tabDataForWindowMerge() -> [TabData] {
+        tabDataForWindowMergeCalled += 1
+        return tabDataForWindowMergeResult
+    }
+
+    var addedWindowMergeTabData: [TabData] = []
+    var addTabsFromWindowMergeCalled = 0
+    func addTabs(fromWindowMergeData tabDataList: [TabData]) {
+        addTabsFromWindowMergeCalled += 1
+        addedWindowMergeTabData = tabDataList
+    }
+
+    var discardTabsMovedToAnotherWindowCalled = 0
+    func discardTabsMovedToAnotherWindow() {
+        discardTabsMovedToAnotherWindowCalled += 1
+    }
+}

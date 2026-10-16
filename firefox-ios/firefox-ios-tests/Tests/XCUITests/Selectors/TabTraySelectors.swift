@@ -1,0 +1,151 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+
+protocol TabTraySelectorsSet {
+    var TABSTRAY_CONTAINER: Selector { get }
+    var COLLECTION_VIEW: Selector { get }
+    var IPHONE_TAB_TRAY_COLLECTION_VIEW: Selector { get }
+    var FIRST_CELL: Selector { get }
+    var NEW_TAB_BUTTON: Selector { get }
+    var DONE_BUTTON: Selector { get }
+    var UNDO_BUTTON: Selector { get }
+    var PRIVATE_EMPTY_STATE_TITLE: Selector { get }
+    var CONTEXT_MENU_ADD_TO_BOOKMARKS: Selector { get }
+    var CONTEXT_MENU_COPY_URL: Selector { get }
+    var CONTEXT_MENU_CLOSE_TAB: Selector { get }
+    var contextMenuOptions: [Selector] { get }
+    func cell(named name: String) -> Selector
+    func tabCellWithIndex(_ index: Int, _ urlLabel: String, _ selectedTab: String) -> Selector
+    func tabCellAtIndex(index: Int) -> Selector
+    func tabSelectorButton(at index: Int) -> Selector
+    var all: [Selector] { get }
+}
+
+struct TabTraySelectors: TabTraySelectorsSet {
+    private enum IDs {
+        static let collectionView = AccessibilityIdentifiers.TabTray.collectionView
+        static let tabsTray = AccessibilityIdentifiers.TabTray.tabsTray
+        static let newTabButton = AccessibilityIdentifiers.TabTray.newTabButton
+        static let doneButton = AccessibilityIdentifiers.TabTray.doneButton
+        static let privateEmptyStateTitle = "Private Browsing"
+    }
+
+    let TABSTRAY_CONTAINER = Selector(
+        strategy: .anyById(IDs.tabsTray),
+        value: IDs.tabsTray,
+        description: "Tabs Tray container",
+        groups: ["tabtray"]
+    )
+
+    let COLLECTION_VIEW = Selector(
+        strategy: .collectionViewById(IDs.collectionView),
+        value: IDs.collectionView,
+        description: "Tab Tray collection view",
+        groups: ["tabtray"]
+    )
+
+    let IPHONE_TAB_TRAY_COLLECTION_VIEW = Selector.collectionViewIdOrLabel(
+        IDs.collectionView,
+        description: "The main collection view for the tab tray on iPhone",
+        groups: ["tabtray"]
+    )
+
+    let FIRST_CELL = Selector.staticTextByLabel(
+        "firstCell",
+        description: "First Tab cell",
+        groups: ["tabtray"]
+    )
+
+    let DONE_BUTTON = Selector.buttonId(
+        IDs.doneButton,
+        description: "Done button that dismisses the tab tray",
+        groups: ["tabTray"]
+    )
+
+    let NEW_TAB_BUTTON = Selector.buttonId(
+        IDs.newTabButton,
+        description: "New Tab Button on TabTray",
+        groups: ["tabtray"]
+    )
+
+    let UNDO_BUTTON = Selector.otherElementsButtonStaticTextByLabel(
+        "Undo",
+        description: "Undo button displayed after removing all tabs",
+        groups: ["tabtray"]
+    )
+
+    // Long-press (tab peek) context menu actions. Titles come from `String.TabPeek*` in Strings.swift.
+    let CONTEXT_MENU_ADD_TO_BOOKMARKS = Selector.collectionViewButtonByLabel(
+        "Add to Bookmarks",
+        description: "Add to Bookmarks option in the tab long-press context menu",
+        groups: ["tabtray"]
+    )
+
+    let CONTEXT_MENU_COPY_URL = Selector.collectionViewButtonByLabel(
+        "Copy URL",
+        description: "Copy URL option in the tab long-press context menu",
+        groups: ["tabtray"]
+    )
+
+    let CONTEXT_MENU_CLOSE_TAB = Selector.collectionViewButtonByLabel(
+        "Close Tab",
+        description: "Close Tab option in the tab long-press context menu",
+        groups: ["tabtray"]
+    )
+
+    var contextMenuOptions: [Selector] {
+        [CONTEXT_MENU_ADD_TO_BOOKMARKS, CONTEXT_MENU_COPY_URL, CONTEXT_MENU_CLOSE_TAB]
+    }
+
+    func cell(named name: String) -> Selector {
+        Selector.staticTextByLabel(
+            name,
+            description: "Tab cell named \(name)",
+            groups: ["tabtray"]
+        )
+    }
+
+    func tabCellWithIndex(_ index: Int, _ urlLabel: String, _ selectedTab: String) -> Selector {
+        let identifier = "\(AccessibilityIdentifiers.TabTray.tabCell)_0_\(index)"
+        let expectedLabel = "\(urlLabel). \(selectedTab)"
+
+        return Selector.cellById(
+            identifier,
+            description: "Tab cell with ID \(identifier) and label '\(expectedLabel)'",
+            groups: ["tabtray"]
+        )
+    }
+
+    let PRIVATE_EMPTY_STATE_TITLE = Selector.staticTextId(
+        IDs.privateEmptyStateTitle,
+        description: "Title of the empty private tabs view",
+        groups: ["tabtray"]
+    )
+
+    func tabCellAtIndex(index: Int) -> Selector {
+        let identifier = "\(AccessibilityIdentifiers.TabTray.tabCell)_0_\(index)"
+
+        return Selector.cellById(
+            identifier,
+            description: "Tab cell at index \(index) for tapping",
+            groups: ["tabtray"]
+        )
+    }
+
+    func tabSelectorButton(at index: Int) -> Selector {
+        let id = "\(AccessibilityIdentifiers.TabTray.selectorCell)\(index)"
+        return Selector.buttonId(
+            id,
+            description: "Button for Tab Tray cell at index \(index)",
+            groups: ["tabtray"]
+        )
+    }
+
+    var all: [Selector] { [TABSTRAY_CONTAINER, COLLECTION_VIEW,
+                           IPHONE_TAB_TRAY_COLLECTION_VIEW, FIRST_CELL, NEW_TAB_BUTTON, DONE_BUTTON,
+                           UNDO_BUTTON, PRIVATE_EMPTY_STATE_TITLE, CONTEXT_MENU_ADD_TO_BOOKMARKS,
+                           CONTEXT_MENU_COPY_URL, CONTEXT_MENU_CLOSE_TAB] }
+}

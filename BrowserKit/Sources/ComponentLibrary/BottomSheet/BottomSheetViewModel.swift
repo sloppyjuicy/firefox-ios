@@ -1,0 +1,50 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+import UIKit
+
+/// The view model used to configure a `BottomSheetViewController`
+public struct BottomSheetViewModel {
+    public struct UX {
+        public static var cornerRadius: CGFloat {
+            if #available(iOS 26.0, *) {
+                return 24
+            } else {
+                return 8
+            }
+        }
+        public static let animationTransitionDuration: CGFloat = 0.3
+        public static let shadowOpacity: Float = 0.3
+    }
+
+    let cornerRadius: CGFloat
+    let backgroundColor: UIColor
+    let animationTransitionDuration: TimeInterval
+    let animatesPresentation: Bool
+    let shouldDismissForTapOutside: Bool
+    let shadowOpacity: Float
+    let closeButtonA11yLabel: String
+    let closeButtonA11yIdentifier: String
+
+    public init(
+        cornerRadius: CGFloat = BottomSheetViewModel.UX.cornerRadius,
+        animationTransitionDuration: TimeInterval = BottomSheetViewModel.UX.animationTransitionDuration,
+        animatesPresentation: Bool = true,
+        backgroundColor: UIColor = .clear,
+        shouldDismissForTapOutside: Bool = true,
+        shadowOpacity: Float = BottomSheetViewModel.UX.shadowOpacity,
+        closeButtonA11yLabel: String,
+        closeButtonA11yIdentifier: String
+    ) {
+        self.cornerRadius = cornerRadius
+        self.animationTransitionDuration = animationTransitionDuration
+        self.animatesPresentation = animatesPresentation
+        self.backgroundColor = backgroundColor
+        self.shouldDismissForTapOutside = shouldDismissForTapOutside
+        self.shadowOpacity = shadowOpacity
+        self.closeButtonA11yLabel = closeButtonA11yLabel
+        self.closeButtonA11yIdentifier = closeButtonA11yIdentifier
+    }
+}

@@ -1,0 +1,116 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import XCTest
+
+@testable import Client
+
+@MainActor
+final class MainMenuCoordinatorTests: XCTestCase, StoreTestUtility {
+    private var mockRouter: MockRouter!
+    var mockStore: MockStoreForMiddleware<AppState>!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        DependencyHelperMock().bootstrapDependencies()
+        mockRouter = MockRouter(navigationController: MockNavigationController())
+        setupStore()
+    }
+
+    override func tearDown() async throws {
+        DependencyHelperMock().reset()
+        resetStore()
+        try await super.tearDown()
+    }
+
+    // MARK: - StoreTestUtility
+    func setupAppState() -> AppState {
+        return AppState()
+    }
+
+    func testInitialState() {
+        _ = createSubject()
+
+        XCTAssertFalse(mockRouter.rootViewController is MicrosurveyViewController)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        XCTAssertEqual(mockRouter.pushCalled, 0)
+        XCTAssertEqual(mockRouter.popViewControllerCalled, 0)
+    }
+
+    func testStart_presentsMainMenuController() throws {
+        let subject = createSubject()
+
+        subject.start()
+
+        XCTAssertTrue(mockRouter.rootViewController is MainMenuViewController)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 1)
+    }
+
+    func testMainMenu_dismissFlow_callsRouterDismiss() throws {
+        let subject = createSubject()
+
+        subject.start()
+        subject.dismissMenuModal(animated: false)
+
+        XCTAssertEqual(mockRouter.dismissCalled, 1)
+    }
+
+    func testHandleNavigation_translatePage_dismissesMenu() {
+        let subject = createSubject()
+        subject.start()
+
+        subject.navigateTo(MenuNavigationDestination(.translatePage), animated: false)
+
+        XCTAssertEqual(mockRouter.dismissCalled, 1)
+    }
+
+    func testHandleNavigation_readerView_dispatchesNavigationBrowserAction() throws {
+        let subject = createSubject()
+
+        subject.navigateTo(MenuNavigationDestination(.readerView), animated: false)
+        mockRouter.savedCompletion?()
+
+        let actionCalled = try XCTUnwrap(mockStore.dispatchedActions.first as? NavigationBrowserAction)
+        let actionType = try XCTUnwrap(actionCalled.actionType as? NavigationBrowserActionType)
+
+        XCTAssertEqual(actionType, NavigationBrowserActionType.tapOnReaderMode)
+        XCTAssertEqual(actionCalled.navigationDestination.destination, .readerMode)
+        XCTAssertEqual(mockRouter.dismissCalled, 1)
+    }
+
+    func testHandleNavigation_reportBrokenSite_callsPresentReportBrokenSiteOnDelegate() {
+        let subject = createSubject()
+        let mockDelegate = MockMainMenuCoordinatorDelegate()
+        subject.navigationHandler = mockDelegate
+
+        subject.navigateTo(MenuNavigationDestination(.reportBrokenSite), animated: false)
+        mockRouter.savedCompletion?()
+
+        XCTAssertEqual(mockDelegate.presentReportBrokenSiteCalled, 1)
+    }
+
+    func testHandleNavigation_webpageSummary_callsDelegate() {
+        let subject = createSubject()
+        let mockDelegate = MockMainMenuCoordinatorDelegate()
+        subject.navigationHandler = mockDelegate
+
+        subject.navigateTo(MenuNavigationDestination(.webpageSummary(config: .defaultConfig)), animated: false)
+        mockRouter.savedCompletion?()
+
+        XCTAssertEqual(mockDelegate.showSummarizePanelCalled, 1)
+        XCTAssertEqual(mockDelegate.showSummarizePanelTrigger, .mainMenu)
+        XCTAssertEqual(mockRouter.dismissCalled, 1)
+    }
+
+    private func createSubject(
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> MainMenuCoordinator {
+        let subject = MainMenuCoordinator(router: mockRouter, windowUUID: .XCTestDefaultUUID, profile: makeProfile())
+
+        trackForMemoryLeaks(subject, file: file, line: line)
+        return subject
+    }
+}

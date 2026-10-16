@@ -1,0 +1,110 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+
+/// This enum defines all the logger categories used in the app.
+/// Categories are sorted in alphabetical order.
+/// Do not add new categories unless discussing with the team beforehand.
+public enum LoggerCategory: String {
+    /// Related to content (trackers, advertisements) blocking
+    case adblock
+
+    /// Related to setting an alternative app icon and resetting to the default app icon.
+    case appIcon
+
+    /// Related to our MLPA authentication service.
+    case mlpa
+
+    /// Related to address, credit card and password autofill
+    case autofill
+
+    /// Related to the certificate handler
+    case certificate
+
+    /// Related to coordinator navigation
+    case coordinator
+
+    /// Related to experiments, nimbus and the messaging framework.
+    case experiments
+
+    /// Related to new homepage UI and it's data management for the homepage rebuild project.
+    case homepage
+
+    /// Related to errors around image fetches, and includes all image types (`SiteImageType`, and general images).
+    case images
+
+    /// Related to library UI and it's data management throughout the app.
+    /// This includes bookmarks, downloads, reader mode and history.
+    case library
+
+    /// Related to the application lifecycle.
+    case lifecycle
+
+    /// Related to all things locale.
+    case locale
+
+    /// Related to the main menu.
+    case mainMenu
+
+    /// Related to Merino AS.
+    case merino
+
+    /// Related to onboarding
+    case onboarding
+
+    /// Related to Relay email mask
+    case relay
+
+    /// Related to redux library or integration
+    case redux
+
+    /// Related to the search engines
+    case searchEngines
+
+    /// Related to the settings
+    case settings
+
+    /// Related to the setup of services on app launch.
+    case setup
+
+    /// Related to showing the share sheet from multiple places in the app.
+    case shareSheet
+
+    /// Related to the shortcuts library
+    case shortcutsLibrary
+
+    /// Related to storage (keychain, SQL database, store of different types, etc).
+    case storage
+
+    /// Related to speech (microphone, audio).
+    case speech
+
+    /// Related to sync accounts, sync management, application services.
+    case sync
+
+    /// Related to the tabs UI, setup and management
+    case tabs
+
+    /// Related to Glean telemetry pings and events
+    case telemetry
+
+    /// Related to translations feature
+    case translations
+
+    /// Webview scripts, webview delegate, webserver like GCDWebserver, showing webview alerts, webview navigation
+    case webview
+
+    /// Multi-window management on iPad devices
+    case window
+
+    /// Remote settings
+    case remoteSettings
+
+    /// Password Generator
+    case passwordGenerator
+
+    /// Related to wallpaper functionality, like fetching metadata, images, etc
+    case wallpaper
+}

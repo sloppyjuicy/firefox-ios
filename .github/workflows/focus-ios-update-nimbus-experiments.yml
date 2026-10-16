@@ -1,0 +1,49 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+name: "Focus Update Nimbus Experiments"
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  update-nimbus-experiments:
+    name: "Update Nimbus Experiments"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Main Branch"
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: focus-ios
+          ref: main
+          fetch-depth: 0
+      - name: "Update Experiments JSON"
+        id: update-experiments-json
+        uses: mozilla-mobile/update-experiments@fc8474a6736574b1c664ad55ca81e2ee7c657d1b # v3
+        with:
+          repo-path: focus-ios
+          output-path: focus-ios/Blockzilla/Nimbus/initial_experiments.json
+          experimenter-url: https://experimenter.services.mozilla.com/api/v6/experiments-first-run/
+          app-name: focus_ios
+          branch: automation/update-nimbus-experiments
+      - name: Create Pull Request
+        id: create-pull-request
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6
+        if: steps.update-experiments-json.outputs.changed == 1 && steps.update-experiments-json.outputs.changed-branch >= 1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: focus-ios
+          branch: automation/update-nimbus-experiments
+          commit-message: "Automated: update initial_experiments.json based on the current first-run experiments in experimenter"
+          title: "Refactor FOCUS [Nimbus] Update initial experiments JSON for Nimbus"
+          body: "This (automated) PR updates the initial_experiments.json on the `main` branch"
+          delete-branch: true
+          labels: Needs Code Review
+      - name: Enable Pull Request Automerge
+        if: steps.create-pull-request.outputs.pull-request-operation == 'created'
+        run: gh pr merge --squash "${{ steps.create-pull-request.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

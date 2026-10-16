@@ -1,0 +1,27 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "ໄອຄອນແອັບ";
+
+/* (No Comment) */
+"New Private Tab" = "ແທັບສ່ວນຕົວໃຫມ່";
+
+/* (No Comment) */
+"New Tab" = "ແທັບໃຫມ່";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox can use your camera to scan QR codes or take photos and video.";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "Firefox ຕ້ອງການ Face ID ເພື່ອເຂົ້າເຖິງລະຫັດຜ່ານທີ່ບັນທຶກໄວ້ ແລະ ວິທີການຊໍາລະເງິນຂອງທ່ານ.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "ເວັບໄຊທ໌ທີ່ທ່ານເຂົ້າໄປອາດຈະຕ້ອງການຕຳແຫນ່ງທີຢູ່ຂອງທ່ານ";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "ນີ້ຈະເຮັດໃຫ້ທ່ານສາມາດຖ່າຍ ແລະ ອັບໂຫລດວິດີໂອໄດ້.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "ສຶ່ງນີ້ຊ່ວຍໃຫ້ທ່ານບັນທຶກຮູບພາບ";
+
+/* (No Comment) */
+"Scan QR Code" = "ສະແກນລະຫັດ QR";
+

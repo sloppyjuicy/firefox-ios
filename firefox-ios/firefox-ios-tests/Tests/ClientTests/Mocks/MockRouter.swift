@@ -1,0 +1,87 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import UIKit
+@testable import Client
+
+class MockRouter: NSObject, Router {
+    var navigationController: NavigationController
+    var rootViewController: UIViewController?
+    var onPresent: (() -> Void)?
+
+    var isPresenting: Bool {
+        return presentCalled != 0
+    }
+
+    var presentedViewController: UIViewController?
+    var presentCalled = 0
+    var presentCalledWithAnimation = 0
+    var dismissCalled = 0
+    var pushedViewController: UIViewController?
+    var pushCalled = 0
+    var popViewControllerCalled = 0
+    var setRootViewControllerCalled = 0
+    var savedCompletion: (() -> Void)?
+    var isNavigationBarHidden = false
+    var topViewController: UIViewController?
+    var viewControllers: [UIViewController]?
+    var popToViewControllerCalled = 0
+
+    init(navigationController: NavigationController) {
+        self.navigationController = navigationController
+        super.init()
+    }
+
+    func present(_ viewController: UIViewController, animated: Bool, completion: (() -> Void)?) {
+        savedCompletion = completion
+        presentedViewController = viewController
+        presentCalled += 1
+        onPresent?()
+    }
+
+    func present(_ viewController: UIViewController,
+                 animated: Bool,
+                 customTransition: UIViewControllerTransitioningDelegate?,
+                 presentationStyle: UIModalPresentationStyle) {
+        presentedViewController = viewController
+        presentCalledWithAnimation += 1
+        onPresent?()
+    }
+
+    func dismiss(animated: Bool, completion: (() -> Void)?) {
+        savedCompletion = completion
+        dismissCalled += 1
+    }
+
+    func push(_ viewController: UIViewController, animated: Bool, completion: (() -> Void)?) {
+        savedCompletion = completion
+        pushedViewController = viewController
+        topViewController = viewController
+        navigationController.pushViewController(viewController, animated: false)
+        pushCalled += 1
+    }
+
+    func popViewController(animated: Bool) {
+        popViewController(reason: .user, animated: animated)
+    }
+
+    func popViewController(reason: DismissalReason, animated: Bool) {
+        popViewControllerCalled += 1
+        savedCompletion?()
+        savedCompletion = nil
+    }
+
+    func popToViewController(_ viewController: UIViewController,
+                             reason: DismissalReason,
+                             animated: Bool) -> [UIViewController]? {
+        popToViewControllerCalled += 1
+        return nil
+    }
+
+    func setRootViewController(_ viewController: UIViewController, hideBar: Bool, animated: Bool) {
+        rootViewController = viewController
+        setRootViewControllerCalled += 1
+        isNavigationBarHidden = hideBar
+    }
+}

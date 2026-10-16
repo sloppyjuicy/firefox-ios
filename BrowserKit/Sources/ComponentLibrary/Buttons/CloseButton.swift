@@ -1,0 +1,103 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import UIKit
+
+public class CloseButton: UIButton,
+                          Notifiable {
+    public var notificationCenter: any NotificationProtocol = NotificationCenter.default
+
+    private var viewModel: CloseButtonViewModel?
+    private var heightConstraint: NSLayoutConstraint?
+    private var widthConstraint: NSLayoutConstraint?
+    private var baseSize = UX.closeButtonSize
+    /// Returns the updated size of the button scaled with the current dynamic font size
+    var dynamicSize: CGSize {
+        updateButtonSizeForDynamicFont()
+        return CGSize(width: widthConstraint?.constant ?? UX.closeButtonSize.width,
+                      height: heightConstraint?.constant ?? UX.closeButtonSize.height)
+    }
+
+    private struct UX {
+        static let closeButtonSize = CGSize(width: 30, height: 30)
+        static let maxCloseButtonSize = CGSize(width: 44, height: 44)
+        static let crossCircleImage = StandardImageIdentifiers.ExtraLarge.crossCircleFill
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+
+        setImage(UIImage(named: UX.crossCircleImage), for: .normal)
+        adjustsImageSizeForAccessibilityContentSizeCategory = true
+        setupConstraints()
+
+        if #available(iOS 26.0, *) {
+            configuration = .glass()
+        }
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupConstraints() {
+        translatesAutoresizingMaskIntoConstraints = false
+        heightConstraint = heightAnchor.constraint(equalToConstant: UX.closeButtonSize.height)
+        heightConstraint?.isActive = true
+        widthConstraint = widthAnchor.constraint(equalToConstant: UX.closeButtonSize.width)
+        widthConstraint?.isActive = true
+        updateButtonSizeForDynamicFont()
+    }
+
+    public func configure(viewModel: CloseButtonViewModel,
+                          notificationCenter: NotificationProtocol = NotificationCenter.default) {
+        self.notificationCenter = notificationCenter
+        startObservingNotifications(
+            withNotificationCenter: notificationCenter,
+            forObserver: self,
+            observing: [UIContentSizeCategory.didChangeNotification]
+        )
+
+        self.viewModel = viewModel
+        accessibilityIdentifier = viewModel.a11yIdentifier
+        accessibilityLabel = viewModel.a11yLabel
+    }
+
+    public func updateButtonSize(_ size: CGSize) {
+        baseSize = size
+        updateButtonSizeForDynamicFont()
+    }
+
+    @available(iOS 26.0, *)
+    public func applyProminentClearGlassConfiguration(backgroundColor: UIColor, foregroundColor: UIColor) {
+        var config = UIButton.Configuration.prominentClearGlass()
+        config.image = configuration?.image ?? image(for: .normal)
+        config.baseBackgroundColor = backgroundColor
+        config.baseForegroundColor = foregroundColor
+        configuration = config
+    }
+
+    private func updateButtonSizeForDynamicFont() {
+        let scaledWidth = UIFontMetrics.default.scaledValue(for: baseSize.width)
+        let scaledHeight = UIFontMetrics.default.scaledValue(for: baseSize.height)
+        let dynamicWidth = min(max(scaledWidth, baseSize.width), UX.maxCloseButtonSize.width)
+        let dynamicHeight = min(max(scaledHeight, baseSize.height), UX.maxCloseButtonSize.height)
+        heightConstraint?.constant = dynamicHeight
+        widthConstraint?.constant = dynamicWidth
+    }
+
+    // MARK: - Notifiable
+
+    public func handleNotifications(_ notification: Notification) {
+        switch notification.name {
+        case UIContentSizeCategory.didChangeNotification:
+            ensureMainThread {
+                self.updateButtonSizeForDynamicFont()
+            }
+        default:
+            break
+        }
+    }
+}

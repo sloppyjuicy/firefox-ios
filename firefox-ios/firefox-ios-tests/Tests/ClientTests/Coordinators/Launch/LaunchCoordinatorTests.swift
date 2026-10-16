@@ -1,0 +1,296 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import SwiftUI
+import Common
+import ComponentLibrary
+import OnboardingKit
+import Shared
+import XCTest
+@testable import Client
+
+@MainActor
+final class LaunchCoordinatorTests: XCTestCase {
+    private var profile: MockProfile!
+    private var mockRouter: MockRouter!
+    private var delegate: MockLaunchCoordinatorDelegate!
+    let windowUUID: WindowUUID = .XCTestDefaultUUID
+
+    override func setUp() async throws {
+        try await super.setUp()
+        profile = makeProfile()
+        DependencyHelperMock().bootstrapDependencies()
+        mockRouter = MockRouter(navigationController: MockNavigationController())
+        delegate = MockLaunchCoordinatorDelegate()
+    }
+
+    override func tearDown() async throws {
+        DependencyHelperMock().reset()
+        profile = nil
+        mockRouter = nil
+        delegate = nil
+        try await super.tearDown()
+    }
+
+    func testInitialState() {
+        let subject = createSubject(isIphone: true)
+
+        XCTAssertEqual(mockRouter.presentCalled, 0)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        XCTAssertTrue(subject.childCoordinators.isEmpty)
+    }
+
+    // MARK: - Video Intro
+    func testStart_videoIntro_present() throws {
+        let subject = createSubject(isIphone: true)
+        subject.start(with: .videoIntro)
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        let presentedViewController = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertNotNil(presentedViewController as? OnboardingVideoIntroViewController)
+    }
+
+    // MARK: - Terms of Service
+    func testStart_termsOfServiceNotIphone_present() throws {
+        let termsOfServiceManager = TermsOfServiceManager(prefs: profile.prefs)
+        let subject = createSubject(isIphone: false)
+        subject.start(with: .termsOfService(manager: termsOfServiceManager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let presentedViewController = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertNotNil(presentedViewController as?
+                        PortraitOnlyHostingController<TermsOfUseView<OnboardingKitCardInfoModel>>)
+    }
+
+    func testStart_termsOfServiceIsIphone_present() throws {
+        let termsOfServiceManager = TermsOfServiceManager(prefs: profile.prefs)
+        let subject = createSubject(isIphone: true)
+        subject.start(with: .termsOfService(manager: termsOfServiceManager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let presentedViewController = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertNotNil(presentedViewController as?
+                        PortraitOnlyHostingController<TermsOfUseView<OnboardingKitCardInfoModel>>)
+    }
+
+    // MARK: - Intro
+    func testStart_introNotIphone_present() throws {
+        let introScreenManager = IntroScreenManager(prefs: profile.prefs)
+        let subject = createSubject(isIphone: false)
+        subject.start(with: .intro(manager: introScreenManager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let presentedViewController = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertNotNil(presentedViewController as?
+                        PortraitOnlyHostingController<OnboardingView<OnboardingKitCardInfoModel>>)
+    }
+
+    func testStart_introIsIphone_setRootView() throws {
+        let introScreenManager = IntroScreenManager(prefs: profile.prefs)
+        let subject = createSubject(isIphone: true)
+        subject.start(with: .intro(manager: introScreenManager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let pushedVC = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertNotNil(pushedVC as?
+                        PortraitOnlyHostingController<OnboardingView<OnboardingKitCardInfoModel>>)
+    }
+
+    func testStart_introNotIphone_presentToModernUI() throws {
+        let introScreenManager = MockIntroScreenManager(isModernEnabled: true)
+        let subject = createSubject(isIphone: false)
+        subject.start(with: .intro(manager: introScreenManager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let presentedViewController = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertTrue(
+            presentedViewController is
+            UIHostingController<OnboardingKit.OnboardingView<Client.OnboardingKitCardInfoModel>>
+        )
+    }
+
+    func testStart_introIsIphone_setRootViewToModernUI() throws {
+        let introScreenManager = MockIntroScreenManager(isModernEnabled: true)
+        let subject = createSubject(isIphone: true)
+        subject.start(with: .intro(manager: introScreenManager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let pushedVC = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertTrue(
+            pushedVC is
+            UIHostingController<OnboardingKit.OnboardingView<Client.OnboardingKitCardInfoModel>>
+        )
+    }
+
+    // MARK: - Default browser
+    func testStart_defaultBrowser_present() throws {
+        let subject = createSubject(isIphone: false)
+        subject.start(with: .defaultBrowser)
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let presentedViewController = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertNotNil(presentedViewController as? DefaultBrowserOnboardingViewController)
+    }
+
+    // MARK: - Survey
+    func testStart_surveyNoMessage_completes() throws {
+        let manager = SurveySurfaceManager(windowUUID: windowUUID)
+        let subject = createSubject(isIphone: false)
+        subject.start(with: .survey(manager: manager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 0)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        XCTAssertNil(mockRouter.presentedViewController)
+    }
+
+    func testStart_surveyWithMessage_setRootView() throws {
+        let messageManager = MockGleanPlumbMessageManagerProtocol()
+        let message = createMessage(isExpired: false)
+        messageManager.message = message
+        let manager = SurveySurfaceManager(windowUUID: windowUUID, and: messageManager)
+        XCTAssertTrue(manager.shouldShowSurveySurface)
+
+        let subject = createSubject(isIphone: false)
+        subject.start(with: .survey(manager: manager))
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertEqual(mockRouter.setRootViewControllerCalled, 0)
+        let pushedVC = try XCTUnwrap(mockRouter.presentedViewController)
+        XCTAssertNotNil(pushedVC as? SurveySurfaceViewController)
+    }
+
+    // MARK: - QRCodeNavigationHandler
+
+    func testShowQRCode_addsChildQRCodeCoordinator() {
+        let subject = createSubject(isIphone: true)
+        let delegate = MockQRCodeViewControllerDelegate()
+
+        subject.showQRCode(delegate: delegate)
+
+        XCTAssertEqual(subject.childCoordinators.count, 1)
+        XCTAssertTrue(subject.childCoordinators.first is QRCodeCoordinator)
+    }
+
+    func testShowQRCode_presentsQRCodeNavigationController() {
+        let subject = createSubject(isIphone: true)
+        let delegate = MockQRCodeViewControllerDelegate()
+
+        subject.showQRCode(delegate: delegate)
+
+        XCTAssertEqual(mockRouter.presentCalled, 1)
+        XCTAssertTrue(mockRouter.presentedViewController is QRCodeNavigationController)
+    }
+
+    // MARK: - Delegates
+    func testStart_surveySetsDelegate() throws {
+        let messageManager = MockGleanPlumbMessageManagerProtocol()
+        let message = createMessage(isExpired: false)
+        messageManager.message = message
+        let manager = SurveySurfaceManager(windowUUID: windowUUID, and: messageManager)
+        XCTAssertTrue(manager.shouldShowSurveySurface)
+
+        let subject = createSubject(isIphone: false)
+        subject.start(with: .survey(manager: manager))
+
+        let presentedVC = try XCTUnwrap(mockRouter.presentedViewController as? SurveySurfaceViewController)
+        XCTAssertNotNil(presentedVC.delegate)
+    }
+
+    func testDidFinish_fromSurveySurfaceViewControllerDelegate() {
+        let subject = createSubject(isIphone: false)
+        subject.parentCoordinator = delegate
+        subject.didFinish()
+
+        XCTAssertEqual(delegate.didFinishCalledCount, 1)
+        XCTAssertEqual(delegate.savedDidFinishCoordinator?.id, subject.id)
+    }
+
+    // MARK: - Onboarding resume (FXIOS-15647)
+    func testOnboardingResumeCardIndex_newUserWithSavedCard_returnsItsIndex() {
+        let cards = [makeOnboardingCard(name: "a"), makeOnboardingCard(name: "b"), makeOnboardingCard(name: "c")]
+        profile.prefs.setString("b", forKey: PrefsKeys.OnboardingLastCardSeen)
+        let subject = createSubject(isIphone: true)
+
+        XCTAssertEqual(subject.onboardingResumeCardIndex(in: cards, reason: .newUser), 1)
+    }
+
+    func testOnboardingResumeCardIndex_savedCardNoLongerInSet_returnsNil() {
+        let cards = [makeOnboardingCard(name: "a"), makeOnboardingCard(name: "b")]
+        profile.prefs.setString("removed-card", forKey: PrefsKeys.OnboardingLastCardSeen)
+        let subject = createSubject(isIphone: true)
+
+        XCTAssertNil(subject.onboardingResumeCardIndex(in: cards, reason: .newUser))
+    }
+
+    func testOnboardingResumeCardIndex_noSavedCard_returnsNil() {
+        let cards = [makeOnboardingCard(name: "a"), makeOnboardingCard(name: "b")]
+        let subject = createSubject(isIphone: true)
+
+        XCTAssertNil(subject.onboardingResumeCardIndex(in: cards, reason: .newUser))
+    }
+
+    func testOnboardingResumeCardIndex_showTourReason_returnsNil() {
+        let cards = [makeOnboardingCard(name: "a"), makeOnboardingCard(name: "b")]
+        profile.prefs.setString("b", forKey: PrefsKeys.OnboardingLastCardSeen)
+        let subject = createSubject(isIphone: true)
+
+        XCTAssertNil(subject.onboardingResumeCardIndex(in: cards, reason: .showTour))
+    }
+
+    // MARK: - Helpers
+    private func makeOnboardingCard(name: String) -> OnboardingKitCardInfoModel {
+        return OnboardingKitCardInfoModel(
+            cardType: .basic,
+            name: name,
+            order: 0,
+            title: "",
+            body: "",
+            buttons: OnboardingButtons<OnboardingActions>(
+                primary: OnboardingButtonInfoModel<OnboardingActions>(title: "", action: .forwardOneCard),
+                secondary: nil
+            ),
+            multipleChoiceButtons: [],
+            a11yIdRoot: "",
+            imageID: ""
+        )
+    }
+
+    private func createSubject(isIphone: Bool,
+                               file: StaticString = #filePath,
+                               line: UInt = #line) -> LaunchCoordinator {
+        let subject = LaunchCoordinator(
+            router: mockRouter,
+            windowUUID: .XCTestDefaultUUID,
+            profile: profile,
+            isIphone: isIphone
+        )
+        trackForMemoryLeaks(subject, file: file, line: line)
+        return subject
+    }
+
+    private func createMessage(
+        for surface: MessageSurfaceId = .survey,
+        isExpired: Bool
+    ) -> GleanPlumbMessage {
+        let metadata = GleanPlumbMessageMetaData(id: "",
+                                                 impressions: 0,
+                                                 dismissals: 0,
+                                                 isExpired: isExpired)
+
+        return GleanPlumbMessage(id: "12345",
+                                 data: MockSurveyMessageDataProtocol(surface: surface),
+                                 action: "https://mozilla.com",
+                                 triggerIfAll: [],
+                                 exceptIfAny: [],
+                                 style: MockStyleDataProtocol(),
+                                 metadata: metadata)
+    }
+}

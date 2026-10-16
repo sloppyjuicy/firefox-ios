@@ -1,0 +1,1094 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Foundation
+import Shared
+import SiteImageView
+import WebKit
+import WebEngine
+import TabDataStore
+
+import struct Storage.PageMetadata
+
+#if DEBUG
+private var debugTabCount = 0
+#endif
+
+@MainActor
+func mostRecentTab(inTabs tabs: [Tab]) -> Tab? {
+    guard var recent = tabs.first else {
+        return nil
+    }
+
+    tabs.forEach { tab in
+        if tab.lastExecutedTime > recent.lastExecutedTime {
+            recent = tab
+        }
+    }
+
+    return recent
+}
+
+protocol TabContentScript {
+    @MainActor
+    static func name() -> String
+    @MainActor
+    func scriptMessageHandlerNames() -> [String]?
+
+    @MainActor
+    func userContentController(
+        _ userContentController: WKUserContentController,
+        didReceiveScriptMessage message: WKScriptMessage
+    )
+
+    @MainActor
+    func prepareForDeinit()
+}
+
+extension TabContentScript {
+    // By default most script don't need a `prepareForDeinit`
+    func prepareForDeinit() {}
+}
+
+protocol LegacyTabDelegate: AnyObject {
+    @MainActor
+    func tab(_ tab: Tab, didAddLoginAlert alert: SaveLoginAlert)
+    @MainActor
+    func tab(_ tab: Tab, didRemoveLoginAlert alert: SaveLoginAlert)
+    @MainActor
+    func tab(_ tab: Tab, didSelectFindInPageForSelection selection: String)
+    @MainActor
+    func tab(_ tab: Tab, didSelectSearchWithFirefoxForSelection selection: String)
+    @MainActor
+    func tab(_ tab: Tab, didCreateWebView webView: WKWebView)
+    @MainActor
+    func tab(_ tab: Tab, willDeleteWebView webView: WKWebView)
+}
+
+enum TabUrlType: String {
+    case regular
+    case search
+    case followOnSearch
+    case organicSearch
+    case googleTopSite
+    case googleTopSiteFollowOn
+}
+
+typealias TabUUID = String
+typealias TabGroupID = UUID
+
+@MainActor
+class Tab: NSObject,
+           ThemeApplicable,
+           FeatureFlaggable,
+           ShareTab,
+           ContentBlockerTab,
+           TabWebViewDelegate,
+           UIGestureRecognizerDelegate {
+    var groupID: TabGroupID?
+
+    private var _isPrivate = false
+    private(set) var isPrivate: Bool {
+        get {
+            return _isPrivate
+        }
+        set {
+            if _isPrivate != newValue {
+                _isPrivate = newValue
+            }
+        }
+    }
+
+    var isNormal: Bool {
+        return !isPrivate
+    }
+
+    /// The window associated with the tab (where the tab lives and will be displayed).
+    /// Currently tabs cannot be actively moved between windows on iPadOS, however this
+    /// may change in the future.
+    let windowUUID: WindowUUID
+
+    var urlType: TabUrlType = .regular
+
+    // PageMetadata is derived from the page content itself, and as such lags behind the
+    // rest of the tab.
+    var pageMetadata: PageMetadata? {
+        didSet {
+            faviconURL = pageMetadata?.faviconURL
+        }
+    }
+
+    var readabilityResult: ReadabilityResult?
+
+    var consecutiveCrashes: UInt = 0
+    let popupThrottler = DefaultPopupThrottler()
+
+    // Setting default page as topsites
+    var newTabPageType: NewTabPage = .topSites
+    // TODO: FXIOS-14381 This can't be nonisolated because it is a var but it is only set once.
+    // We should probably just do this as part of a Tab init from TabData but it will
+    // be a bigger refactor.
+    nonisolated(unsafe) var tabUUID: TabUUID = UUID().uuidString
+    private var screenshotUUIDString: String?
+
+    var screenshotUUID: UUID? {
+        get {
+            guard let uuidString = screenshotUUIDString else { return nil }
+            return UUID(uuidString: uuidString)
+        } set(value) {
+            screenshotUUIDString = value?.uuidString ?? ""
+        }
+    }
+
+    var adsTelemetryUrlList = [String]() {
+        didSet {
+            startingSearchUrlWithAds = url
+        }
+    }
+    var adsTelemetryRedirectUrlList = [URL]()
+    var startingSearchUrlWithAds: URL?
+    var adsProviderName = ""
+    var hasHomeScreenshot = false
+    var shouldScrollToTop = false
+    var isFindInPageMode = false
+
+    // To check if current URL is the starting page i.e. either blank page or internal page like topsites
+    var isURLStartingPage: Bool {
+        guard url != nil else { return true }
+        if url!.absoluteString.hasPrefix("internal://") {
+            return true
+        }
+        return false
+    }
+
+    var canonicalURL: URL? {
+        if temporaryDocument?.isDownloading ?? false {
+            return url
+        }
+        if let string = pageMetadata?.siteURL,
+           let siteURL = URL(string: string) {
+            // If the canonical URL from the page metadata doesn't contain the
+            // "#" fragment, check if the tab's URL has a fragment and if so,
+            // append it to the canonical URL.
+            if siteURL.fragment == nil,
+               let fragment = self.url?.fragment,
+               let siteURLWithFragment = URL(string: "\(string)#\(fragment)") {
+                return siteURLWithFragment
+            }
+
+            return siteURL
+        }
+        return url
+    }
+
+    var isLoading: Bool {
+        return webView?.isLoading ?? false
+    }
+
+    var estimatedProgress: Double {
+        return webView?.estimatedProgress ?? 0
+    }
+
+    var backForwardList: BackForwardList? {
+        guard let backForwardList = webView?.backForwardList else { return nil }
+        return TabBackForwardList(
+            backForwardList: backForwardList,
+            temporaryDocumentSession: temporaryDocumentsSession
+        )
+    }
+
+    var historyList: [URL] {
+        func listToUrl(_ item: BackForwardListItem) -> URL { return item.url }
+
+        var historyUrls = self.backForwardList?.backList.map(listToUrl) ?? [URL]()
+        if let url = url {
+            historyUrls.append(url)
+        }
+        return historyUrls
+    }
+
+    var title: String? {
+        if let title = webView?.title, !title.isEmpty {
+            return webView?.title
+        }
+
+        return nil
+    }
+
+    /// This property returns, ideally, the web page's title. Otherwise, based on the page being internal
+    /// or not, it will resort to other displayable titles.
+    var displayTitle: String {
+        if self.isFxHomeTab {
+            return .LegacyAppMenu.AppMenuOpenHomePageTitleString
+        }
+
+        if let url, url.isFileURL {
+            // return the file name
+            return url.lastPathComponent
+        }
+
+        if let lastTitle = lastTitle, !lastTitle.isEmpty {
+            return lastTitle
+        }
+
+        // First, check if the webView can give us a title.
+        if let title = webView?.title, !title.isEmpty {
+            return title
+        }
+
+        // Then, if it's not Home, and it's also not a complete and valid URL, display what was "entered" as the title.
+        if let url = self.url, !InternalURL.isValid(url: url), let shownUrl = url.displayURL?.absoluteString {
+            return shownUrl
+        }
+
+        // Finally, somehow lastTitle is persisted (and webView's title isn't).
+        guard let lastTitle = lastTitle, !lastTitle.isEmpty else {
+            // And if `lastTitle` fails, we'll take the URL itself (somewhat treated) as the last resort.
+            return self.url?.displayURL?.baseDomain ??  ""
+        }
+
+        return lastTitle
+    }
+
+    /// Use the display title unless it's an empty string, then use the base domain from the url
+    func getTabTrayTitle() -> String {
+        let baseDomain = url?.baseDomain
+        var backUpName = "" // In case display title is empty
+
+        if let baseDomain = baseDomain {
+            backUpName = baseDomain.contains("local") ? .LegacyAppMenu.AppMenuOpenHomePageTitleString : baseDomain
+        } else if let url = url, let about = InternalURL(url)?.aboutComponent {
+            backUpName = about
+        } else if url == nil {
+            // When homepage is blank, we need to use "New Tab" as title instead "Homepage"
+            backUpName = .TabsTray.TabsSelectorBlankTabsTitle
+        }
+
+        return displayTitle.isEmpty ? backUpName : displayTitle
+    }
+
+    var canGoBack: Bool {
+        // FXIOS-9785 This could result in the back button never being enabled for restored tabs
+        assert(webView != nil, "We should not be trying to enable or disable the back button before the webView is set")
+
+        return webView?.canGoBack ?? false
+    }
+
+    var canGoForward: Bool {
+        // FXIOS-9785 This could result in the forward button never being enabled for restored tabs
+        assert(webView != nil, "We should not be trying to enable or disable the forward button before the webView is set")
+
+        return webView?.canGoForward ?? false
+    }
+
+    var userActivity: NSUserActivity?
+    var webView: TabWebView?
+    weak var tabDelegate: LegacyTabDelegate?
+    var loginAlert: SaveLoginAlert?
+    var lastExecutedTime: Timestamp
+    var firstCreatedTime: Timestamp
+    private let faviconHelper: SiteImageHandler
+    // TODO: FXIOS-13297 Keep track of new DispatchQueueInterface usages
+    nonisolated private let removeDispatchQueue: DispatchQueueInterface
+    var faviconURL: String? {
+        didSet {
+            guard let url = url,
+                  let faviconURLString = faviconURL,
+                  let faviconUrl = URL(string: faviconURLString)
+            else { return }
+            faviconHelper.cacheFaviconURL(
+                siteURL: url,
+                faviconURL: faviconUrl
+            )
+        }
+    }
+    fileprivate var lastRequest: URLRequest?
+    var pendingScreenshot = false
+    var url: URL? {
+        didSet {
+            if let _url = url, let sourceURL = temporaryDocumentsSession[_url] {
+                url = sourceURL
+            }
+            if let _url = url, let internalUrl = InternalURL(_url), internalUrl.isAuthorized {
+                url = URL(string: internalUrl.stripAuthorization)
+            }
+        }
+    }
+
+    var lastKnownUrl: URL? {
+        // Historically, there was a check for the tab session data beforehand here.
+        // Since session data doesn't exist anymore since we use WKWebview interaction state
+        // Tab.lastKnownUrl is in fact the Tab.url.
+        return self.url
+    }
+
+    var isFxHomeTab: Bool {
+        // Check if there is a url or last known url
+        let url = url ?? lastKnownUrl
+        guard let url = url else { return false }
+
+        // Make sure the url is of type home page
+        if url.absoluteString.hasPrefix("internal://"),
+           let internalUrl = InternalURL(url),
+           internalUrl.isAboutHomeURL {
+            return true
+        }
+        return false
+    }
+
+    var isCustomHomeTab: Bool {
+        if let customHomeUrl = HomeButtonHomePageAccessors.getHomePage(profile.prefs),
+           let customHomeBaseDomain = customHomeUrl.baseDomain,
+           let url = url,
+           let baseDomain = url.baseDomain,
+           baseDomain.hasPrefix(customHomeBaseDomain) {
+            return true
+        }
+        return false
+    }
+
+    var mimeType: String?
+    var isEditing = false
+    // TODO: [FXIOS-15182] We can remove this HTTP auth credential once the refactors to TemporaryDocument are implemented
+    var httpAuthCredential: (host: String, credential: URLCredential)?
+    // When viewing a non-HTML content type in the webview (like a PDF document), this URL will
+    // point to a tempfile containing the content so it can be shared to external applications.
+    var temporaryDocument: TemporaryDocument?
+
+    /// Used to retain a reference to an AR 3D model preview until display ends
+    var quickLookPreviewHelper: OpenQLPreviewHelper?
+
+    /// Returns true if this tab's URL is known, and it's longer than we want to store.
+    var urlIsTooLong: Bool {
+        guard let url = self.url else {
+            return false
+        }
+        return url.absoluteString.lengthOfBytes(using: .utf8) > AppConstants.databaseURLLengthMax
+    }
+
+    // Use computed property so @available can be used to guard `noImageMode`.
+    var noImageMode: Bool {
+        didSet {
+            guard noImageMode != oldValue else { return }
+
+            contentBlocker?.noImageMode(enabled: noImageMode)
+
+            UserScriptManager.shared.injectUserScriptsIntoWebView(
+                webView,
+                nightMode: nightMode,
+                noImageMode: noImageMode,
+                backgroundAudio: featureFlagsProvider.isEnabled(.backgroundAudio)
+                    && BackgroundAudioHelper.isEnabled(profile.prefs)
+            )
+        }
+    }
+
+    var nightMode: Bool {
+        didSet {
+            guard nightMode != oldValue else { return }
+            webView?.isOpaque = !nightMode
+            webView?.evaluateJavascriptInCustomContentWorld(
+                NightModeHelper.jsCallbackBuilder(nightMode),
+                in: .world(name: NightModeHelper.name())
+            )
+            UserScriptManager.shared.injectUserScriptsIntoWebView(
+                webView,
+                nightMode: nightMode,
+                noImageMode: noImageMode,
+                backgroundAudio: featureFlagsProvider.isEnabled(.backgroundAudio)
+                    && BackgroundAudioHelper.isEnabled(profile.prefs)
+            )
+        }
+    }
+
+    var contentBlocker: FirefoxTabContentBlocker?
+
+    /// Per-tab translation state. Mirrors the Redux `AddressBarState.translationConfiguration` so the
+    /// toolbar/menu can be re-synced with the WKWebView's translated DOM after a tab switch.
+    /// Cleared on real navigation in `webView(_:didCommit:)`.
+    var translationConfiguration: TranslationConfiguration?
+
+    /// One-shot closure registered by a feature before a navigation it owns. `webView(_:didCommit:)`
+    /// calls and clears it on the next commit; if nil the commit is treated as a regular navigation
+    /// and any feature-owned state (e.g. `translationConfiguration`) is cleared.
+    var onNextCommit: (() -> Void)?
+
+    /// The last title shown by this tab. Used by the tab tray to show titles for zombie tabs.
+    var lastTitle: String?
+
+    /// Whether or not the desktop site was requested with the last request, reload or navigation.
+    var changedUserAgent = false {
+        didSet {
+            if changedUserAgent != oldValue {
+                TabEvent.post(.didToggleDesktopMode, for: self)
+            }
+        }
+    }
+
+    var readerModeAvailableOrActive: Bool {
+        if let readerModeState {
+            return readerModeState != .unavailable
+        }
+        return false
+    }
+
+    /// The reader mode state for the tab. The value could be nil when ReaderMode is not supported for the page.
+    var readerModeState: ReaderModeState? {
+        if mimeType == MIMEType.HTML,
+           let readerMode = self.getContentScript(name: "ReaderMode") as? ReaderMode {
+            return readerMode.state
+        }
+        return nil
+    }
+
+    var pageZoom: CGFloat = 1.0 {
+        didSet {
+            webView?.setValue(pageZoom, forKey: "viewScale")
+        }
+    }
+
+    fileprivate(set) var screenshot: UIImage?
+
+    // If this tab has been opened from another, its parent will point to the tab from which it was opened
+    weak var parent: Tab?
+
+    private var contentScriptManager = TabContentScriptManager()
+
+    /// WebKit-provided configuration for popup tabs. Takes precedence over standard configuration when set.
+    var requiredPopupConfiguration: WKWebViewConfiguration?
+    private var configuration: WKWebViewConfiguration?
+
+    /// Any time a tab tries to make requests to display a Javascript Alert and we are not the active
+    /// tab instance, queue it for later until we become foregrounded.
+    private var alertQueue = [JavaScriptAlertInfo]()
+
+    var onWebViewLoadingStateChanged: (@MainActor () -> Void)?
+    private var webViewLoadingObserver: NSKeyValueObservation?
+
+    private var temporaryDocumentsSession: TemporaryDocumentSession = [:]
+
+    // MARK: - Tab leaks detection view
+    private var uiTestLeakView: UIView?
+
+    // MARK: - Dependencies
+    var profile: Profile
+    private let fileManager: FileManagerProtocol
+    private var logger: Logger
+    private let documentLogger: DocumentLogger
+
+    init(profile: Profile,
+         isPrivate: Bool = false,
+         groupID: TabGroupID? = nil,
+         windowUUID: WindowUUID,
+         faviconHelper: SiteImageHandler = DefaultSiteImageHandler.factory(),
+         tabCreatedTime: Date = Date(),
+         fileManager: FileManagerProtocol = FileManager.default,
+         logger: Logger = DefaultLogger.shared,
+         documentLogger: DocumentLogger = AppContainer.shared.resolve(),
+         dispatchQueue: DispatchQueueInterface = DispatchQueue.global(qos: .background)) {
+        self.groupID = groupID
+        self.nightMode = false
+        self.windowUUID = windowUUID
+        self.noImageMode = false
+        self.profile = profile
+        self.faviconHelper = faviconHelper
+        self.lastExecutedTime = tabCreatedTime.toTimestamp()
+        self.firstCreatedTime = tabCreatedTime.toTimestamp()
+        self.fileManager = fileManager
+        self.logger = logger
+        self.documentLogger = documentLogger
+        self.removeDispatchQueue = dispatchQueue
+        super.init()
+        self.isPrivate = isPrivate
+#if DEBUG
+        debugTabCount += 1
+#endif
+
+        TelemetryWrapper.recordEvent(
+            category: .action,
+            method: .add,
+            object: .tab,
+            value: isPrivate ? .privateTab : .normalTab
+        )
+    }
+
+    weak var navigationDelegate: WKNavigationDelegate? {
+        didSet {
+            if let webView = webView {
+                webView.navigationDelegate = navigationDelegate
+            }
+        }
+    }
+
+    /// Creates and configures a WKWebView for this tab.
+    /// - Parameters:
+    ///   - restoreSessionData: Optional session data to restore the webview's browsing state.
+    ///   - configuration: The WKWebViewConfiguration to use. Overridden by `requiredConfiguration` if set.
+    func createWebview(with restoreSessionData: Data? = nil, configuration: WKWebViewConfiguration) {
+        guard webView == nil else { return }
+
+        let requiredConfiguration = requiredPopupConfiguration ?? configuration
+        // Ensures we inject scripts into a new content controller
+        requiredConfiguration.userContentController = .init()
+        self.configuration = requiredConfiguration
+
+        if #available(iOS 18.2, *),
+           featureFlagsProvider.isEnabled(.httpsUpgrade) {
+            let pagePrefs = requiredConfiguration.defaultWebpagePreferences ?? WKWebpagePreferences()
+            pagePrefs.preferredHTTPSNavigationPolicy = .automaticFallbackToHTTP
+            requiredConfiguration.defaultWebpagePreferences = pagePrefs
+        }
+
+        let webView = TabWebView(frame: .zero,
+                                 configuration: requiredConfiguration,
+                                 windowUUID: windowUUID,
+                                 certStore: profile.certStore)
+        webView.configure(delegate: self, navigationDelegate: navigationDelegate)
+        webView.accessibilityLabel = .WebViewAccessibilityLabel
+        webView.allowsBackForwardNavigationGestures = true
+        webView.allowsLinkPreview = true
+
+        // Allow Safari Web Inspector (requires toggle in Settings > Safari > Advanced).
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
+
+        // Turning off masking allows the web content to flow outside of the scrollView's frame
+        // which allows the content appear beneath the toolbars in the BrowserViewController
+        webView.scrollView.layer.masksToBounds = false
+
+        restore(webView, interactionState: restoreSessionData)
+
+        self.webView = webView
+
+        configureEdgeSwipeGestureRecognizers()
+
+        UserScriptManager.shared.injectUserScriptsIntoWebView(
+            webView,
+            nightMode: nightMode,
+            noImageMode: noImageMode,
+            backgroundAudio: featureFlagsProvider.isEnabled(.backgroundAudio)
+                && BackgroundAudioHelper.isEnabled(profile.prefs)
+        )
+
+        tabDelegate?.tab(self, didCreateWebView: webView)
+        webViewLoadingObserver = webView.observe(\.isLoading) { [weak self] _, _ in
+            guard let self else { return }
+            ensureMainThread {
+                self.onWebViewLoadingStateChanged?()
+            }
+        }
+    }
+
+    func restore(_ webView: WKWebView, interactionState: Data? = nil) {
+        if let url = url {
+            if let internalURL = InternalURL(url),
+               internalURL.isAboutHomeURL {
+                webView.load(PrivilegedRequest(url: url) as URLRequest)
+            } else {
+                webView.load(URLRequest(url: url))
+            }
+        }
+        if let interactionState = interactionState {
+            webView.interactionState = interactionState
+        }
+    }
+
+    /// Keep final cleanup in deinit as a safety net, but add call in close() explicitly
+    /// because retained tabs may delay deinit and keep resources alive.
+    deinit {
+        if Thread.isMainThread {
+            MainActor.assumeIsolated {
+                // Note: this has no effect in production. This view is only
+                // created during automation testing as a sentinel UI element.
+                uiTestLeakView?.removeFromSuperview()
+            }
+        }
+#if DEBUG
+        debugTabCount -= 1
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        func checkTabCount(failures: Int) {
+            // Need delay for pool to drain.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if appDelegate.tabManager.remoteTabs.count == debugTabCount {
+                    return
+                }
+
+                // If this assert has false positives, remove it and just log an error.
+                assert(failures < 3, "Tab init/deinit imbalance, possible memory leak.")
+                checkTabCount(failures: failures + 1)
+            }
+        }
+        checkTabCount(failures: 0)
+#endif
+    }
+
+    /// When a user clears ALL history, `sessionData` and `historyList` need to be purged, and close the webView.
+    func clearAndResetTabHistory() {
+        guard let currentlyOpenUrl = lastKnownUrl ?? historyList.last else { return }
+
+        url = currentlyOpenUrl
+
+        // We're closing the tab in the UI, and remove the tabs from the tabmanager.tabs array right away
+        // so everything is kept in sync. But the actual closure of the Tab object is asynchronous [FXIOS-15339].
+        Task {
+            await close()
+        }
+    }
+
+    /// Performs cleanup because deinit may be delayed by retain cycles or long-lived references.
+    func close() async {
+        await webView?.pauseAllMediaPlayback()
+
+        webView?.stopLoading()
+
+        contentScriptManager.uninstall(tab: self)
+        webView?.removeAllUserScripts()
+
+        if let webView = webView {
+            tabDelegate?.tab(self, willDeleteWebView: webView)
+        }
+
+        webView?.addUITestMemoryLeakDetectionUIElement()
+        webView?.navigationDelegate = nil
+        webView?.removeFromSuperview()
+
+        webViewLoadingObserver?.invalidate()
+        webViewLoadingObserver = nil
+        webView = nil
+
+        deleteDownloadedDocuments(docsURL: temporaryDocumentsSession)
+        addUITestMemoryLeakDetectionUIElement()
+    }
+
+    func offloadWebView() async {
+        guard webView != nil else { return }
+        await close()
+    }
+
+    func goBack() {
+        // if the file was cancelled then return and avoid calling webView.goBack
+        // since the previous page is already there
+        guard !cancelTemporaryDocumentDownload() else { return }
+        _ = webView?.goBack()
+    }
+
+    func goForward() {
+        // if the file was cancelled then return and avoid calling webView.goForward
+        // since the previous page is already there
+        guard !cancelTemporaryDocumentDownload() else { return }
+        _ = webView?.goForward()
+    }
+
+    func goToBackForwardListItem(_ item: WKBackForwardListItem) {
+        cancelTemporaryDocumentDownload()
+        _ = webView?.go(to: item)
+    }
+
+    @discardableResult
+    func loadRequest(_ request: URLRequest) -> WKNavigation? {
+        cancelTemporaryDocumentDownload(forceReload: false)
+        if let webView = webView {
+            // Convert about:reader?url=http://example.com URLs to local ReaderMode URLs
+            if let url = request.url,
+               let syncedReaderModeURL = url.decodeReaderModeURL,
+               let localReaderModeURL = syncedReaderModeURL.encodeReaderModeURL(
+                ReaderModeSchemeHandler.currentBaseURL
+               ) {
+                let readerModeRequest = PrivilegedRequest(url: localReaderModeURL) as URLRequest
+                lastRequest = readerModeRequest
+                return webView.load(readerModeRequest)
+            }
+            lastRequest = request
+            if let url = request.url, url.isFileURL, request.isPrivileged {
+                return webView.loadFileURL(url, allowingReadAccessTo: url)
+            }
+            return webView.load(request)
+        }
+        return nil
+    }
+
+    func stop() {
+        webView?.stopLoading()
+        cancelTemporaryDocumentDownload()
+    }
+
+    func reload(bypassCache: Bool = false) {
+        if cancelTemporaryDocumentDownload() {
+            return
+        }
+        // If the current page is an error page, and the reload button is tapped, load the original URL
+        if let url = webView?.url, let internalUrl = InternalURL(url), let page = internalUrl.originalURLFromErrorPage {
+            let request = URLRequest(url: page, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
+            webView?.load(request)
+            return
+        }
+
+        if bypassCache, let url = webView?.url {
+            let reloadRequest = URLRequest(url: url,
+                                           cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+                                           timeoutInterval: 10.0)
+
+            if webView?.load(reloadRequest) != nil {
+                logger.log("Reloaded the tab from originating source, ignoring local cache.",
+                           level: .debug,
+                           category: .tabs)
+                return
+            }
+        }
+
+        if let webView, webView.url != nil {
+            webView.reloadFromOrigin()
+            logger.log("Reloaded zombified tab from origin",
+                       level: .debug,
+                       category: .tabs)
+            return
+        }
+
+        if let webView = self.webView {
+            logger.log("restoring webView from scratch",
+                       level: .debug,
+                       category: .tabs)
+            restore(webView)
+        }
+    }
+
+    // MARK: - Content script
+
+    func addContentScript(_ helper: TabContentScript, name: String) {
+        contentScriptManager.addContentScript(helper, name: name, forTab: self)
+    }
+
+    func addContentScriptToPage(_ helper: TabContentScript, name: String) {
+        contentScriptManager.addContentScriptToPage(helper, name: name, forTab: self)
+    }
+
+    func addContentScriptToCustomWorld(_ helper: TabContentScript, name: String) {
+        contentScriptManager.addContentScriptToCustomWorld(helper, name: name, forTab: self)
+    }
+
+    func getContentScript(name: String) -> TabContentScript? {
+        return contentScriptManager.getContentScript(name)
+    }
+
+    // MARK: - Login alert
+
+    func addLoginAlert(_ alert: SaveLoginAlert) {
+        // Only one login alert can show per tab
+        guard loginAlert == nil else { return }
+        loginAlert = alert
+        tabDelegate?.tab(self, didAddLoginAlert: alert)
+    }
+
+    func removeLoginAlert(_ alert: SaveLoginAlert) {
+        tabDelegate?.tab(self, didRemoveLoginAlert: alert)
+        loginAlert = nil
+    }
+
+    func expireLoginAlert() {
+        if let loginAlert, !loginAlert.shouldPersist {
+            removeLoginAlert(loginAlert)
+        }
+    }
+
+    func setFindInPage(isBottomSearchBar: Bool, doesFindInPageBarExist: Bool) {
+        if #available(iOS 16, *) {
+            guard let webView = self.webView,
+                  let findInteraction = webView.findInteraction else { return }
+            isFindInPageMode = findInteraction.isFindNavigatorVisible && isBottomSearchBar
+        } else {
+            isFindInPageMode = doesFindInPageBarExist && isBottomSearchBar
+        }
+    }
+
+    func setScreenshot(_ screenshot: UIImage?) {
+        self.screenshot = screenshot
+    }
+
+    func toggleChangeUserAgent(originalURL: URL? = nil) {
+        changedUserAgent.toggle()
+        let activeURL = originalURL ?? url
+
+        if changedUserAgent, let url = activeURL {
+            let url = ChangeUserAgent().removeMobilePrefixFrom(url: url)
+            let request = URLRequest(url: url)
+            webView?.load(request)
+        } else {
+            reload()
+        }
+
+        TabEvent.post(.didToggleDesktopMode, for: self)
+    }
+
+    func cancelQueuedAlerts() {
+        alertQueue.forEach { alert in
+            alert.cancel()
+        }
+    }
+
+    /// Queues a JS Alert for later display
+    /// Do not call completionHandler until the alert is displayed and dismissed
+    func queueJavascriptAlertPrompt(_ alert: JavaScriptAlertInfo) {
+        alertQueue.append(alert)
+    }
+
+    func dequeueJavascriptAlertPrompt() -> JavaScriptAlertInfo? {
+        guard !alertQueue.isEmpty else { return nil }
+        return alertQueue.removeFirst()
+    }
+
+    func hasJavascriptAlertPrompt() -> Bool {
+        return !alertQueue.isEmpty
+    }
+
+    func isDescendentOf(_ ancestor: Tab) -> Bool {
+        return sequence(first: parent) { $0?.parent }.contains { $0 == ancestor }
+    }
+
+    // MARK: - ThemeApplicable
+
+    func applyTheme(theme: Theme) {
+        UITextField.appearance().keyboardAppearance = theme.type.keyboardAppearence(isPrivate: isPrivate)
+        webView?.applyTheme(theme: theme)
+        /// Configures the web view's background to prevent a white flash during initial load in night mode.
+        /// Note: Background colors are only visible when `isOpaque` is false — setting them while it's true has no effect.
+        webView?.backgroundColor =  theme.colors.layer1
+        webView?.scrollView.backgroundColor = theme.colors.layer1
+        webView?.isOpaque = !nightMode
+        webView?.underPageBackgroundColor = nightMode ? .black : nil
+    }
+
+    // MARK: - Static Helpers
+
+    /// Returns true if the tabs both have the same type of private or normal.
+    /// Simply checks the `isPrivate` of both tabs.
+    func isSameTypeAs(_ otherTab: Tab) -> Bool {
+        switch (self.isPrivate, otherTab.isPrivate) {
+        case (true, true):
+            // Two private tabs are always lumped together in the same type
+            return true
+        case (false, false):
+            // Two normal tabs are always lumped together in the same type
+            return true
+        default:
+            return false
+        }
+    }
+
+    // MARK: - Temporary UI Workaround Hack/Fix (FXIOS-15487)
+
+    func bug15487_isGoogleAIPage() -> Bool {
+        // Temporary UI workaround. Implications have been discussed with Product team and we've decided
+        // to implement this for now to help alleviate difficulties for users using Google AI search.
+        // We attempt to detect Google AI page here and if so this is used by the BVC to avoid presenting
+        // our normal over-keyboard UI, which unfortunately causes the iOS keyboard to be dismissed due to
+        // the size of Firefox's UI coupled with how we are resizing the WKWebView in our iOS browser.
+        // A longer-term fix is being discussed & is forthcoming.
+        guard let url, let domain = url.shortDomain else { return false }
+        guard domain == "google" else { return false }
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let queryItems = components.queryItems else { return false }
+        return queryItems.contains(where: { $0.name == "udm" && $0.value == "50" })
+    }
+
+    // MARK: - Temporary Document handling - PDF Refactor
+
+    /// Retrieves the session cookies attached to the current `WKWebView` managed by the `Tab`
+    func getSessionCookies(_ completion: @MainActor @escaping ([HTTPCookie]) -> Void) {
+        webView?.configuration.websiteDataStore.httpCookieStore.getAllCookies(completion)
+    }
+
+    /// Returns true if the download was cancelled.
+    ///
+    /// `forceReload` forces the reload of the page when a document is downloading.
+    ///  After download cancellation reload the page to ensure clean state.
+    @discardableResult
+    private func cancelTemporaryDocumentDownload(forceReload: Bool = true) -> Bool {
+        guard let temporaryDocument else { return false }
+        self.temporaryDocument = nil
+        if temporaryDocument.isDownloading {
+            temporaryDocument.cancelDownload()
+            if let sourceURL = temporaryDocument.sourceURL {
+                documentLogger.remove(url: sourceURL)
+            }
+            if forceReload {
+                // if the webView's url is the home page then bypass cache so to reload the homepage
+                // Otherwise the webView is restored causing the PDF to be reloaded again.
+                let isInternalURL = InternalURL(webView?.url) != nil
+                reload(bypassCache: isInternalURL)
+            }
+            return true
+        }
+        return false
+    }
+
+    nonisolated private func deleteDownloadedDocuments(docsURL: TemporaryDocumentSession) {
+        guard !docsURL.isEmpty else { return }
+        removeDispatchQueue.async { [fileManager] in
+            docsURL.forEach { url in
+                try? fileManager.removeItem(at: url.key)
+            }
+        }
+    }
+
+    func shouldDownloadDocument(_ request: URLRequest) -> Bool {
+        if let url = request.url, url.isFileURL, temporaryDocumentsSession[url] != nil {
+            let fileExists = fileManager.fileExists(atPath: url.path)
+            // Add a temporary document when the request is pointing to a document that was previously viewed.
+            // This is needed since temporary document is removed when navigating to any website and thus it needs
+            // to be restored, otherwise the share sheet will try to share a link and not the actual doc.
+            addTemporaryDocumentIfNeeded(request)
+            return !fileExists
+        }
+        return temporaryDocument?.canDownload(request: request) ?? true
+    }
+
+    private func addTemporaryDocumentIfNeeded(_ request: URLRequest) {
+        guard temporaryDocument == nil else { return }
+        let mimeType = MIMEType.mimeTypeFromFileExtension(request.url?.pathExtension ?? "")
+        temporaryDocument = DefaultTemporaryDocument(filename: request.url?.lastPathComponent,
+                                                     request: request,
+                                                     mimeType: mimeType)
+    }
+
+    func enqueueDocument(_ document: TemporaryDocument) {
+        temporaryDocument = document
+        let sourceURL = document.sourceURL
+        let isSourceFileURL = sourceURL?.isFileURL == true
+
+        temporaryDocument?.download { [weak self] url in
+            ensureMainThread { [weak self] in
+                guard let url else { return }
+
+                // Prevent the WebView to load a new item so it doesn't add a new entry to the back and forward list.
+                if let item = self?.backForwardList?.firstItem(with: url) as? WKBackForwardListItem {
+                    self?.webView?.go(to: item)
+                } else {
+                    self?.webView?.loadFileURL(url, allowingReadAccessTo: url)
+                }
+
+                // Don't add a source URL if it is a local one. That's happen when reloading the PDF content
+                guard let sourceURL, !isSourceFileURL else { return }
+                self?.temporaryDocumentsSession[url] = sourceURL
+                self?.documentLogger.registerDownloadFinish(url: sourceURL)
+            }
+        }
+    }
+
+    func pauseDocumentDownload() {
+        temporaryDocument?.pauseDownload()
+    }
+
+    func resumeDocumentDownload() {
+        temporaryDocument?.resumeDownload()
+    }
+
+    func cancelDocumentDownload() {
+        temporaryDocument?.cancelDownload()
+    }
+
+    func isDownloadingDocument() -> Bool {
+        return temporaryDocument?.isDownloading ?? false
+    }
+
+    func getTemporaryDocumentsSession() -> TemporaryDocumentSession {
+        return temporaryDocumentsSession
+    }
+
+    func restoreTemporaryDocumentSession(_ session: TemporaryDocumentSession) {
+        temporaryDocumentsSession = session
+    }
+
+    // MARK: - UIGestureRecognizerDelegate
+
+    // This prevents the recognition of one gesture recognizer from blocking another
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        return true
+    }
+
+    func configureEdgeSwipeGestureRecognizers() {
+        guard let webView = webView else { return }
+
+        let edgeSwipeGesture = UIScreenEdgePanGestureRecognizer(
+            target: self,
+            action: #selector(handleEdgeSwipeTabNavigation(_:))
+        )
+        edgeSwipeGesture.edges = .left
+        edgeSwipeGesture.delegate = self
+        webView.addGestureRecognizer(edgeSwipeGesture)
+    }
+
+    @objc
+    func handleEdgeSwipeTabNavigation(_ sender: UIScreenEdgePanGestureRecognizer) {
+        guard let webView = webView else { return }
+        if sender.state == .ended, sender.velocity(in: webView).x > 150 {
+            TelemetryWrapper.recordEvent(
+                category: .action,
+                method: .swipe,
+                object: .navigateTabHistoryBackSwipe
+            )
+        }
+    }
+
+    // MARK: - TabWebViewDelegate
+
+    func tabWebView(_ tabWebView: TabWebView, didSelectFindInPageForSelection selection: String) {
+        tabDelegate?.tab(self, didSelectFindInPageForSelection: selection)
+    }
+
+    func tabWebViewSearchWithFirefox(
+        _ tabWebViewSearchWithFirefox: TabWebView,
+        didSelectSearchWithFirefoxForSelection selection: String
+    ) {
+        tabDelegate?.tab(self, didSelectSearchWithFirefoxForSelection: selection)
+    }
+
+    func tabWebViewShouldShowAccessoryView(_ tabWebView: TabWebView) -> Bool {
+        // Hide the default WKWebView accessory view panel for PDF documents.
+        return mimeType != MIMEType.PDF
+    }
+
+    // MARK: - ContentBlockerTab
+
+    func currentURL() -> URL? {
+        return url
+    }
+
+    func currentWebView() -> WKWebView? {
+        return webView
+    }
+
+    func imageContentBlockingEnabled() -> Bool {
+        return noImageMode
+    }
+
+    // MARK: - Automation Support
+
+    /// No effect in production. This function creates a sentinel UI element which
+    /// can be detected by our automated tests if the Tab is leaked after it is closed.
+    private func addUITestMemoryLeakDetectionUIElement() {
+        guard AppConstants.isRunningUITests, let keyWindow = UIWindow.keyWindow else { return }
+
+        class TAB_LEAK_DETECTED: UIButton { }
+
+        guard let root = keyWindow.rootViewController else { fatalError() }
+        let uiTestScreen = UIScreen.main.bounds
+        let viewFrame = CGRect(x: uiTestScreen.width / 2.0,
+                               y: uiTestScreen.height / 2.0,
+                               width: 5,
+                               height: 5)
+        let leakIdentifierView = TAB_LEAK_DETECTED(frame: viewFrame)
+        leakIdentifierView.backgroundColor = UIColor.white
+        leakIdentifierView.accessibilityIdentifier = AccessibilityIdentifiers.Browser.Tab.automationTestLeakIndicator
+        leakIdentifierView.isAccessibilityElement = true
+        leakIdentifierView.isUserInteractionEnabled = true
+        leakIdentifierView.accessibilityTraits = [.button]
+        root.view.addSubview(leakIdentifierView)
+        uiTestLeakView = leakIdentifierView
+    }
+}

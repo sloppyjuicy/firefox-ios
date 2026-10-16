@@ -1,0 +1,30 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "Εικονίδιο εφαρμογής";
+
+/* (No Comment) */
+"New Private Tab" = "Νέα ιδιωτική καρτέλα";
+
+/* (No Comment) */
+"New Tab" = "Νέα καρτέλα";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Το Firefox μπορεί να χρησιμοποιήσει την κάμερα για σάρωση κωδικών QR ή λήψη φωτογραφιών και βίντεο.";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "Το Firefox απαιτεί το Face ID για την πρόσβαση σε αποθηκευμένα συνθηματικά και μεθόδους πληρωμής.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "Οι ιστότοποι που επισκέπτεστε ενδέχεται να ζητήσουν την τοποθεσία σας.";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "Το Firefox χρησιμοποιεί το μικρόφωνο για την καταγραφή και τη μεταφόρτωση ήχου.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "Επιτρέπει την αποθήκευση φωτογραφιών.";
+
+/* Privacy - Speech Recognition Usage Description */
+"NSSpeechRecognitionUsageDescription" = "Επιτρέπει στο Firefox τη μετατροπή της ομιλίας σε κείμενο.";
+
+/* (No Comment) */
+"Scan QR Code" = "Σάρωση κωδικού QR";
+

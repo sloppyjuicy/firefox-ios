@@ -1,0 +1,27 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "ᱮᱯ ᱪᱤᱱᱦᱟᱹ";
+
+/* (No Comment) */
+"New Private Tab" = "ᱱᱟᱶᱟ ᱱᱤᱡᱮᱨᱟᱠ ᱴᱮᱵ";
+
+/* (No Comment) */
+"New Tab" = "ᱱᱟᱶᱟ ᱴᱮᱵ";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox ᱟᱢᱟᱜ ᱠᱮᱢᱨᱟ QR ᱠᱳᱰ ᱥᱠᱮᱱ ᱞᱟᱹᱜᱤᱫ ᱟᱨ ᱵᱟᱝ ᱪᱤᱛᱟᱹᱨ ᱟᱨ ᱵᱷᱤᱰᱤᱭᱳ ᱦᱟᱛᱟᱣ ᱞᱟᱹᱜᱤᱫ ᱵᱮᱵᱷᱟᱨ ᱫᱟᱲᱮᱭᱟᱜᱼᱟᱭ ᱾";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "ᱟᱢᱟᱜ ᱥᱟᱧᱪᱟᱣ ᱨᱩᱠᱷᱭᱟᱹ ᱞᱳᱜᱤᱱ ᱨᱮ ᱵᱚᱞᱚᱱ ᱞᱟᱹᱜᱤᱱ Firefox ᱟᱢᱟᱜ ᱢᱮᱫᱦᱟᱸ ID ᱞᱟᱹᱠᱛᱤᱜ ᱠᱟᱱᱟᱭ ᱾";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "ᱦᱤᱨᱤᱟᱠᱟᱱ ᱣᱮᱵᱥᱟᱭᱤᱴ ᱟᱢᱟᱜ ᱡᱟᱭᱜᱟ ᱠᱚ ᱠᱷᱚᱡ ᱫᱟᱲᱮᱟᱜᱼᱟ᱾";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "ᱱᱚᱶᱟ ᱛᱮ ᱟᱢ ᱣᱤᱲᱤᱭᱚ ᱨᱟᱠᱟᱵ ᱟᱨ ᱞᱟᱫᱮ ᱫᱟᱰᱮᱭᱟᱜᱼᱟᱢ ᱾";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "ᱱᱚᱶᱟ ᱛᱮ ᱟᱢ ᱪᱤᱛᱟᱹᱨᱠᱚ ᱥᱟᱧᱪᱟᱣ ᱫᱟᱰᱮᱭᱟᱜᱼᱟᱢ ᱾";
+
+/* (No Comment) */
+"Scan QR Code" = "Scan QR ᱠᱚᱰ ᱥᱠᱟᱱ ᱢᱮ";
+

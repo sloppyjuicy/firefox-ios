@@ -1,0 +1,594 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import WebKit
+import Foundation
+import Shared
+import Common
+import PDFKit
+
+import class Account.RustFirefoxAccounts
+import enum MozillaAppServices.OAuthScope
+import struct MozillaAppServices.FxaAuthData
+
+enum FxAPageType: Equatable {
+    case emailLoginFlow
+    case qrCode(url: URL)
+    /// A pairing v2 deep link loaded straight from the content server. Distinct from `qrCode`
+    /// because that case is also used by the v1 flows, which start their own OAuth flow through
+    /// `beginPairingAuthentication` before the page loads. Only this case may mint OAuth
+    /// parameters on the page's request.
+    case pairingV2(url: URL)
+    case settingsPage
+
+    /// Whether a page of this type may ask the app to start an OAuth flow on its behalf.
+    var allowsPairOAuthStart: Bool {
+        if case .pairingV2 = self { return true }
+        return false
+    }
+
+    /// Whether the page closes on `oauth_login`. Pairing pages stay open to show the content
+    /// server's confirmation screen, which it renders after sending `oauth_login`.
+    var dismissesOnOAuthLogin: Bool {
+        switch self {
+        case .qrCode, .pairingV2: return false
+        case .emailLoginFlow, .settingsPage: return true
+        }
+    }
+}
+
+/// The two shapes a `fxaccounts:pair_oauth_start` reply can take.
+enum PairOAuthReply: Equatable {
+    case parameters([String: String])
+    case error(String)
+
+    var jsonObject: [String: Any] {
+        switch self {
+        case .parameters(let parameters):
+            return parameters
+        case .error(let message):
+            return ["error": ["message": message]]
+        }
+    }
+}
+
+enum FxAAuthenticationStatusResponse {
+    private static let pairingVersion = 2
+
+    static func json(localeProvider: LocaleProvider = SystemLocaleProvider()) -> String? {
+        let response = ["capabilities": authenticationStatusCapabilities(localeProvider: localeProvider)]
+        return FxAWebViewModel.webChannelJSONString(from: response)
+    }
+
+    private static func authenticationStatusCapabilities(
+        localeProvider: LocaleProvider
+    ) -> [String: Any] {
+        var engines = ["bookmarks", "history", "tabs", "passwords", "creditcards"]
+        if AddressLocaleFeatureValidator.isValidRegion(for: localeProvider.regionCode()) {
+            engines.append("addresses")
+        }
+
+        return [
+            "choose_what_to_sync": true,
+            "pairingVersion": pairingVersion,
+            "engines": engines
+        ]
+    }
+}
+
+// See https://mozilla.github.io/ecosystem-platform/docs/fxa-engineering/fxa-webchannel-protocol
+// For details on message types.
+private enum RemoteCommand: String {
+    case canLinkAccount = "fxaccounts:can_link_account"
+    // case loaded = "fxaccounts:loaded"
+    case status = "fxaccounts:fxa_status"
+    case pairOAuthStart = "fxaccounts:pair_oauth_start"
+    case oauthLogin = "fxaccounts:oauth_login"
+    case login = "fxaccounts:login"
+    case changePassword = "fxaccounts:change_password"
+    case signOut = "fxaccounts:logout"
+    case deleteAccount = "fxaccounts:delete"
+    case profileChanged = "profile:change"
+    case unknown
+}
+
+@MainActor
+class FxAWebViewModel {
+    fileprivate let pageType: FxAPageType
+    fileprivate let profile: Profile
+    fileprivate var deepLinkParams: FxALaunchParams
+    fileprivate(set) var baseURL: URL?
+    let fxAWebViewTelemetry: FxAWebViewTelemetry
+    private let shouldAskForNotificationPermission: Bool
+    private let logger: Logger
+    // This is not shown full-screen, use mobile UA
+    static let mobileUserAgent = UserAgent.mobileUserAgent()
+
+    var userDefaults: UserDefaultsInterface = UserDefaults.standard
+    private lazy var pairingOAuthHandler = FxAPairingOAuthHandler(
+        authenticatorProvider: { [weak self] in self?.profile.rustFxA.accountManager },
+        logger: logger
+    )
+
+    var blobToDataScript = """
+                async function createBlobFromUrl(url) {
+                  const response = await fetch(url);
+                  const blob = await response.blob();
+                  return blob;
+                }
+
+                function blobToDataURLAsync(blob) {
+                  return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      resolve(reader.result);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                  });
+                }
+
+                const url = await createBlobFromUrl(blobUrl)
+                return await blobToDataURLAsync(url)
+            """
+
+    /// Serialize a WebChannel payload for injection into the reply script.
+    ///
+    /// `fileprivate` rather than `private` so `FxAAuthenticationStatusResponse` can reuse it, and
+    /// `nonisolated` because that caller is not on the main actor. The body touches no state.
+    nonisolated fileprivate static func webChannelJSONString(from object: Any) -> String? {
+        guard JSONSerialization.isValidJSONObject(object),
+              let data = try? JSONSerialization.data(withJSONObject: object),
+              let json = String(data: data, encoding: .utf8)
+        else { return nil }
+        return json
+    }
+
+    func setupUserScript(for controller: WKUserContentController) {
+        guard let path = Bundle.main.path(forResource: "FxASignIn", ofType: "js"),
+              let source = try? String(contentsOfFile: path, encoding: .utf8)
+        else {
+            assertionFailure("Error unwrapping contents of file to set up user script")
+            return
+        }
+
+        let userScript = WKUserScript(
+            source: source,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        )
+        controller.addUserScript(userScript)
+    }
+
+    /**
+     init() FxAWebViewModel.
+     - parameter pageType: Specify login flow or settings page if already logged in.
+     - parameter profile: a Profile.
+     - parameter deepLinkParams: url parameters that originate from a deep link
+     - parameter shouldAskForNotificationPermission: indicator if notification permissions should
+                                                     be requested from the user upon login.
+     */
+    required init(pageType: FxAPageType,
+                  profile: Profile,
+                  deepLinkParams: FxALaunchParams,
+                  shouldAskForNotificationPermission: Bool = true,
+                  logger: Logger = DefaultLogger.shared,
+                  telemetry: FxAWebViewTelemetry = FxAWebViewTelemetry()) {
+        self.pageType = pageType
+        self.profile = profile
+        self.deepLinkParams = deepLinkParams
+        self.shouldAskForNotificationPermission = shouldAskForNotificationPermission
+        self.logger = logger
+        self.fxAWebViewTelemetry = telemetry
+    }
+
+    var onDismissController: (() -> Void)?
+
+    func composeTitle(basedOn url: URL?, hasOnlySecureContent: Bool) -> String {
+        return (hasOnlySecureContent ? "🔒 " : "") + (url?.host ?? "")
+    }
+
+    func setupFirstPage(completion: @escaping (URLRequest, TelemetryWrapper.EventMethod?) -> Void) {
+        if let accountManager = profile.rustFxA.accountManager {
+            let entrypoint = self.deepLinkParams.entrypoint.rawValue
+            accountManager.getManageAccountURL(entrypoint: "ios_settings_\(entrypoint)") { [weak self] result in
+                guard let self = self else { return }
+
+                // Handle authentication with either the QR code login flow, email login flow, or settings page flow
+                switch self.pageType {
+                case .emailLoginFlow:
+                    accountManager.beginAuthentication(
+                        entrypoint: "email_\(entrypoint)",
+                        scopes: [OAuthScope.profile, OAuthScope.oldSync]
+                    ) { [weak self] result in
+                        guard let self = self else { return }
+
+                        if case .success(var url) = result {
+                            if self.profile.prefs.boolForKey(PrefsKeys.KeyUseReactFxA) ?? false {
+                                url = url.withQueryParams([
+                                    URLQueryItem(name: "forceExperiment", value: "generalizedReactApp"),
+                                    URLQueryItem(name: "forceExperimentGroup", value: "react")
+                                ])
+                            }
+                            self.baseURL = url
+                            completion(self.makeRequest(url), .emailLogin)
+                        }
+                    }
+                case let .qrCode(url), let .pairingV2(url):
+                    self.baseURL = url
+                    completion(self.makeRequest(url), .qrPairing)
+                case .settingsPage:
+                    if case .success(let url) = result {
+                        self.baseURL = url
+                        completion(self.makeRequest(url), nil)
+                    }
+                }
+            }
+        }
+    }
+
+    private func makeRequest(_ url: URL) -> URLRequest {
+        let args = deepLinkParams.query.filter { $0.key.starts(with: "utm_") }.map {
+            return URLQueryItem(name: $0.key, value: $0.value)
+        }
+
+        var comp = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        comp?.queryItems?.append(contentsOf: args)
+        if let url = comp?.url {
+            return URLRequest(url: url)
+        }
+
+        return URLRequest(url: url)
+    }
+
+    func createOutputURL(withFileName name: String, withFileExtension ext: String) -> URL? {
+        try? FileManager.default.url(for: .documentDirectory,
+                                     in: .userDomainMask,
+                                     appropriateFor: nil,
+                                     create: false)
+        .appendingPathComponent(name)
+        .appendingPathExtension(ext)
+    }
+
+    func isMozillaAccountPDF(blobURL: URL, webViewURL: URL?) -> Bool {
+        if blobURL.scheme == "blob", webViewURL?.host == "accounts.firefox.com" {
+            return true
+        }
+        return false
+    }
+
+    func getURLForPDF(webView: WKWebView, blobURL: URL, completion: @escaping (_ outputURL: URL?) -> Void) {
+        webView.callAsyncJavaScriptInDefaultContentWorld(
+            blobToDataScript,
+            arguments: ["blobUrl": blobURL.absoluteString]) { [weak self] result in
+                completion(self?.createURLForPDF(result: result))
+        }
+    }
+
+    func createURLForPDF(result: Result<Any?, Error>) -> URL? {
+        switch result {
+        case .success(let dataURL):
+            guard let data = dataURL as? String,
+                  let url = URL(string: data),
+                  let data = try? Data(contentsOf: url),
+                  let pdf = PDFDocument(data: data),
+                  let outputURL = createOutputURL(withFileName: "RecoveryKey",
+                                                  withFileExtension: "pdf") else {
+                return nil
+            }
+
+            pdf.write(to: outputURL)
+            if FileManager.default.fileExists(atPath: outputURL.path) {
+                let url = URL(fileURLWithPath: outputURL.path)
+                return url
+            }
+
+            return nil
+        case .failure(let error):
+            logger.log("Failed to get a valid data URL result, with error: \(error.localizedDescription)",
+                       level: .debug,
+                       category: .webview)
+            return nil
+        }
+    }
+}
+
+// MARK: - Commands
+extension FxAWebViewModel {
+    func handle(scriptMessage message: WKScriptMessage) {
+        guard let url = baseURL,
+              let webView = message.webView
+        else { return }
+
+        // The handler is exposed to every frame regardless of the user script's `forMainFrameOnly`,
+        // and only the top-level document is ever the content server's own page.
+        guard message.frameInfo.isMainFrame else {
+            logger.log("Ignoring message from a subframe", level: .warning, category: .sync)
+            return
+        }
+
+        let origin = message.frameInfo.securityOrigin
+        guard origin.`protocol` == url.scheme && origin.host == url.host && origin.port == (url.port ?? 0) else {
+            logger.log("Ignoring message - \(origin) does not match expected origin: \(url.origin ?? "nil")",
+                       level: .warning,
+                       category: .sync)
+            return
+        }
+
+        guard message.name == "accountsCommandHandler" else { return }
+        guard let body = message.body as? [String: Any],
+              let detail = body["detail"] as? [String: Any],
+              let msg = detail["message"] as? [String: Any],
+              let cmd = msg["command"] as? String
+        else { return }
+
+        let id = messageID(from: msg["messageId"])
+        handleRemote(command: cmd, id: id, data: msg["data"], webView: webView)
+    }
+
+    // Handle a message coming from the content server.
+    func handleRemote(command rawValue: String, id: Int?, data: Any?, webView: WKWebView) {
+        logger.log("webchannel message: \(rawValue)", level: .info, category: .sync)
+        let command = RemoteCommand(rawValue: rawValue) ?? .unknown
+        switch command {
+        case .pairOAuthStart:
+            guard let id else {
+                logger.log("Ignoring \(rawValue) with no usable messageId", level: .warning, category: .sync)
+                return
+            }
+            // Only the v2 pairing deep link has a reason to mint OAuth parameters for the page.
+            // The other flows share this bridge and have already started their own OAuth flow, so
+            // starting a second one would clobber the state their sign-in depends on.
+            guard pageType.allowsPairOAuthStart else {
+                logger.log("Ignoring \(rawValue) outside the pairing flow", level: .warning, category: .sync)
+                sendPairOAuth(id: id, webView: webView, reply: .error(FxAPairingOAuthHandler.errorMessage))
+                return
+            }
+            onPairOAuthStart(id: id, webView: webView)
+        case .oauthLogin:
+            if let data = data {
+                onLoginComplete(data: data, webView: webView)
+            } else if pageType.dismissesOnOAuthLogin {
+                onDismissController?()
+            }
+        case .changePassword:
+            if let data = data {
+                onPasswordChange(data: data, webView: webView)
+            }
+        case .status:
+            if let id = id {
+                onSessionStatus(id: id, webView: webView)
+            }
+        case .deleteAccount, .signOut:
+            profile.removeAccount()
+            onDismissController?()
+        case .profileChanged:
+            profile.rustFxA.accountManager?.refreshProfile(ignoreCache: true)
+            // dismiss keyboard after changing profile in order to see notification view
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil,
+                from: nil,
+                for: nil
+            )
+        case .login:
+            guard let data = data as? [String: Any],
+                  let jsonData = try? JSONSerialization.data(withJSONObject: data),
+                  let jsonString = String(data: jsonData, encoding: .utf8)
+            else { return }
+            profile.rustFxA.accountManager?.handleWebChannelLogin(jsonPayload: jsonString) {}
+        case .canLinkAccount:
+            if let id = id {
+                onCanLinkAccount(msgId: id, webView: webView)
+            }
+        case .unknown:
+            if let id = id {
+                onUnknownMessage(msgId: id, webView: webView, rawValue: rawValue)
+            }
+        }
+    }
+
+    /// The WebChannel sends `messageId` as a string today, but accept a number too so a numeric
+    /// sender cannot silently strand every reply. Internal rather than private so tests reach it.
+    func messageID(from value: Any?) -> Int? {
+        if let value = value as? Int {
+            return value
+        }
+        if let value = value as? String {
+            return Int(value)
+        }
+        return nil
+    }
+
+    /// Send a message to web content using the required message structure.
+    /// The reply envelope the WebChannel expects. `messageId` is emitted unquoted so the page
+    /// matches it against the id it sent. Internal rather than private so tests can assert the
+    /// shape, which is a protocol contract with the content server.
+    nonisolated static func webChannelReplyScript(
+        typeId: String,
+        messageId: Int,
+        command: String,
+        data: String
+    ) -> String {
+        return """
+            var msg = {
+                id: "\(typeId)",
+                message: {
+                    messageId: \(messageId),
+                    command: "\(command)",
+                    data : \(data)
+                }
+            };
+            window.dispatchEvent(new CustomEvent('WebChannelMessageToContent', { detail: JSON.stringify(msg) }));
+        """
+    }
+
+    private func runJS(webView: WKWebView, typeId: String, messageId: Int, command: String, data: String = "{}") {
+        let msg = Self.webChannelReplyScript(
+            typeId: typeId,
+            messageId: messageId,
+            command: command,
+            data: data
+        )
+
+        webView.evaluateJavascriptInDefaultContentWorld(msg)
+    }
+
+    /// Respond to the webpage session status notification by either passing signed in
+    /// user info (for settings), or by passing CWTS setup info (in case the user is
+    /// signing up for an account). This latter case is also used for the sign-in state.
+    private func onSessionStatus(id: Int, webView: WKWebView, localeProvider: LocaleProvider = SystemLocaleProvider()) {
+        guard let fxa = profile.rustFxA.accountManager else { return }
+        let cmd = "fxaccounts:fxa_status"
+        let typeId = "account_updates"
+        let data: String
+        switch pageType {
+        case .settingsPage:
+            let signedInUserJson = fxa.getSignedInUserForWebChannel() ?? "null"
+            data = """
+                {
+                    capabilities: {},
+                    signedInUser: \(signedInUserJson),
+                }
+                """
+        case .emailLoginFlow, .qrCode, .pairingV2:
+            guard let status = FxAAuthenticationStatusResponse.json(localeProvider: localeProvider) else {
+                logger.log("Failed to serialize the \(cmd) reply", level: .warning, category: .sync)
+                return
+            }
+            data = status
+        }
+
+        runJS(webView: webView, typeId: typeId, messageId: id, command: cmd, data: data)
+    }
+
+    private func onPairOAuthStart(id: Int, webView: WKWebView) {
+        // Captured strongly so the dropped-reply case below still logs once self is gone.
+        let logger = self.logger
+        pairingOAuthHandler.start { [weak self, weak webView] result in
+            guard let self, let webView else {
+                logger.log("Pair OAuth reply dropped. View model or web view deallocated",
+                           level: .info,
+                           category: .sync)
+                return
+            }
+
+            switch result {
+            case .success(let parameters):
+                sendPairOAuth(id: id, webView: webView, reply: .parameters(parameters))
+            case .failure:
+                sendPairOAuth(id: id, webView: webView, reply: .error(FxAPairingOAuthHandler.errorMessage))
+            }
+        }
+    }
+
+    private func sendPairOAuth(id: Int, webView: WKWebView, reply: PairOAuthReply) {
+        guard let dataJSON = Self.webChannelJSONString(from: reply.jsonObject) else {
+            logger.log("Failed to serialize the \(RemoteCommand.pairOAuthStart.rawValue) reply",
+                       level: .warning,
+                       category: .sync)
+            return
+        }
+        runJS(webView: webView,
+              typeId: "account_updates",
+              messageId: id,
+              command: RemoteCommand.pairOAuthStart.rawValue,
+              data: dataJSON)
+    }
+
+    private func onLoginComplete(data: Any, webView: WKWebView) {
+        guard let data = data as? [String: Any],
+              let code = data["code"] as? String,
+              let state = data["state"] as? String
+        else { return }
+
+        if let declinedSyncEngines = data["declinedSyncEngines"] as? [String] {
+            // Stash the declined engines so on first sync we can disable them!
+            UserDefaults.standard.set(declinedSyncEngines, forKey: "fxa.cwts.declinedSyncEngines")
+        }
+
+        let auth = FxaAuthData(code: code, state: state, actionQueryParam: "signin")
+        profile.rustFxA.accountManager?.finishAuthentication(authData: auth) { _ in
+            self.profile.syncManager?.onAddedAccount()
+
+            // Set the user's Firefox account UID if available
+            if let accountUid = self.profile.rustFxA.accountManager?.accountProfile()?.uid {
+                UserTelemetry().setFirefoxAccountID(uid: accountUid)
+            }
+
+            // only ask for notification permission if it's not onboarding related (e.g. settings)
+            // or if the onboarding flow is missing the notifications card
+            guard self.shouldAskForNotificationPermission else { return }
+
+            NotificationManager().requestAuthorization { granted, error in
+                guard error == nil else { return }
+                if granted {
+                    ensureMainThread {
+                        if self.userDefaults.object(forKey: PrefsKeys.Notifications.SyncNotifications) == nil {
+                            self.userDefaults.set(granted, forKey: PrefsKeys.Notifications.SyncNotifications)
+                        }
+                        if self.userDefaults.object(forKey: PrefsKeys.Notifications.TipsAndFeaturesNotifications) == nil {
+                            self.userDefaults.set(granted, forKey: PrefsKeys.Notifications.TipsAndFeaturesNotifications)
+                        }
+                        NotificationCenter.default.post(name: .RegisterForPushNotifications, object: nil)
+                    }
+                }
+            }
+        }
+        // Record login or registration completed telemetry
+        fxAWebViewTelemetry.recordTelemetry(for: .completed)
+        if pageType.dismissesOnOAuthLogin {
+            onDismissController?()
+        }
+    }
+
+    private func onPasswordChange(data: Any, webView: WKWebView) {
+        guard let data = data as? [String: Any],
+              let jsonData = try? JSONSerialization.data(withJSONObject: data),
+              let jsonString = String(data: jsonData, encoding: .utf8)
+        else { return }
+
+        profile.rustFxA.accountManager?.handlePasswordChanged(jsonPayload: jsonString) { [weak self] in
+            NotificationCenter.default.post(name: .RegisterForPushNotifications, object: nil)
+            self?.profile.syncManager?.syncEverything(why: .enabledChange)
+        }
+    }
+
+    private func onCanLinkAccount(msgId: Int, webView: WKWebView) {
+        let cmd = RemoteCommand.canLinkAccount.rawValue
+        let typeId = "account_updates"
+        // Respond with an 'ok' message immediately today so FxA does not need to support conditional logic on the
+        // server-side just for iOS.
+        // For proper account merging support, see: https://github.com/mozilla-mobile/firefox-ios/issues/21873
+        let data = """
+            { "ok": true }
+        """
+
+        runJS(webView: webView, typeId: typeId, messageId: msgId, command: cmd, data: data)
+    }
+
+    private func onUnknownMessage(msgId: Int, webView: WKWebView, rawValue: String) {
+        let typeId = "account_updates"
+        let data = """
+            { "error": "Unrecognized FxAccountsWebChannel command: \(rawValue)" }
+        """
+
+        runJS(webView: webView, typeId: typeId, messageId: msgId, command: rawValue, data: data)
+    }
+
+    func shouldAllowRedirectAfterLogIn(basedOn navigationURL: URL?) -> WKNavigationActionPolicy {
+        // Cancel navigation that happens after login to an account, which is when a redirect to `redirectURL` happens.
+        // The app handles this event fully in native UI.
+        let redirectUrl = RustFirefoxAccounts.redirectURL
+        if let navigationURL = navigationURL {
+            let expectedRedirectURL = URL(string: redirectUrl)!
+            if navigationURL.scheme == expectedRedirectURL.scheme
+                && navigationURL.host == expectedRedirectURL.host
+                && navigationURL.path == expectedRedirectURL.path {
+                return .cancel
+            }
+        }
+        return .allow
+    }
+}

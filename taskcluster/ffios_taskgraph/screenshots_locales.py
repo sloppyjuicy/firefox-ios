@@ -3,11 +3,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
+from functools import cache
 
-from taskgraph.util.memoize import memoize
 
-
-@memoize
+@cache
 def get_screenshots_locales():
     current_dir = os.path.dirname(os.path.realpath(__file__))
     project_dir = os.path.realpath(os.path.join(current_dir, '..', '..'))
@@ -15,7 +14,7 @@ def get_screenshots_locales():
     config = {"locales": []}
 
     # Check all *.lproj files as there is one per locale
-    for file in os.listdir(os.path.join(project_dir, 'Client')):
+    for file in os.listdir(os.path.join(project_dir, 'firefox-ios/Client')):
         if file.endswith(".lproj"):
                 config["locales"].append(file)
 

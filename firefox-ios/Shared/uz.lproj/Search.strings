@@ -1,0 +1,6 @@
+/* Label for search engine buttons. %@ is the name of the search engine. */
+"%@ search" = "%@ araması";
+
+/* Label for search settings button. */
+"Search Settings" = "Izlash sozlamalari";
+

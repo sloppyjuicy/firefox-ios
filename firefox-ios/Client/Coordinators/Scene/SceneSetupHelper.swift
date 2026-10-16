@@ -1,0 +1,98 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import UIKit
+
+class BrowserWindow: UIWindow {
+    let uuid: WindowUUID
+    private var safeAreaDebugGuides: SafeAreaDebugGuides?
+
+    var showsSafeAreaDebugGuides: Bool {
+        get { safeAreaDebugGuides != nil }
+        set {
+            guard newValue != showsSafeAreaDebugGuides else { return }
+            if newValue {
+                let guides = SafeAreaDebugGuides()
+                safeAreaDebugGuides = guides
+                layer.addSublayer(guides.layer)
+                setNeedsLayout()
+            } else {
+                safeAreaDebugGuides?.layer.removeFromSuperlayer()
+                safeAreaDebugGuides = nil
+            }
+        }
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        safeAreaDebugGuides?.update(in: self)
+    }
+
+    override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        guard safeAreaDebugGuides != nil else { return }
+        setNeedsLayout()
+    }
+
+    init(frame: CGRect, uuid: WindowUUID) {
+        self.uuid = uuid
+        super.init(frame: frame)
+    }
+
+    init(windowScene: UIWindowScene, uuid: WindowUUID) {
+        self.uuid = uuid
+        super.init(windowScene: windowScene)
+    }
+
+    required init?(coder: NSCoder) {
+        assertionFailure("init(coder:) currently unsupported for BrowserWindow")
+        self.uuid = .unavailable
+        super.init(coder: coder)
+    }
+}
+
+struct SceneSetupHelper {
+    @MainActor
+    func configureWindowFor(_ scene: UIScene,
+                            windowUUID: WindowUUID,
+                            screenshotServiceDelegate: UIScreenshotServiceDelegate) -> UIWindow {
+        guard let windowScene = (scene as? UIWindowScene) else {
+            return BrowserWindow(frame: UIScreen.main.bounds, uuid: windowUUID)
+        }
+
+        windowScene.screenshotService?.delegate = screenshotServiceDelegate
+
+        let window = BrowserWindow(windowScene: windowScene, uuid: windowUUID)
+
+        // Setting the initial theme correctly as we don't have a window attached yet to let ThemeManager set it
+        let themeManager: ThemeManager = AppContainer.shared.resolve()
+        themeManager.setWindow(window, for: windowUUID)
+        window.overrideUserInterfaceStyle = themeManager.getCurrentTheme(for: windowUUID).type.getInterfaceStyle()
+
+        return window
+    }
+
+    @MainActor
+    func createNavigationController() -> UINavigationController {
+        let navigationController = RootNavigationController()
+        navigationController.isNavigationBarHidden = true
+        navigationController.edgesForExtendedLayout = UIRectEdge(rawValue: 0)
+
+        return navigationController
+    }
+}
+
+class RootNavigationController: UINavigationController {
+    // Forward status bar appearance decisions to the top view controller. By default, UINavigationController ignores
+    // child view controllers’ preferStatusBarHidden values. Overriding this ensures that the top view controller controls
+    // whether the status bar is hidden.
+    override var childForStatusBarHidden: UIViewController? {
+        return topViewController
+    }
+
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return topViewController?.supportedInterfaceOrientations ?? .allButUpsideDown
+    }
+}

@@ -1,0 +1,21 @@
+/* (No Comment) */
+"New Private Tab" = "Yangi maxfiy ichki oyna";
+
+/* (No Comment) */
+"New Tab" = "Yangi ichki oyna";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox can use your camera to scan QR codes or take photos and video.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "Ziyaret ettiğiniz web siteleri konumunuzu isteyebilir.";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "Bu videoga tushirish va ularni yuklash imkonini beradi.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "This lets you save photos.";
+
+/* (No Comment) */
+"Scan QR Code" = "Scan QR Code";
+

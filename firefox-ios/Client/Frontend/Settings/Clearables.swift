@@ -1,0 +1,256 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import CoreSpotlight
+import Foundation
+import SiteImageView
+import Shared
+import WebKit
+import WebEngine
+
+// A base protocol for something that can be cleared.
+protocol Clearable {
+    @MainActor
+    func clear() -> Success
+    /// Clears data scoped to a single domain (eTLD+1).
+    /// Default implementation in production is a no-op for clearables where domain scoping is not meaningful
+    /// but will assert in debug builds since we currently do not expect to call this on Clearables where
+    /// it is unsupported. (e.g. history, downloads, spotlight).
+    @MainActor
+    func clear(forDomain domain: String) async
+    var label: String { get }
+}
+
+extension Clearable {
+    @MainActor
+    func clear(forDomain domain: String) async {
+        assertionFailure("clear(forDomain:) called on Clearable '\(String(describing: type(of: self)))' that does not support it.")
+    }
+}
+
+// TODO: FXIOS-14152 - HistoryClearable shouldn't be @unchecked Sendable
+// Clears our browsing history, including favicons and thumbnails.
+final class HistoryClearable: Clearable, @unchecked Sendable {
+    let profile: Profile
+    let tabManager: TabManager
+    let siteImageHandler: SiteImageHandler
+    private let logger: Logger
+
+    init(profile: Profile,
+         tabManager: TabManager,
+         siteImageHandler: SiteImageHandler = DefaultSiteImageHandler.factory(),
+         logger: Logger = DefaultLogger.shared) {
+        self.profile = profile
+        self.tabManager = tabManager
+        self.siteImageHandler = siteImageHandler
+        self.logger = logger
+    }
+
+    var label: String { .ClearableHistory }
+
+    @MainActor
+    func clear() -> Success {
+        // Treat desktop sites as part of browsing history.
+        Tab.ChangeUserAgent.clear()
+
+        // Clear everything in places
+        return profile.places.deleteEverythingHistory()
+            .bindQueue(.main) { success in
+                // FXIOS-13228 It should be safe to assumeIsolated here because of `.main` queue above
+                MainActor.assumeIsolated {
+                    return self.clearAfterHistory(success: success)
+                }
+            }
+    }
+
+    @MainActor
+    func clearAfterHistory(success: Maybe<Void>) -> Success {
+        // Clear image data from Site Image Helper
+        siteImageHandler.clearAllCaches()
+
+        self.profile.recentlyClosedTabs.clearTabs()
+        self.profile.places.deleteHistoryMetadataOlderThan(olderThan: INT64_MAX).uponQueue(.global()) { _ in }
+        CSSearchableIndex.default().deleteAllSearchableItems()
+        NotificationCenter.default.post(name: .PrivateDataClearedHistory, object: nil)
+        logger.log("HistoryClearable succeeded: \(success).",
+                   level: .debug,
+                   category: .storage)
+
+        self.tabManager.clearAllTabsHistory()
+
+        return Deferred(value: success)
+    }
+}
+
+// Clear cached data. This includes the web cache and old log data. Note: this has to close all open
+// tabs in order to ensure the data cached in them isn't flushed to disk.
+class CacheClearable: Clearable {
+    var label: String { .ClearableCache }
+    private let logger: Logger
+
+    init(logger: Logger = DefaultLogger.shared) {
+        self.logger = logger
+    }
+
+    func clear() -> Success {
+        let dataTypes = Set([WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache])
+        WKWebsiteDataStore.default().removeData(ofTypes: dataTypes, modifiedSince: .distantPast, completionHandler: {})
+
+        // Clear in-memory reader cache (private browsing content etc.)
+        MemoryReaderModeCache.shared.clear()
+
+        // Clear out any persistent cached readerized content on disk
+        DiskReaderModeCache.shared.clear()
+
+        // Ensure all log files are cleared. A new log file will be immediately created as soon as our
+        // next log message is sent but any older cached log data will be reset to free up disk space.
+        logger.deleteCachedLogFiles()
+
+        logger.log("CacheClearable succeeded.",
+                   level: .debug,
+                   category: .storage)
+        return succeed()
+    }
+}
+
+class SpotlightClearable: Clearable {
+    var label: String { .ClearableSpotlight }
+
+    func clear() -> Success {
+        let deferred = Success()
+        UserActivityHandler.clearSearchIndex { _ in
+            deferred.fill(Maybe(success: ()))
+        }
+        return deferred
+    }
+}
+
+// Removes all app cache storage.
+// NOTE(FXIOS-15603): WKWebsiteDataTypeOfflineWebApplicationCache targets the
+// HTML offline web app cache, which was deprecated in the HTML spec and removed from WebKit.
+// This should be removed.
+class SiteDataClearable: Clearable {
+    var label: String { .ClearableOfflineData }
+    private let logger: Logger
+    private let dataStore: WKWebsiteDataStore
+    private let dataTypes = Set([
+        WKWebsiteDataTypeLocalStorage,
+        WKWebsiteDataTypeSessionStorage,
+        WKWebsiteDataTypeWebSQLDatabases,
+        WKWebsiteDataTypeIndexedDBDatabases,
+        WKWebsiteDataTypeFetchCache,
+    ])
+
+    @MainActor
+    init(logger: Logger = DefaultLogger.shared,
+         dataStore: WKWebsiteDataStore = .default()) {
+        self.logger = logger
+        self.dataStore = dataStore
+    }
+
+    func clear() -> Success {
+        dataStore.removeData(ofTypes: dataTypes, modifiedSince: .distantPast, completionHandler: {})
+
+        logger.log("SiteDataClearable succeeded.",
+                   level: .debug,
+                   category: .storage)
+        return succeed()
+    }
+
+    @MainActor
+    func clear(forDomain domain: String) async {
+        let records = await dataStore.dataRecords(ofTypes: dataTypes)
+        let targets = records.filter { $0.displayName == domain.lowercased() }
+        guard !targets.isEmpty else { return }
+        await dataStore.removeData(ofTypes: dataTypes, for: targets)
+        logger.log(
+            "SiteDataClearable removed domain-scoped data for \(domain).",
+            level: .debug,
+            category: .storage)
+    }
+}
+
+// Remove all cookies stored by the site. This includes localStorage, sessionStorage, and WebSQL/IndexedDB.
+class CookiesClearable: Clearable {
+    var label: String { .ClearableCookies }
+    private let logger: Logger
+    private let dataStore: WKWebsiteDataStore
+    private let dataTypes = Set([WKWebsiteDataTypeCookies, WKWebsiteDataTypeLocalStorage])
+
+    @MainActor
+    init(logger: Logger = DefaultLogger.shared,
+         dataStore: WKWebsiteDataStore = .default()) {
+        self.logger = logger
+        self.dataStore = dataStore
+    }
+
+    func clear() -> Success {
+        dataStore.removeData(
+            ofTypes: dataTypes,
+            modifiedSince: .distantPast,
+            completionHandler: {}
+        )
+
+        logger.log("CookiesClearable succeeded.",
+                   level: .debug,
+                   category: .storage)
+        return succeed()
+    }
+
+    @MainActor
+    func clear(forDomain domain: String) async {
+        let records = await dataStore.dataRecords(ofTypes: dataTypes)
+        let targets = records.filter { $0.displayName == domain.lowercased() }
+        guard !targets.isEmpty else { return }
+        await dataStore.removeData(ofTypes: dataTypes, for: targets)
+        logger.log(
+            "CookiesClearable removed domain-scoped data for \(domain).",
+            level: .debug,
+            category: .storage)
+    }
+}
+
+class TrackingProtectionClearable: Clearable {
+    // @TODO: re-using string because we are too late in cycle to change strings
+    var label: String {
+        return .SettingsTrackingProtectionSectionName
+    }
+
+    func clear() -> Success {
+        let result = Success()
+        ContentBlocker.shared.clearSafelist {
+            result.fill(Maybe(success: ()))
+        }
+        return result
+    }
+}
+
+// Clears our downloaded files in the `~/Documents/Downloads` folder.
+class DownloadedFilesClearable: Clearable {
+    var label: String { .ClearableDownloads }
+
+    func clear() -> Success {
+        if let downloadsPath = try? FileManager.default.url(
+            for: .documentDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: false
+        ).appendingPathComponent("Downloads"),
+            let files = try? FileManager.default.contentsOfDirectory(
+                at: downloadsPath,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles,
+                          .skipsPackageDescendants,
+                          .skipsSubdirectoryDescendants]) {
+            for file in files {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+
+        NotificationCenter.default.post(name: .PrivateDataClearedDownloadedFiles, object: nil)
+
+        return succeed()
+    }
+}

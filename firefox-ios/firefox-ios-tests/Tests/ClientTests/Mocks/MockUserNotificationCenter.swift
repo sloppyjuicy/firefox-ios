@@ -1,0 +1,37 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+import UserNotifications
+@testable import Client
+
+class MockUserNotificationCenter: UserNotificationCenterProtocol, @unchecked Sendable {
+    var getSettingsWasCalled = false
+    func notificationSettings() async -> UNNotificationSettings {
+        getSettingsWasCalled = true
+
+        // calling UNUserNotificationCenter as UNNotificationSettings can't be created otherwise
+        return await UNUserNotificationCenter.current().notificationSettings()
+    }
+
+    var requestAuthorizationWasCalled = false
+    var requestAuthorizationResult: (Bool, Error?) = (true, nil)
+    func requestAuthorization(options: UNAuthorizationOptions,
+                              completionHandler: @escaping (Bool, Error?) -> Void) {
+        requestAuthorizationWasCalled = true
+        completionHandler(requestAuthorizationResult.0, requestAuthorizationResult.1)
+    }
+
+    var addWasCalled = false
+    func add(_ request: UNNotificationRequest,
+             withCompletionHandler completionHandler: ((Error?) -> Void)?) {
+        addWasCalled = true
+    }
+
+    var getDeliveredWasCalled = false
+    func deliveredNotifications() async -> [UNNotification] {
+        getDeliveredWasCalled = true
+        return []
+    }
+}

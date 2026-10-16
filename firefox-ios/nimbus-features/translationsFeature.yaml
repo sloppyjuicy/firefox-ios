@@ -1,0 +1,16 @@
+# The configuration for the translationsFeature feature
+features:
+  translations-feature:
+    description: >
+      Enables translations feature.
+    variables:
+      enabled:
+        description: >
+          Whether or not to enable translations feature.
+        type: Boolean
+        default: true
+      languagePickerEnabled:
+        description: >
+          Whether or not to enable the translations language picker (Phase 2).
+        type: Boolean
+        default: true

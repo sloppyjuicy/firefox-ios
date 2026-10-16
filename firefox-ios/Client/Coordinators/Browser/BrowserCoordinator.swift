@@ -1,0 +1,1757 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Foundation
+import Glean
+import PhotosUI
+import SwiftUI
+import UIKit
+import WebKit
+import Shared
+import Storage
+import Redux
+import PDFKit
+import SummarizeKit
+import QuickAnswersKit
+
+import enum MozillaAppServices.VisitType
+import struct MozillaAppServices.CreditCard
+import ComponentLibrary
+
+final class BrowserCoordinator: BaseCoordinator,
+                          LaunchCoordinatorDelegate,
+                          BrowserDelegate,
+                          SettingsCoordinatorDelegate,
+                          BrowserNavigationHandler,
+                          LibraryCoordinatorDelegate,
+                          EnhancedTrackingProtectionCoordinatorDelegate,
+                          ParentCoordinatorDelegate,
+                          TabManagerDelegate,
+                          TabTrayCoordinatorDelegate,
+                          PrivateHomepageDelegate,
+                          WindowEventCoordinator,
+                          MainMenuCoordinatorDelegate,
+                          ETPCoordinatorSSLStatusDelegate,
+                          SearchEngineSelectionCoordinatorDelegate,
+                          TermsOfUseDelegate,
+                          ShareSheetCoordinatorDelegate,
+                          WebCompatReportCoordinatorNavigationDelegate,
+                          BrowsingSettingsDelegate,
+                          FeatureFlaggable {
+    private struct UX {
+        static let searchEnginePopoverSize = CGSize(width: 250, height: 536)
+    }
+
+    var browserViewController: BrowserViewController
+    var webviewController: WebviewViewController?
+    var homepageViewController: HomepageViewController?
+    private weak var nativeErrorPageViewController: NativeErrorPageViewController?
+    private weak var privateHomepageViewController: PrivateHomepageViewController?
+
+    private var profile: Profile
+    private let tabManager: TabManager
+    private let themeManager: ThemeManager
+    private let windowManager: WindowManager
+    private let windowMerger: WindowMerging
+    private let screenshotService: ScreenshotService
+    private let glean: GleanWrapper
+    private let applicationHelper: ApplicationHelper
+    private let summarizerNimbusUtils: SummarizerNimbusUtils
+    private let touExperimentsTracking: ToUExperimentsTracking
+    private let homepageTabStateStore: HomepageTabStateStore
+    private var browserIsReady = false
+    private var windowUUID: WindowUUID { return tabManager.windowUUID }
+    private let googleLensService: GoogleLensServicing
+    private lazy var trackerBlockerTelemetry = TrackerBlockerTelemetry(gleanWrapper: glean)
+    private let isCameraAvailable: @MainActor () -> Bool
+    private var isSummarizerOn: Bool {
+        return summarizerNimbusUtils.isSummarizeFeatureToggledOn
+    }
+    private var pendingOnboardingCardAction: OnboardingCardButtonAction = .none
+
+    override var isDismissible: Bool { false }
+
+    init(router: Router,
+         screenshotService: ScreenshotService,
+         tabManager: TabManager,
+         homepageTabStateStore: HomepageTabStateStore = HomepageTabStateStore(),
+         profile: Profile = AppContainer.shared.resolve(),
+         themeManager: ThemeManager = AppContainer.shared.resolve(),
+         windowManager: WindowManager = AppContainer.shared.resolve(),
+         summarizerNimbusUtils: SummarizerNimbusUtils = DefaultSummarizerNimbusUtils(),
+         glean: GleanWrapper = DefaultGleanWrapper(),
+         applicationHelper: ApplicationHelper = DefaultApplicationHelper(),
+         windowMerger: WindowMerging = MergeWindowsManager(),
+         googleLensService: GoogleLensServicing = GoogleLensService(),
+         isCameraAvailable: @escaping @MainActor () -> Bool = {
+             UIImagePickerController.isSourceTypeAvailable(.camera)
+         }) {
+        self.summarizerNimbusUtils = summarizerNimbusUtils
+        self.screenshotService = screenshotService
+        self.profile = profile
+        self.tabManager = tabManager
+        self.themeManager = themeManager
+        self.windowManager = windowManager
+        self.windowMerger = windowMerger
+        self.touExperimentsTracking = ToUExperimentsTracking(prefs: profile.prefs)
+        self.homepageTabStateStore = homepageTabStateStore
+        self.browserViewController = BrowserViewController(profile: profile,
+                                                           tabManager: tabManager,
+                                                           gleanWrapper: glean)
+        self.applicationHelper = applicationHelper
+        self.glean = glean
+        self.googleLensService = googleLensService
+        self.isCameraAvailable = isCameraAvailable
+        super.init(router: router)
+
+        browserViewController.browserDelegate = self
+        browserViewController.navigationHandler = self
+        tabManager.addDelegate(self)
+    }
+
+    func start(with launchType: LaunchType?) {
+        router.setRootViewController(browserViewController, hideBar: true, animated: false)
+        if let launchType = launchType, launchType.canLaunch(fromType: .BrowserCoordinator) {
+            startLaunch(with: launchType)
+        } else {
+            // Defer ToU presentation to next run loop after deep link processing
+            // This prevents ToU from being dismissed when deep link navigation starts
+            DispatchQueue.main.async { [weak self] in
+                self?.showTermsOfUse()
+            }
+        }
+    }
+
+    // MARK: - Helper methods
+
+    private func startLaunch(with launchType: LaunchType) {
+        let launchCoordinator = LaunchCoordinator(router: router, windowUUID: windowUUID)
+        launchCoordinator.parentCoordinator = self
+        add(child: launchCoordinator)
+        launchCoordinator.start(with: launchType)
+    }
+
+    // MARK: - LaunchCoordinatorDelegate
+    func didFinishTermsOfService(from coordinator: LaunchCoordinator) {
+        didFinishLaunch(from: coordinator)
+    }
+
+    func didFinishLaunch(from coordinator: LaunchCoordinator) {
+        router.dismiss(animated: true, completion: { [weak self] in
+            self?.showTermsOfUse()
+        })
+        remove(child: coordinator)
+
+        // Once launch is done, we check for any saved Route
+        if let savedRoute {
+            logger.log("Find and handle route called after didFinishLaunch after onboarding",
+                       level: .info,
+                       category: .coordinator)
+            findAndHandle(route: savedRoute)
+        }
+    }
+
+    // MARK: - BrowserDelegate
+
+    func showHomepage(
+        overlayManager: OverlayModeManager,
+        isZeroSearch: Bool,
+        statusBarScrollDelegate: StatusBarScrollDelegate,
+        toastContainer: UIView
+    ) {
+        let homepageController = self.homepageViewController ?? HomepageViewController(
+            windowUUID: windowUUID,
+            tabManager: tabManager,
+            homepageTabStateStore: homepageTabStateStore,
+            overlayManager: overlayManager,
+            statusBarScrollDelegate: statusBarScrollDelegate,
+            toastContainer: toastContainer
+        )
+        browserViewController.dispatchAvailableContentHeightChangedAction()
+        homepageController.termsOfUseDelegate = self
+        homepageController.view.accessibilityElementsHidden = false
+        dispatchActionForEmbeddingHomepage(with: isZeroSearch)
+        let didEmbed = browserViewController.embedContent(homepageController)
+        if !didEmbed {
+            logger.log("Unable to embed new homepage", level: .debug, category: .coordinator)
+        }
+        self.homepageViewController = homepageController
+        homepageController.restoreVerticalScrollOffset(force: didEmbed)
+
+        if didEmbed {
+            // [FXIOS-13651] Fix for WKWebView memory leak. (See comments on related PR.)
+            webviewController?.update(webView: nil)
+        }
+    }
+
+    private func dispatchActionForEmbeddingHomepage(with isZeroSearch: Bool) {
+        store.dispatch(
+            HomepageAction(
+                isZeroSearch: isZeroSearch,
+                windowUUID: windowUUID,
+                actionType: HomepageActionType.embeddedHomepage
+            )
+        )
+    }
+
+    func showPrivateHomepage(overlayManager: OverlayModeManager) {
+        let privateHomepageController = PrivateHomepageViewController(
+            windowUUID: windowUUID,
+            overlayManager: overlayManager
+        )
+        homepageViewController?.view.accessibilityElementsHidden = true
+        privateHomepageController.parentCoordinator = self
+        self.privateHomepageViewController = privateHomepageController
+        guard browserViewController.embedContent(privateHomepageController) else {
+            logger.log("Unable to embed private homepage", level: .debug, category: .coordinator)
+            return
+        }
+    }
+
+    func navigateFromHomePanel(to url: URL, visitType: VisitType, isGoogleTopSite: Bool) {
+        browserViewController.homePanel(didSelectURL: url, visitType: visitType, isGoogleTopSite: isGoogleTopSite)
+    }
+
+    func showContextMenu(for configuration: ContextMenuConfiguration) {
+        let coordinator = ContextMenuCoordinator(
+            configuration: configuration,
+            router: router,
+            windowUUID: windowUUID,
+            bookmarksHandlerDelegate: browserViewController
+        )
+        coordinator.parentCoordinator = self
+        add(child: coordinator)
+        coordinator.start()
+    }
+
+    func showEditBookmark(parentFolder: FxBookmarkNode, bookmark: FxBookmarkNode) {
+        let navigationController = DismissableNavigationViewController()
+        let router = DefaultRouter(navigationController: navigationController)
+        let bookmarksCoordinator = BookmarksCoordinator(
+            router: router,
+            profile: profile,
+            windowUUID: windowUUID,
+            libraryCoordinator: self,
+            libraryNavigationHandler: nil,
+            shouldUsePrivateOverride: false
+        )
+        add(child: bookmarksCoordinator)
+        bookmarksCoordinator.start(parentFolder: parentFolder, bookmark: bookmark)
+        navigationController.onViewDismissed = { [weak self, weak bookmarksCoordinator] in
+            // Remove coordinator when user drags down to dismiss modal
+            guard let bookmarksCoordinator else { return }
+            self?.didFinish(from: bookmarksCoordinator)
+        }
+        present(navigationController)
+    }
+
+    func shouldShowNewTabToast(tab: Tab) -> Bool {
+        guard let shortcutsLibraryVC = router.navigationController.topViewController as? ShortcutsLibraryViewController
+        else { return true }
+
+        shortcutsLibraryVC.showOpenedNewTabToast(tab: tab)
+        return false
+    }
+
+    // MARK: - PrivateHomepageDelegate
+    func homePanelDidRequestToOpenInNewTab(with url: URL, isPrivate: Bool, selectNewTab: Bool) {
+        openInNewTab(url: url, isPrivate: isPrivate, selectNewTab: selectNewTab)
+    }
+
+    func show(webView: WKWebView) {
+        // Keep the webviewController in memory, update to newest webview when needed
+        if let webviewController = webviewController {
+            webviewController.update(webView: webView)
+            browserViewController.frontEmbeddedContent(webviewController)
+            logger.log("Webview content was updated", level: .info, category: .coordinator)
+        } else {
+            let webviewViewController = WebviewViewController(webView: webView)
+            webviewController = webviewViewController
+            let isEmbedded = browserViewController.embedContent(webviewViewController)
+            logger.log("Webview controller was created and embedded \(isEmbedded)", level: .info, category: .coordinator)
+        }
+
+        // Shortcuts library is pushed on top of BVC, so we need to pop that view controller once the web view is showing
+        if router.navigationController.topViewController is ShortcutsLibraryViewController {
+            router.popViewController(animated: false)
+        }
+
+        homepageViewController?.view.accessibilityElementsHidden = true
+        UIAccessibility.post(notification: UIAccessibility.Notification.screenChanged, argument: nil)
+        screenshotService.screenshotableView = webviewController
+    }
+
+    func browserHasLoaded() {
+        browserIsReady = true
+        logger.log("Browser has loaded", level: .info, category: .coordinator)
+
+        if let savedRoute {
+            logger.log("Find and handle route called after browserHasLoaded",
+                       level: .info,
+                       category: .coordinator)
+            findAndHandle(route: savedRoute)
+        }
+
+        presentHardcodedOnboardingDripIfNeeded()
+    }
+
+    // Presents the day-based onboarding card over the current tab
+    private func presentHardcodedOnboardingDripIfNeeded() {
+        guard browserViewController.presentedViewController == nil else { return }
+
+        let manager = IntroScreenManager(prefs: profile.prefs)
+        guard manager.shouldUseContinuousOnboarding, !manager.shouldShowIntroScreen else { return }
+
+        let cards = OnboardingCardScheduler(prefs: profile.prefs).getDueCards()
+        guard !cards.isEmpty else { return }
+
+        let view = OnboardingFlowView(
+            cards: cards,
+            windowUUID: windowUUID,
+            themeManager: themeManager,
+            onAction: { [weak self] action in
+                self?.handleOnboardingCardAction(action)
+            },
+            onComplete: { [weak self] in
+                self?.browserViewController.dismiss(animated: true) { [weak self] in
+                    self?.completeOnboardingCardAction()
+                }
+            }
+        )
+
+        let hostingController = PortraitOnlyHostingController(rootView: view)
+        hostingController.modalPresentationStyle = .fullScreen
+        hostingController.modalTransitionStyle = .crossDissolve
+        browserViewController.present(hostingController, animated: true)
+    }
+
+    private func handleOnboardingCardAction(_ action: OnboardingCardButtonAction) {
+        switch action {
+        case .enableNotifications:
+            NotificationManager().enableNotifications()
+        case .declineNotifications:
+            profile.prefs.setBool(true, forKey: PrefsKeys.onboardingNotificationsDeclined)
+        case .signIn:
+            // Presented in completeOnboardingCardAction once the onboarding card is dismissed.
+            pendingOnboardingCardAction = .signIn
+        case .none:
+            break
+        }
+    }
+
+    // Runs any navigation from an onboarding card action, after the onboarding card is dismissed.
+    private func completeOnboardingCardAction() {
+        let action = pendingOnboardingCardAction
+        pendingOnboardingCardAction = .none
+        switch action {
+        case .signIn:
+            let fxaParameters = FxASignInViewParameters(
+                launchParameters: FxALaunchParams(entrypoint: .introOnboarding, query: [:]),
+                flowType: .emailLoginFlow,
+                referringPage: .onboarding
+            )
+            showSignInView(fxaParameters: fxaParameters)
+        default:
+            break
+        }
+    }
+
+    // MARK: - ETPCoordinatorSSLStatusDelegate
+
+    var showHasOnlySecureContentInTrackingPanel: Bool {
+        return browserViewController.tabManager.selectedTab?.currentWebView()?.hasOnlySecureContent ?? false
+    }
+
+    // MARK: - Route handling
+
+    override func canHandle(route: Route) -> Bool {
+        guard hasBrowserLoaded else { return false }
+
+        switch route {
+        case .searchQuery, .search, .searchURL, .glean, .homepanel, .action, .fxaSignIn, .fxaPairing,
+                .defaultBrowser, .sharesheet:
+            return true
+        case let .settings(section):
+            return canHandleSettings(with: section)
+        }
+    }
+
+    override func handle(route: Route) {
+        guard hasBrowserLoaded else { return }
+
+        logger.log("Handling a route", level: .info, category: .coordinator)
+        switch route {
+        case let .searchQuery(query, isPrivate):
+            handle(query: query, isPrivate: isPrivate)
+
+        case let .search(url, isPrivate, options):
+            handle(url: url, isPrivate: isPrivate, options: options)
+
+        case let .searchURL(url, tabId):
+            handle(searchURL: url, tabId: tabId)
+
+        case let .sharesheet(shareType, shareMessage):
+            handleShareRoute(shareType: shareType, shareMessage: shareMessage)
+
+        case let .glean(url):
+            glean.handleDeeplinkUrl(url: url)
+
+        case let .homepanel(section):
+            handle(homepanelSection: section)
+
+        case let .settings(section):
+            show(settings: section)
+
+        case let .action(routeAction):
+            switch routeAction {
+            case .closePrivateTabs:
+                handleClosePrivateTabsWidgetAction()
+            case .showIntroOnboarding:
+                showIntroOnboarding()
+            case .mergeWindows:
+                // A home screen shortcut can outlive the feature being turned off remotely.
+                guard featureFlagsProvider.isEnabled(.mergeWindows) else { break }
+                windowMerger.mergeAllWindows(into: windowUUID)
+            }
+
+        case let .fxaSignIn(params):
+            handle(fxaParams: params)
+
+        case let .fxaPairing(url):
+            browserViewController.presentPairingViewController(url)
+
+        case let .defaultBrowser(section):
+            switch section {
+            case .systemSettings:
+                applicationHelper.openSettings()
+            case .tutorial:
+                startLaunch(with: .defaultBrowser)
+            }
+        }
+
+        if route.willSelectTabOnHandling,
+           AppEventQueue.activityIsInProgress(.pendingDeeplinkTab(windowUUID)) {
+            AppEventQueue.completed(.pendingDeeplinkTab(windowUUID))
+        }
+    }
+
+    /// Ensures we're properly setup before we handle routes / deeplinks.
+    private var hasBrowserLoaded: Bool {
+        // The restoring tabs check is necessary for FXIOS-13351.
+        let isReady = browserIsReady && !tabManager.isRestoringTabs
+
+        guard isReady else {
+            logger.log(
+            """
+            Not handling route. Browser ready: \(browserIsReady), \
+            restoring tabs: \(tabManager.isRestoringTabs)
+            """,
+            level: .info,
+            category: .coordinator
+            )
+            return false
+        }
+
+        return true
+    }
+
+    private func showIntroOnboarding() {
+        let introManager = IntroScreenManager(prefs: profile.prefs)
+        let launchType = LaunchType.intro(manager: introManager)
+        startLaunch(with: launchType)
+    }
+
+    private func handleClosePrivateTabsWidgetAction() {
+        // Our widget actions will arrive as a URL passed into the client iOS app.
+        // If multiple iPad windows are open the resulting action + route will be
+        // sent to one particular window, but for this action we want to close tabs
+        // for all open windows, so we route this message to the WindowManager.
+        windowManager.performMultiWindowAction(.closeAllPrivateTabs)
+    }
+
+    private func handle(homepanelSection section: Route.HomepanelSection) {
+        switch section {
+        case .bookmarks:
+            browserViewController.showLibrary(panel: .bookmarks)
+        case .history:
+            browserViewController.showLibrary(panel: .history)
+        case .readingList:
+            browserViewController.showLibrary(panel: .readingList)
+        case .downloads:
+            browserViewController.showLibrary(panel: .downloads)
+        case .topSites:
+            browserViewController.openURLInNewTab(HomePanelType.topSites.internalUrl)
+        case .newPrivateTab:
+            browserViewController.openBlankNewTab(focusLocationField: true, isPrivate: true)
+        case .newTab:
+            browserViewController.openBlankNewTab(focusLocationField: true)
+        }
+    }
+
+    // MARK: - Handle Deeplink Open URL / text
+
+    private func handle(query: String, isPrivate: Bool) {
+        browserViewController.handle(query: query, isPrivate: isPrivate)
+    }
+
+    private func handle(url: URL?, isPrivate: Bool, options: Set<Route.SearchOptions>? = nil) {
+        browserViewController.handle(url: url, isPrivate: isPrivate, options: options)
+    }
+
+    private func handle(searchURL: URL?, tabId: String) {
+        browserViewController.handle(url: searchURL, tabId: tabId)
+    }
+
+    private func handle(fxaParams: FxALaunchParams) {
+        browserViewController.presentSignInViewController(fxaParams)
+    }
+
+    /// Starts the share sheet coordinator for the deep link `.sharesheet` route (share content via Nimbus Messaging).
+    /// - Parameters:
+    ///   - shareType: The content to share.
+    ///   - shareMessage: An optional textual message to accompany the shared content. May contain a Mail subject line.
+    private func handleShareRoute(shareType: ShareType, shareMessage: ShareMessage?) {
+        // FIXME: FXIOS-10829 Deep link shares should set a reasonable sourceView for iPad... or sourceView could be optional
+        startShareSheetCoordinator(
+            shareType: shareType,
+            shareMessage: shareMessage,
+            sourceView: browserViewController.addressToolbarContainer,
+            sourceRect: nil,
+            toastContainer: browserViewController.contentContainer,
+            popoverArrowDirection: .any
+        )
+    }
+
+    private func canHandleSettings(with section: Route.SettingsSection) -> Bool {
+        guard !childCoordinators.contains(where: { $0 is SettingsCoordinator }) else {
+            return false // route is handled with existing child coordinator
+        }
+        return true
+    }
+
+    private func handleSettings(with section: Route.SettingsSection, onDismiss: (() -> Void)? = nil) {
+        guard !childCoordinators.contains(where: { $0 is SettingsCoordinator }) else {
+            return // route is handled with existing child coordinator
+        }
+        windowManager.postWindowEvent(event: .settingsOpened, windowUUID: windowUUID)
+        let navigationController = SettingsNavigationController(windowUUID: windowUUID)
+        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+        let modalPresentationStyle: UIModalPresentationStyle = isPad ? .fullScreen: .formSheet
+        navigationController.modalPresentationStyle = modalPresentationStyle
+        let settingsRouter = DefaultRouter(navigationController: navigationController)
+
+        let settingsCoordinator = SettingsCoordinator(
+            router: settingsRouter,
+            tabManager: tabManager,
+            relayController: browserViewController.relayController,
+        )
+        settingsCoordinator.parentCoordinator = self
+        add(child: settingsCoordinator)
+        settingsCoordinator.start(with: section)
+
+        navigationController.onViewDismissed = { [weak self, weak settingsCoordinator] in
+            if let settingsCoordinator {
+                self?.didFinishSettings(from: settingsCoordinator)
+            }
+            onDismiss?()
+        }
+        present(navigationController)
+    }
+
+    private func showLibrary(with homepanelSection: Route.HomepanelSection) {
+        windowManager.postWindowEvent(event: .libraryOpened, windowUUID: windowUUID)
+        if let libraryCoordinator = childCoordinators[LibraryCoordinator.self] {
+            libraryCoordinator.start(with: homepanelSection)
+            (libraryCoordinator.router.navigationController as? UINavigationController).map { router.present($0) }
+        } else {
+            let navigationController = DismissableNavigationViewController()
+            navigationController.modalPresentationStyle = .formSheet
+
+            let libraryCoordinator = LibraryCoordinator(
+                router: DefaultRouter(navigationController: navigationController),
+                tabManager: tabManager
+            )
+            libraryCoordinator.parentCoordinator = self
+            add(child: libraryCoordinator)
+            libraryCoordinator.start(with: homepanelSection)
+
+            present(navigationController)
+        }
+    }
+
+    private func showETPMenu(sourceView: UIView) {
+        let enhancedTrackingProtectionCoordinator = EnhancedTrackingProtectionCoordinator(router: router,
+                                                                                          tabManager: tabManager,
+                                                                                          secureConnectionDelegate: self)
+        enhancedTrackingProtectionCoordinator.parentCoordinator = self
+        add(child: enhancedTrackingProtectionCoordinator)
+        enhancedTrackingProtectionCoordinator.start(sourceView: sourceView)
+    }
+
+    // MARK: - SettingsCoordinatorDelegate
+
+    func openURLinNewTab(_ url: URL) {
+        browserViewController.openURLInNewTab(url)
+    }
+
+    func didFinishSettings(from coordinator: SettingsCoordinator) {
+        router.dismiss(animated: true, completion: nil)
+        remove(child: coordinator)
+    }
+
+    func openDebugTestTabs(count: Int) {
+        guard let url = URL(string: "https://www.mozilla.org") else { return }
+        browserViewController.debugOpen(numberOfNewTabs: count, at: url)
+    }
+
+    // MARK: - LibraryCoordinatorDelegate
+
+    func openRecentlyClosedSiteInNewTab(_ url: URL, isPrivate: Bool) {
+        browserViewController.openRecentlyClosedSiteInNewTab(url, isPrivate: isPrivate)
+    }
+
+    func libraryPanelDidRequestToOpenInNewTab(_ url: URL, isPrivate: Bool) {
+        browserViewController.libraryPanelDidRequestToOpenInNewTab(url, isPrivate: isPrivate)
+        router.dismiss()
+    }
+
+    func libraryPanel(didSelectURL url: URL, visitType: VisitType) {
+        browserViewController.libraryPanel(didSelectURL: url, visitType: visitType)
+        router.dismiss()
+    }
+
+    var libraryPanelWindowUUID: WindowUUID {
+        return windowUUID
+    }
+
+    func didFinishLibrary(from coordinator: Coordinator) {
+        router.dismiss(animated: true, completion: nil)
+        remove(child: coordinator)
+    }
+
+    // MARK: - EnhancedTrackingProtectionCoordinatorDelegate
+
+    func didFinishEnhancedTrackingProtection(from coordinator: EnhancedTrackingProtectionCoordinator) {
+        router.dismiss(animated: true, completion: nil)
+        remove(child: coordinator)
+    }
+
+    func settingsOpenPage(settings: Route.SettingsSection) {
+        handleSettings(with: settings)
+    }
+
+    // MARK: - MainMenuCoordinatorDelegate
+
+    func showMainMenu() {
+        let mainMenuCoordinator = MainMenuCoordinator(router: router,
+                                                      windowUUID: tabManager.windowUUID,
+                                                      profile: profile)
+        mainMenuCoordinator.parentCoordinator = self
+        mainMenuCoordinator.navigationHandler = self
+        add(child: mainMenuCoordinator)
+        mainMenuCoordinator.startWithNavController()
+    }
+
+    func openURLInNewTab(_ url: URL?) {
+        if let url {
+            browserViewController.openURLInNewTab(url, isPrivate: self.tabManager.selectedTab?.isPrivate ?? false)
+        }
+    }
+
+    func openNewTab(inPrivateMode isPrivate: Bool) {
+        browserViewController.openNewTabFromMenu(
+            focusLocationField: true,
+            isPrivate: isPrivate
+        )
+    }
+
+    func showLibraryPanel(_ panel: Route.HomepanelSection) {
+        showLibrary(with: panel)
+    }
+
+    func showSettings(at destination: Route.SettingsSection) {
+        presentWithModalDismissIfNeeded {
+            self.handleSettings(with: destination, onDismiss: nil)
+        }
+    }
+
+    func editBookmarkForCurrentTab() {
+        guard let urlString = tabManager.selectedTab?.url?.absoluteString else { return }
+        browserViewController.openBookmarkEditPanel(urlString: urlString)
+    }
+
+    func showFindInPage() {
+        browserViewController.updateFindInPageVisibility(isVisible: true)
+    }
+
+    func updateZoomPageBarVisibility() {
+        browserViewController.updateZoomPageBarVisibility(visible: true)
+    }
+
+    /// Share the currently selected tab using the share sheet.
+    ///
+    /// Part of the MainMenuCoordinatorDelegate implementation, called from the New Menu > Tools > Share.
+    func showShareSheetForCurrentlySelectedTab() {
+        // We share the tab's displayURL to make sure we don't share reader mode localhost URLs
+        guard let selectedTab = tabManager.selectedTab,
+              let url = selectedTab.canonicalURL?.displayURL else {
+            return
+        }
+
+        startShareSheetCoordinator(
+            shareType: .tab(url: url, tab: selectedTab),
+            shareMessage: nil,
+            sourceView: self.browserViewController.addressToolbarContainer,
+            sourceRect: nil,
+            toastContainer: self.browserViewController.contentContainer,
+            popoverArrowDirection: .any
+        )
+    }
+
+    func presentSiteProtections() {
+        showETPMenu(sourceView: browserViewController.addressToolbarContainer)
+    }
+
+    func presentReportBrokenSite(url: URL?) {
+        let webCompatReportCoordinator = WebCompatReportCoordinator(
+            router: router,
+            windowUUID: windowUUID,
+            themeManager: themeManager,
+            parentCoordinatorDelegate: self,
+            navigationDelegate: self
+        )
+        add(child: webCompatReportCoordinator)
+        webCompatReportCoordinator.start(reportedURL: url)
+    }
+
+    // MARK: - WebCompatReportCoordinatorNavigationDelegate
+
+    func webCompatReportDidSubmit() {
+        let message = String.WebCompatReporter.Toast.ReportSent
+        browserViewController.showPlainToast(message: message)
+        UIAccessibility.post(notification: .announcement, argument: message)
+    }
+
+    func presentAdBlockerSettings() {
+        let browsingSettings = BrowsingSettingsViewController(profile: profile,
+                                                              windowUUID: windowUUID,
+                                                              shouldUsePrivateOverride: false)
+        browsingSettings.parentCoordinator = self
+        let navigationController = DismissableNavigationViewController(rootViewController: browsingSettings)
+        setupAdBlockerSettingsDetents(for: navigationController)
+        navigationController.sheetPresentationController?.prefersGrabberVisible = true
+        router.present(navigationController, animated: true)
+    }
+
+    private func setupAdBlockerSettingsDetents(for controller: UIViewController) {
+        if #available(iOS 16.0, *) {
+            let customDetent = UISheetPresentationController.Detent.custom(
+                identifier: .init("threeQuarter")
+            ) { context in
+                context.maximumDetentValue * 0.75
+            }
+            controller.sheetPresentationController?.detents = [customDetent, .large()]
+        } else {
+            controller.sheetPresentationController?.detents = [.medium(), .large()]
+        }
+    }
+
+    func pressedMailApp() {
+        guard let nav = router.navigationController.presentedViewController as? UINavigationController else { return }
+        let viewController = OpenWithSettingsViewController(
+            prefs: profile.prefs,
+            windowUUID: windowUUID,
+            shouldUsePrivateOverride: false
+        )
+        nav.pushViewController(viewController, animated: true)
+    }
+
+    func pressedAutoPlay() {
+        guard let nav = router.navigationController.presentedViewController as? UINavigationController else { return }
+        let viewController = AutoplaySettingsViewController(
+            prefs: profile.prefs,
+            windowUUID: windowUUID,
+            shouldUsePrivateOverride: false
+        )
+        nav.pushViewController(viewController, animated: true)
+    }
+
+    func pressedOpenSupportPage(url: URL) {
+        askedToOpen(url: url, withTitle: nil)
+    }
+
+    func askedToOpen(url: URL?, withTitle title: NSAttributedString?) {
+        guard let url,
+              let nav = router.navigationController.presentedViewController as? UINavigationController else { return }
+        let viewController = SettingsContentViewController(
+            windowUUID: windowUUID,
+            shouldUsePrivateOverride: true,
+            shouldBeInPrivateTheme: false
+        )
+        viewController.settingsTitle = title
+        viewController.url = url
+        nav.pushViewController(viewController, animated: true)
+    }
+
+    func presentSavePDFController() {
+        guard let selectedTab = browserViewController.tabManager.selectedTab else { return }
+
+        if selectedTab.mimeType == MIMEType.PDF {
+            showShareSheetForCurrentlySelectedTab()
+        } else {
+            // Online PDFs viewed in a tab can be shared via this URL to other Firefox synced devices with Send to Device.
+            let remoteURL = selectedTab.webView?.url
+
+            selectedTab.webView?.createPDF { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let data):
+                    guard let pdf = PDFDocument(data: data),
+                          let outputURL = pdf.createOutputURL(withFileName: selectedTab.webView?.title ?? "") else {
+                        return
+                    }
+                    do {
+                        try data.write(to: outputURL)
+                        startShareSheetCoordinator(
+                            shareType: .file(url: outputURL, remoteURL: remoteURL),
+                            shareMessage: nil,
+                            sourceView: self.browserViewController.addressToolbarContainer,
+                            sourceRect: nil,
+                            toastContainer: self.browserViewController.contentContainer,
+                            popoverArrowDirection: .any
+                        )
+                    } catch {
+                        self.logger.log("PDF creation failed.", level: .warning, category: .webview)
+                    }
+                case .failure(let error):
+                    // TODO: FXIOS-11542 [iOS Menu Redesign] - Handle saveAsPDF Menu option, error case
+                    self.logger.log("Failed to get a valid data URL result, with error: \(error.localizedDescription)",
+                                    level: .debug,
+                                    category: .webview)
+                }
+            }
+        }
+    }
+
+    func showPrintSheet() {
+        guard let tab = browserViewController.tabManager.selectedTab, let webView = tab.webView else { return }
+
+        let printInfo = UIPrintInfo(dictionary: nil)
+        printInfo.jobName = tab.displayTitle
+        let printController = UIPrintInteractionController.shared
+        printController.printInfo = printInfo
+
+        if tab.mimeType == MIMEType.PDF, let url = webView.url {
+            printController.printingItem = url
+        } else {
+            printController.printFormatter = webView.viewPrintFormatter()
+        }
+
+        printController.present(animated: true, completionHandler: nil)
+    }
+
+    func showSignInView(fxaParameters: FxASignInViewParameters?) {
+        guard let fxaParameters else { return }
+        browserViewController.presentSignInViewController(fxaParameters.launchParameters,
+                                                          flowType: fxaParameters.flowType,
+                                                          referringPage: fxaParameters.referringPage)
+    }
+
+    // MARK: - SearchEngineSelectionCoordinatorDelegate
+
+    func showSearchEngineSelection(forSourceView sourceView: UIView) {
+        guard !childCoordinators.contains(where: { $0 is SearchEngineSelectionCoordinator }) else { return }
+
+        let navigationController = DismissableNavigationViewController()
+        if navigationController.shouldUseiPadSetup() {
+            navigationController.modalPresentationStyle = .popover
+            navigationController.preferredContentSize = UX.searchEnginePopoverSize
+            navigationController.popoverPresentationController?.sourceView = sourceView
+            navigationController.popoverPresentationController?.canOverlapSourceViewRect = false
+        } else {
+            navigationController.modalPresentationStyle = .pageSheet
+            navigationController.sheetPresentationController?.detents = [.medium(), .large()]
+            navigationController.sheetPresentationController?.prefersGrabberVisible = true
+            releaseAddressBarKeyboardIfEditing()
+        }
+
+        let coordinator = DefaultSearchEngineSelectionCoordinator(
+            router: DefaultRouter(navigationController: navigationController),
+            windowUUID: tabManager.windowUUID
+        )
+
+        coordinator.parentCoordinator = self
+        coordinator.navigationHandler = self
+        add(child: coordinator)
+        coordinator.start()
+
+        present(navigationController)
+    }
+
+    /// Gives up the address bar's claim on the keyboard, while staying in editing mode, before a sheet is
+    /// presented over the browser. Without this the address bar takes the keyboard back on top of the sheet
+    /// the next time the toolbar is reconfigured, which a bottom address bar does on every rotation.
+    private func releaseAddressBarKeyboardIfEditing() {
+        let isEditing = store.state.componentState(ToolbarState.self,
+                                                   for: .toolbar,
+                                                   window: windowUUID)?.addressToolbar.isEditing == true
+        guard isEditing else { return }
+        store.dispatch(ToolbarModernAction.didKeyboardRequestChange(shouldShow: false), forWindowUUID: windowUUID)
+    }
+
+    // MARK: - BrowserNavigationHandler
+    func openInNewTab(url: URL, isPrivate: Bool, selectNewTab: Bool) {
+        browserViewController.homePanelDidRequestToOpenInNewTab(
+            url,
+            isPrivate: isPrivate,
+            selectNewTab: selectNewTab
+        )
+    }
+
+    func showShareSheet(
+        shareType: ShareType,
+        shareMessage: ShareMessage?,
+        sourceView: UIView,
+        sourceRect: CGRect?,
+        toastContainer: UIView,
+        popoverArrowDirection: UIPopoverArrowDirection
+    ) {
+        startShareSheetCoordinator(
+            shareType: shareType,
+            shareMessage: shareMessage,
+            sourceView: sourceView,
+            sourceRect: sourceRect,
+            toastContainer: toastContainer,
+            popoverArrowDirection: popoverArrowDirection
+        )
+    }
+
+    func show(settings: Route.SettingsSection, onDismiss: (() -> Void)? = nil) {
+        presentWithModalDismissIfNeeded {
+            self.handleSettings(with: settings, onDismiss: onDismiss)
+        }
+    }
+
+    /// Not all flows are handled by coordinators at the moment so we can't call router.dismiss for all
+    /// This bridges to use the presentWithModalDismissIfNeeded method we have in older flows
+    private func presentWithModalDismissIfNeeded(completion: @escaping () -> Void) {
+        if let presentedViewController = router.navigationController.presentedViewController {
+            presentedViewController.dismiss(animated: false, completion: {
+                completion()
+            })
+        } else {
+            completion()
+        }
+    }
+
+    func show(homepanelSection: Route.HomepanelSection) {
+        showLibrary(with: homepanelSection)
+    }
+
+    func showEnhancedTrackingProtection(sourceView: UIView) {
+        showETPMenu(sourceView: sourceView)
+    }
+
+    func showTrackerBlockerSheet() {
+        let stateProvider = TrackerBlockerSheetStateProvider(
+            statsStore: DefaultTrackerBlockStatsStoreUtility(prefs: profile.prefs)
+        )
+        let state = stateProvider.sheetState()
+
+        trackerBlockerTelemetry.dashboardViewed(
+            presentation: state.presentation,
+            lifetimeCount: state.lifetimeTotal
+        )
+
+        // The homepage's dismiss-keyboard tap gesture ignores touches that land on a cell, so tapping the
+        // tracker blocker module leaves the address bar editing with the keyboard still spoken for.
+        releaseAddressBarKeyboardIfEditing()
+
+        let viewController = TrackerBlockerSheetViewController(
+            windowUUID: windowUUID,
+            state: state,
+            themeManager: themeManager
+        )
+        router.present(viewController, animated: true)
+    }
+
+    /// Starts the ShareSheetCoordinator, which initiates opening the iOS share sheet using an `UIActivityViewController`.
+    ///
+    /// For shared tabs where the user is currently on a non-HTML page (e.g. viewing a PDF), this method will initiate a
+    /// file download, and then share the file instead. This currently blocks without any UI indication, which is less
+    /// than ideal but has been the existing behaviour for a long time (task to address this: FXIOS-10823).
+    ///
+    /// - Parameters:
+    ///   - shareType: The type of content to share.
+    ///   - shareMessage: An optional accompanying message to share (with optional email subject line).
+    ///   - sourceView: The view tapped to initiate share. iPad share sheet popovers will point to this element.
+    ///   - sourceRect: The source rect for the view tapped to initiate share. iPad share sheet popovers will point to this
+    ///                 element.
+    ///   - toastContainer: The container for displaying toast information.
+    ///   - popoverArrowDirection: The arrow direction for iPad share sheet popovers.
+    ///
+    /// There are many ways to share many types of content from various areas of the app. Code paths that go through this
+    /// method include:
+    /// * Sharing content from a long press on Home screen tiles (e.g. long press Jump Back In context menu)
+    /// * From the old Menu > Share and the new Menu > More > Share
+    /// * From the new toolbar share button beside the address bar
+    /// * From long pressing a link in the WKWebView and sharing from the context menu (via ActionProviderBuilder > addShare)
+    /// * Via the sharesheet deeplink path in `RouteBuilder` (e.g. tapping home cards that initiate sharing content)
+    ///     * Currently this is the only path that is using the ShareMessage param (Info Card Referral experiment FXE-1090)
+    func startShareSheetCoordinator(
+        shareType: ShareType,
+        shareMessage: ShareMessage?,
+        sourceView: UIView,
+        sourceRect: CGRect?,
+        toastContainer: UIView,
+        popoverArrowDirection: UIPopoverArrowDirection
+    ) {
+        if let coordinator = childCoordinators.first(where: { $0 is ShareSheetCoordinator }) as? ShareSheetCoordinator {
+            // The share sheet extension coordinator wasn't correctly removed in the last share session. Attempt to recover.
+            logger.log(
+                "ShareSheetCoordinator already exists when it shouldn't. Removing and recreating it to access share sheet."
+                + " Existing coordinator UUID: \(coordinator.windowUUID), BrowserCoordinator UUID: \(windowUUID)",
+                level: .info,
+                category: .shareSheet
+            )
+
+            coordinator.dismiss()
+        }
+
+        Task {
+            // FXIOS-10824 It's strange if the user has to wait a long time to download files that are literally already
+            // being shown in the webview.
+            var overrideShareType = shareType
+            if case let ShareType.tab(url, tab) = shareType {
+                // For tabs displaying content other than HTML MIME types, we can download the temporary document (i.e. a PDF
+                // file) and share that instead.
+                overrideShareType = await tryDownloadingTabFileToShare(
+                    withTabURL: url,
+                    forShareTab: tab
+                )
+            }
+
+            await MainActor.run { [weak self, overrideShareType] in
+                guard let self else { return }
+
+                let shareSheetCoordinator = ShareSheetCoordinator(
+                    router: router,
+                    profile: profile,
+                    tabManager: tabManager,
+                    parentCoordinator: self,
+                    delegate: self
+                )
+                add(child: shareSheetCoordinator)
+                shareSheetCoordinator.start(
+                    shareType: overrideShareType,
+                    shareMessage: shareMessage,
+                    sourceView: sourceView,
+                    sourceRect: sourceRect,
+                    popoverArrowDirection: popoverArrowDirection
+                )
+            }
+        }
+    }
+
+    func showCreditCardAutofill(creditCard: CreditCard?,
+                                decryptedCard: UnencryptedCreditCardFields?,
+                                viewType state: CreditCardBottomSheetState,
+                                frame: WKFrameInfo?,
+                                viewController: UIViewController,
+                                alertContainer: UIView) {
+        let bottomSheetCoordinator = makeCredentialAutofillCoordinator()
+        bottomSheetCoordinator.showCreditCardAutofill(
+            creditCard: creditCard,
+            decryptedCard: decryptedCard,
+            viewType: state,
+            frame: frame,
+            viewController: viewController,
+            alertContainer: alertContainer
+        )
+    }
+
+    @MainActor
+    @preconcurrency
+    func showSavedLoginAutofill(tabURL: URL, currentRequestId: String, field: FocusFieldType) {
+        let bottomSheetCoordinator = makeCredentialAutofillCoordinator()
+        bottomSheetCoordinator.showSavedLoginAutofill(tabURL: tabURL, currentRequestId: currentRequestId, field: field)
+    }
+
+    func showAddressAutofill(frame: WKFrameInfo?) {
+        let bottomSheetCoordinator = makeAddressAutofillCoordinator()
+        bottomSheetCoordinator.showAddressAutofill(frame: frame)
+    }
+
+    func showRequiredPassCode() {
+        let bottomSheetCoordinator = makeCredentialAutofillCoordinator()
+        bottomSheetCoordinator.showPassCodeController()
+    }
+
+    private func makeAddressAutofillCoordinator() -> AddressAutofillCoordinator {
+        if let bottomSheetCoordinator = childCoordinators.first(where: {
+            $0 is AddressAutofillCoordinator
+        }) as? AddressAutofillCoordinator {
+            return bottomSheetCoordinator
+        }
+        let bottomSheetCoordinator = AddressAutofillCoordinator(
+            profile: profile,
+            router: router,
+            parentCoordinator: self,
+            tabManager: tabManager
+        )
+        add(child: bottomSheetCoordinator)
+        return bottomSheetCoordinator
+    }
+
+    private func makeCredentialAutofillCoordinator() -> CredentialAutofillCoordinator {
+        if let bottomSheetCoordinator = childCoordinators.first(where: {
+            $0 is CredentialAutofillCoordinator
+        }) as? CredentialAutofillCoordinator {
+            return bottomSheetCoordinator
+        }
+        let bottomSheetCoordinator = CredentialAutofillCoordinator(
+            profile: profile,
+            router: router,
+            parentCoordinator: self,
+            tabManager: tabManager
+        )
+        add(child: bottomSheetCoordinator)
+        return bottomSheetCoordinator
+    }
+
+    func showQRCode(delegate: QRCodeViewControllerDelegate, rootNavigationController: UINavigationController?) {
+        windowManager.postWindowEvent(event: .qrScannerOpened, windowUUID: windowUUID)
+        var coordinator: QRCodeCoordinator
+        if let qrCodeCoordinator = childCoordinators.first(where: { $0 is QRCodeCoordinator }) as? QRCodeCoordinator {
+            coordinator = qrCodeCoordinator
+        } else {
+            if rootNavigationController != nil {
+                coordinator = QRCodeCoordinator(
+                    parentCoordinator: self,
+                    router: DefaultRouter(navigationController: rootNavigationController!)
+                )
+            } else {
+                coordinator = QRCodeCoordinator(
+                    parentCoordinator: self,
+                    router: router
+                )
+            }
+
+            add(child: coordinator)
+        }
+        coordinator.showQRCode(delegate: delegate)
+    }
+
+    func showTabTray(selectedPanel: TabTrayPanelType) {
+        guard !childCoordinators.contains(where: { $0 is TabTrayCoordinator }) else {
+            return // flow is already handled
+        }
+        let navigationController = DismissableNavigationViewController()
+        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+        let modalPresentationStyle: UIModalPresentationStyle
+        if featureFlagsProvider.isEnabled(.tabTrayUIExperiments) {
+            modalPresentationStyle = .fullScreen
+        } else {
+            modalPresentationStyle = isPad ? .fullScreen: .formSheet
+        }
+        navigationController.modalPresentationStyle = modalPresentationStyle
+
+        let tabTrayCoordinator = TabTrayCoordinator(
+            router: DefaultRouter(navigationController: navigationController),
+            tabTraySection: selectedPanel,
+            profile: profile,
+            tabManager: tabManager
+        )
+        tabTrayCoordinator.parentCoordinator = self
+        add(child: tabTrayCoordinator)
+        tabTrayCoordinator.start(with: selectedPanel)
+
+        navigationController.onViewDismissed = { [weak self, weak tabTrayCoordinator] in
+            guard let self else { return }
+            if let tabTrayCoordinator {
+                self.didDismissTabTray(from: tabTrayCoordinator)
+            }
+            store.dispatch(
+                TabTrayAction(
+                    windowUUID: self.windowUUID,
+                    actionType: TabTrayActionType.modalSwipedToClose
+                )
+            )
+        }
+
+        // FXIOS-13305: We don't handle animations properly for synced tabs, so we will use default presentation
+        if featureFlagsProvider.isEnabled(.tabTrayUIExperiments) &&
+            UIDevice.current.userInterfaceIdiom != .pad && selectedPanel != .syncedTabs {
+            guard let tabTrayVC = tabTrayCoordinator.tabTrayViewController else { return }
+            // Present on the next runloop turn so setup and tap feedback render first,
+            // keeping each main-thread turn short and reducing the risk of a hang during presentation.
+            DispatchQueue.main.async { [weak self, weak tabTrayCoordinator] in
+                guard let self, let tabTrayCoordinator, childCoordinators.contains(where: { $0 === tabTrayCoordinator })
+                else { return }
+
+                // Defense in case something else was presented while we waited a runloop turn,
+                // presenting now would fail silently and leave a stale coordinator
+                // that blocks the next tab tray open, so remove it instead.
+                guard !router.isPresenting else {
+                    remove(child: tabTrayCoordinator)
+                    return
+                }
+                present(navigationController, customTransition: tabTrayVC, style: modalPresentationStyle)
+            }
+        } else {
+            present(navigationController)
+        }
+        guard browserViewController.isAppStoreReviewTriggerEnabled else { return }
+        browserViewController.ratingPromptManager.showRatingPromptIfNeeded()
+    }
+
+    // This implementation of present is specifically for the animation on .tabTrayUIExperiments
+    private func present(_ viewController: UIViewController,
+                         customTransition: UIViewControllerTransitioningDelegate,
+                         style: UIModalPresentationStyle) {
+        browserViewController.willNavigateAway(from: tabManager.selectedTab)
+        if !UIAccessibility.isReduceMotionEnabled {
+            router.present(
+                viewController,
+                animated: true,
+                customTransition: customTransition,
+                presentationStyle: style
+            )
+        } else {
+            router.present(viewController)
+        }
+    }
+
+    private func present(_ viewController: UIViewController) {
+        browserViewController.willNavigateAway(from: tabManager.selectedTab)
+        router.present(viewController)
+    }
+
+    func showBackForwardList() {
+        guard let backForwardList = tabManager.selectedTab?.backForwardList else { return }
+        let backForwardListVC = BackForwardListViewController(profile: profile,
+                                                              windowUUID: windowUUID,
+                                                              backForwardList: backForwardList)
+        backForwardListVC.backForwardTransitionDelegate = BackForwardListAnimator()
+        backForwardListVC.browserFrameInfoProvider = browserViewController
+        backForwardListVC.tabManager = tabManager
+        backForwardListVC.modalPresentationStyle = .overCurrentContext
+        present(backForwardListVC)
+    }
+
+    func showDocumentLoading() {
+        browserViewController.showDocumentLoadingView()
+    }
+
+    func removeDocumentLoading() {
+        browserViewController.removeDocumentLoadingView()
+    }
+
+    func showSummarizePanel(_ trigger: SummarizerTrigger, config: SummarizerConfig?) {
+        guard isSummarizerOn,
+              tabManager.selectedTab?.isFxHomeTab == false,
+              let webView = tabManager.selectedTab?.webView else { return }
+        let contentContainer = browserViewController.contentContainer
+        let browserFrame = browserViewController.view.frame
+        var browserScreenshot = browserViewController.view.snapshot
+        if let croppedImage = browserScreenshot.cgImage?.cropping(
+            to: CGRect(
+                x: contentContainer.frame.origin.x * browserScreenshot.scale,
+                y: contentContainer.frame.origin.y * browserScreenshot.scale,
+                width: contentContainer.frame.width * browserScreenshot.scale,
+                height: (browserFrame.height - abs(contentContainer.frame.origin.y)) * browserScreenshot.scale
+            )) {
+            browserScreenshot = UIImage(cgImage: croppedImage, scale: UIScreen.main.scale, orientation: .up)
+        }
+
+        guard !childCoordinators.contains(where: { $0 is SummarizeCoordinator }) else { return }
+        let coordinator = SummarizeCoordinator(
+            browserSnapshot: browserScreenshot,
+            browserSnapshotTopOffset: contentContainer.frame.origin.y,
+            webView: webView,
+            parentCoordinatorDelegate: self,
+            trigger: trigger,
+            prefs: profile.prefs,
+            windowUUID: windowUUID,
+            config: config,
+            router: router) { [weak self] url in
+            guard let url else { return }
+            self?.openURLinNewTab(url)
+        }
+        add(child: coordinator)
+        coordinator.start()
+    }
+
+    func showShortcutsLibrary() {
+        let shortcutsLibraryViewController = ShortcutsLibraryViewController(windowUUID: windowUUID)
+        router.push(shortcutsLibraryViewController)
+    }
+
+    func showQuickAnswers(transitionType: QuickAnswersTransitionType) {
+        guard !childCoordinators.contains(where: { $0 is QuickAnswersCoordinator }) else { return }
+        let coordinator = QuickAnswersCoordinator(
+            parentCoordinatorDelegate: self,
+            prefs: profile.prefs,
+            windowUUID: windowUUID,
+            themeManager: themeManager,
+            router: router,
+            transitionType: transitionType,
+        ) { [weak self] navigationType in
+            switch navigationType {
+            case .url(let url):
+                self?.navigateFromHomePanel(to: url, visitType: .link, isGoogleTopSite: false)
+            case .searchResult(let query):
+                self?.browserViewController.openSearchNewTab(query)
+            }
+        }
+        add(child: coordinator)
+        coordinator.start()
+    }
+
+    func showGoogleLensPhotoPicker() {
+        guard !childCoordinators.contains(where: { $0 is PhotoPickerCoordinator }) else { return }
+        let coordinator = PhotoPickerCoordinator(
+            parentCoordinatorDelegate: self,
+            router: router,
+            photoPickerReason: .googleLens
+        ) { [weak self] results in
+            self?.handleGoogleLensPhotoPick(results)
+        }
+        add(child: coordinator)
+        coordinator.start()
+        store.dispatch(GeneralBrowserAction(showOverlay: false,
+                                            windowUUID: self.windowUUID,
+                                            actionType: GeneralBrowserActionType.leaveOverlay))
+    }
+
+    func showGoogleLensCamera() {
+        guard !childCoordinators.contains(where: { $0 is CameraCoordinator }) else { return }
+        let coordinator = CameraCoordinator(
+            parentCoordinatorDelegate: self,
+            router: router,
+            isCameraAvailable: isCameraAvailable(),
+            cameraReason: .googleLens
+        ) { [weak self] image in
+            guard let image else { return }
+            self?.searchGoogleLens(with: image, source: .camera)
+        }
+        add(child: coordinator)
+        coordinator.start()
+        store.dispatch(GeneralBrowserAction(showOverlay: false,
+                                            windowUUID: self.windowUUID,
+                                            actionType: GeneralBrowserActionType.leaveOverlay))
+    }
+
+    func searchGoogleLens(with image: UIImage, source: GoogleLensTelemetry.Source, searchTimerId: GleanTimerId? = nil) {
+        let googleLensTelemetry = GoogleLensTelemetry(gleanWrapper: glean)
+        guard let tab = tabManager.selectedTab else {
+            if let searchTimerId {
+                googleLensTelemetry.cancelSearchTimer(source: source, timerId: searchTimerId)
+            }
+            logger.log("Google Lens: no selected tab to load the upload request",
+                       level: .warning,
+                       category: .coordinator)
+            return
+        }
+        let entryPoint: GoogleLensUploadEntryPoint = source == .contextMenu ? .webImageContextMenu : .addressToolbar
+        let viewportSize = tab.webView?.bounds.size ?? browserViewController.view.bounds.size
+        guard let request = googleLensService.makeUploadRequest(for: image,
+                                                                viewportSize: viewportSize,
+                                                                entryPoint: entryPoint) else {
+            if let searchTimerId {
+                googleLensTelemetry.cancelSearchTimer(source: source, timerId: searchTimerId)
+            }
+            logger.log("Google Lens: failed to build upload request (image could not be processed)",
+                       level: .warning,
+                       category: .coordinator)
+            return
+        }
+        let timerId = searchTimerId ?? googleLensTelemetry.startSearchTimer(source: source)
+        browserViewController.googleLensSearches[tab.tabUUID] = GoogleLensSearchState(source: source,
+                                                                                      searchTimerId: timerId)
+        _ = tab.loadRequest(request)
+    }
+    private func handleGoogleLensPhotoPick(_ results: [PHPickerResult]) {
+        guard let provider = results.first?.itemProvider else { return }
+        guard provider.canLoadObject(ofClass: UIImage.self) else {
+            logger.log("Google Lens: picked item cannot be loaded as an image",
+                       level: .warning,
+                       category: .coordinator)
+            return
+        }
+        provider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+            let image = object as? UIImage
+            let errorDescription = error?.localizedDescription
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let image {
+                    self.searchGoogleLens(with: image, source: .photoPicker)
+                } else if let errorDescription {
+                    self.logger.log("Google Lens: failed to load picked image: \(errorDescription)",
+                                    level: .warning,
+                                    category: .coordinator)
+                } else {
+                    self.logger.log("Google Lens: picker returned a non-image object",
+                                    level: .warning,
+                                    category: .coordinator)
+                }
+            }
+        }
+    }
+
+    func showPrivacyNoticeLink(url: URL) {
+        let linkVC = TermsOfUseLinkViewController(
+            url: url,
+            windowUUID: windowUUID,
+            themeManager: themeManager
+        )
+        let navController = UINavigationController(rootViewController: linkVC)
+        navController.modalPresentationStyle = .pageSheet
+        router.present(navController, animated: true)
+    }
+
+    func showCertificatesFromErrorPage(errorPageURL: URL, originalURL: URL, title: String) {
+        let certificates = CertificateHelper.certificatesFromErrorURL(errorPageURL, logger: logger)
+        guard !certificates.isEmpty else { return }
+
+        let topLevelDomain = originalURL.host ?? originalURL.absoluteString
+        let model = CertificatesModel(
+            topLevelDomain: topLevelDomain,
+            title: title,
+            URL: originalURL.absoluteString,
+            certificates: certificates
+        )
+        let certificatesController = CertificatesViewController(
+            with: model,
+            windowUUID: windowUUID
+        )
+        let navController = UINavigationController(rootViewController: certificatesController)
+        navController.modalPresentationStyle = .pageSheet
+        router.present(navController, animated: true)
+    }
+
+    func openLearnMoreFromNativeErrorPage(url: URL) {
+        tabManager.addTabsForURLs([url], zombie: false, shouldSelectTab: true)
+    }
+
+    func popToBVC() {
+        router.popToViewController(browserViewController, reason: .deeplink)
+    }
+
+    // MARK: Microsurvey
+
+    func showMicrosurvey(model: MicrosurveyModel) {
+        guard !childCoordinators.contains(where: { $0 is MicrosurveyCoordinator }) else {
+            return
+        }
+
+        let navigationController = DismissableNavigationViewController()
+        navigationController.sheetPresentationController?.detents = [.medium(), .large()]
+        setiPadLayoutDetents(for: navigationController)
+        navigationController.sheetPresentationController?.prefersGrabberVisible = true
+        let coordinator = MicrosurveyCoordinator(
+            model: model,
+            router: DefaultRouter(navigationController: navigationController),
+            tabManager: tabManager
+        )
+        coordinator.parentCoordinator = self
+        add(child: coordinator)
+        coordinator.start()
+
+        navigationController.onViewDismissed = { [weak self, weak coordinator] in
+            // Remove coordinator when user drags down to dismiss modal
+            guard let coordinator else { return }
+            self?.didFinish(from: coordinator)
+        }
+
+        present(navigationController)
+    }
+
+    func showNativeErrorPage(overlayManager: OverlayModeManager) {
+        if nativeErrorPageViewController != nil {
+            // Already showing a native error page, the existing instance will
+            // pick up the new error state via its Redux subscription.
+            return
+        }
+
+        let errorPageController = NativeErrorPageViewController(
+            windowUUID: windowUUID,
+            tabManager: tabManager,
+            overlayManager: overlayManager
+        )
+        guard browserViewController.embedContent(errorPageController) else {
+            logger.log("Unable to embed error page", level: .debug, category: .coordinator)
+            return
+        }
+        nativeErrorPageViewController = errorPageController
+    }
+
+    private func setiPadLayoutDetents(for controller: UIViewController) {
+        guard controller.shouldUseiPadSetup() else { return }
+        controller.sheetPresentationController?.selectedDetentIdentifier = .large
+    }
+
+    // MARK: - Terms of Use
+
+    func showTermsOfUse(context: TriggerContext = .appLaunch) {
+        /// For .appLaunch and .appBecameActive, we show ToU
+        /// on top of standard homepage or any website
+        /// For case .homepageOpened, ToU should be displayed only on
+        /// standard  homepage or blank page
+        /// (not on custom URL homepage/new tab, not on regular websites)
+        if let selectedTab = tabManager.selectedTab, context == .homepageOpened {
+            guard selectedTab.isFxHomeTab || selectedTab.url == nil else { return }
+        }
+
+        guard !childCoordinators.contains(where: { $0 is TermsOfUseCoordinator }) else {
+            return // route is handled with existing child coordinator
+        }
+
+        let presenter = homepageViewController ?? browserViewController
+
+        let router = DefaultRouter(navigationController: presenter.navigationController ?? UINavigationController())
+
+        let coordinator = TermsOfUseCoordinator(
+            windowUUID: windowUUID,
+            router: router,
+            themeManager: AppContainer.shared.resolve(),
+            notificationCenter: NotificationCenter.default,
+            prefs: profile.prefs,
+            experimentsTracking: touExperimentsTracking
+        )
+        guard coordinator.shouldShowTermsOfUse(context: context) else { return }
+        coordinator.parentCoordinator = self
+        add(child: coordinator)
+        coordinator.start(context: context)
+    }
+
+    // MARK: - Password Generator
+    func showPasswordGenerator(tab: Tab, frame: WKFrameInfo) {
+        let scriptEvaluator = WebKitPasswordGeneratorScriptEvaluator(webView: frame.webView)
+        let frameContext = PasswordGeneratorFrameContext(origin: frame.webView?.url?.origin,
+                                                         host: frame.securityOrigin.host,
+                                                         scriptEvaluator: scriptEvaluator,
+                                                         frameInfo: frame)
+        showPasswordGenerator(tab: tab, frameContext: frameContext)
+    }
+
+    func showPasswordGenerator(tab: Tab, frameContext: PasswordGeneratorFrameContext) {
+        let passwordGenVC = PasswordGeneratorViewController(windowUUID: windowUUID,
+                                                            currentTab: tab,
+                                                            frameContext: frameContext)
+
+        let action = PasswordGeneratorAction(
+            windowUUID: windowUUID,
+            actionType: PasswordGeneratorActionType.showPasswordGenerator,
+            frameContext: frameContext
+        )
+        store.dispatch(action)
+
+        let bottomSheetVM = BottomSheetViewModel(
+            shouldDismissForTapOutside: true,
+            closeButtonA11yLabel: .PasswordGenerator.CloseButtonA11yLabel,
+            closeButtonA11yIdentifier: AccessibilityIdentifiers.PasswordGenerator.closeButton
+        )
+
+        let bottomSheetVC = BottomSheetViewController(
+            viewModel: bottomSheetVM,
+            childViewController: passwordGenVC,
+            usingDimmedBackground: true,
+            windowUUID: windowUUID
+        )
+        present(bottomSheetVC)
+    }
+
+    // MARK: - ParentCoordinatorDelegate
+
+    func didFinish(from childCoordinator: Coordinator) {
+        remove(child: childCoordinator)
+    }
+
+    // MARK: - TabManagerDelegate
+
+    func tabManagerDidRestoreTabs(_ tabManager: TabManager) {
+        // TabManager clears isRestoringTabs after notifying its delegates.
+        Task { @MainActor [weak self] in
+            guard let self, let savedRoute = self.savedRoute else { return }
+            logger.log("Find and handle route called after tabManagerDidRestoreTabs",
+                       level: .info,
+                       category: .coordinator)
+            findAndHandle(route: savedRoute)
+        }
+    }
+
+    func tabManager(_ tabManager: TabManager, didRemoveTab tab: Tab, isRestoring: Bool) {
+        homepageTabStateStore.removeState(for: tab.tabUUID)
+    }
+
+    // MARK: - TabTrayCoordinatorDelegate
+
+    func didDismissTabTray(from coordinator: TabTrayCoordinator) {
+        router.dismiss(animated: true, completion: nil)
+        // [FXIOS-10482] Initial bandaid for memory leaking during tab tray open/close. Needs further investigation.
+        coordinator.dismissChildTabTrayPanels()
+        remove(child: coordinator)
+    }
+
+    // MARK: - WindowEventCoordinator
+
+    func coordinatorHandleWindowEvent(event: WindowEvent, uuid: WindowUUID) {
+        switch event {
+        case .windowWillClose:
+            // Runs before the guard below: a merge is driven from the surviving window, so it is
+            // this coordinator that needs to hear about the *other* windows finishing closing.
+            windowMerger.windowDidClose(uuid: uuid)
+
+            guard uuid == windowUUID else { return }
+            // Additional cleanup performed when the current iPad window is closed.
+            // This is necessary in order to ensure the BVC and other memory is freed correctly.
+
+            // Notify theme manager
+            themeManager.windowDidClose(uuid: uuid)
+            releaseBrowserViewController()
+        case .libraryOpened:
+            // Auto-close library panel if it was opened in another iPad window. [FXIOS-8095]
+            guard uuid != windowUUID else { return }
+            performIfCoordinatorRootVCIsPresented(LibraryCoordinator.self) { _ in
+                router.dismiss(animated: true, completion: nil)
+            }
+        case .settingsOpened:
+            // Auto-close settings panel if it was opened in another iPad window. [FXIOS-8095]
+            guard uuid != windowUUID else { return }
+            performIfCoordinatorRootVCIsPresented(SettingsCoordinator.self) {
+                didFinishSettings(from: $0)
+            }
+        case .syncMenuOpened:
+            guard uuid != windowUUID else { return }
+            let browserPresentedVC = router.navigationController.presentedViewController
+            if let navVCs = (browserPresentedVC as? UINavigationController)?.viewControllers,
+               navVCs.contains(where: {
+                   $0 is FirefoxAccountSignInViewController || $0 is SyncContentSettingsViewController
+               }) {
+                router.dismiss(animated: true, completion: nil)
+            }
+        case .qrScannerOpened:
+            guard uuid != windowUUID else { return }
+            let browserPresentedVC = router.navigationController.presentedViewController
+            let rootVC = (browserPresentedVC as? UINavigationController)?.viewControllers.first
+            if rootVC is QRCodeViewController {
+                router.dismiss(animated: true, completion: nil)
+                remove(child: childCoordinators.first(where: { $0 is QRCodeCoordinator }))
+            }
+        }
+    }
+
+    // MARK: - ShareSheetCoordinatorDelegate
+
+    func showToast(message: String) {
+        browserViewController.showPlainToast(message: message)
+    }
+
+    // MARK: - Private helpers
+
+    private func releaseBrowserViewController() {
+        // Clean up views and ensure BVC and its adjacent views for the window are freed.
+        browserViewController.view.endEditing(true)
+        browserViewController.dismissUrlBar()
+        browserViewController.contentContainer.removeContent()
+        browserViewController.header.removeAllArrangedViews()
+        browserViewController.overKeyboardContainer.removeAllArrangedViews()
+        browserViewController.bottomContainer.removeAllArrangedViews()
+        browserViewController.removeFromParent()
+    }
+
+    /// Tabs displaying content other than a HTML MIME type can be downloaded and treated as files when shared. This method
+    /// attempts to download any such files. If there is no file to download, returns just a regular `ShareType.tab`.
+    /// - Parameters:
+    ///   - tabURL: The URL for the tab pointing to a website.
+    ///   - tab: The current tab displaying the tabURL.
+    /// - Returns: Returns a `ShareType.file` containing a `file://` URL that points to a downloaded file on the device. If
+    ///            no file was downloaded, then just returns a regular `ShareType.tab` with the passed in `tabURL` and `tab`.
+    private func tryDownloadingTabFileToShare(
+        withTabURL tabURL: URL,
+        forShareTab tab: ShareTab
+    ) async -> ShareType {
+        guard let temporaryDocument = tab.temporaryDocument,
+              !temporaryDocument.isDownloading else {
+            // If no temporary document, share the tab as usual with a web URL
+            return .tab(url: tabURL, tab: tab)
+        }
+
+        // [FXIOS-15182]: Read document data straight from the already-authenticated WebView, instead of re-downloading it.
+        if featureFlagsProvider.isEnabled(.webViewDocumentFetchRefactor),
+           let fileURL = await documentFileFromWebView(tab, tabURL: tabURL) {
+            return .file(url: fileURL, remoteURL: tabURL)
+        }
+
+        guard let fileURL = await temporaryDocument.download() else {
+            // If no file was downloaded, simply share the tab as usual with a web URL
+            return .tab(url: tabURL, tab: tab)
+        }
+
+        // If we successfully got a temp file URL, share it like a downloaded file
+        return .file(url: fileURL, remoteURL: tabURL)
+    }
+
+    /// Reads the rendered document from the tab WebView, and writes the data to a temporary file for sharing.
+    /// Because the data is pulled directly from the WebView, any auth already performed is honored.
+    private func documentFileFromWebView(_ tab: ShareTab, tabURL: URL) async -> URL? {
+        guard let webView = tab.webView else { return nil }
+
+        let readDocumentJS = """
+        const embed = document.querySelector('embed');
+        const src = embed ? embed.src : window.location.href;
+        const response = await fetch(src);
+        const blob = await response.blob();
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+        });
+        """
+
+        do {
+            let result = try await webView.callAsyncJavaScript(readDocumentJS, contentWorld: .defaultClient)
+            guard let base64 = result as? String,
+                  let data = Data(base64Encoded: base64) else { return nil }
+            let fileURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent(Self.shareableFilename(for: tabURL, mimeType: tab.mimeType))
+            try data.write(to: fileURL)
+            return fileURL
+        } catch {
+            logger.log("WebView document fetch failed: \(error.localizedDescription)",
+                       level: .warning,
+                       category: .shareSheet)
+            return nil
+        }
+    }
+
+    private static func shareableFilename(for url: URL, mimeType: String?) -> String {
+        let lastComponent = url.lastPathComponent
+        if !lastComponent.isEmpty, !(lastComponent as NSString).pathExtension.isEmpty {
+            return lastComponent
+        }
+        if let mimeType, let fileExtension = MIMEType.fileExtensionFromMIMEType(mimeType) {
+            return "document.\(fileExtension)"
+        }
+        return "document"
+    }
+
+    /// Utility. Performs the supplied action if a coordinator of the indicated type
+    /// is currently presenting its primary view controller.
+    /// - Parameters:
+    ///   - coordinatorType: the type of coordinator.
+    ///   - action: the action to perform. The Coordinator instance is supplied for convenience.
+    private func performIfCoordinatorRootVCIsPresented<T: Coordinator>(_ coordinatorType: T.Type,
+                                                                       action: (T) -> Void) {
+        guard let expectedCoordinator = childCoordinators[coordinatorType] else { return }
+        let browserPresentedVC = router.navigationController.presentedViewController
+        let rootVC = (browserPresentedVC as? UINavigationController)?.viewControllers.first
+        if rootVC === expectedCoordinator.router.rootViewController {
+            action(expectedCoordinator)
+        }
+    }
+}

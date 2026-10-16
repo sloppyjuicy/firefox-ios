@@ -1,0 +1,154 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+import Common
+
+class StoryTests: FeatureFlaggedTestBase {
+    private var newsScreen: NewsScreen!
+    private lazy var settingsHomepageScreen = SettingsHomepageScreen(app: app)
+
+    override func setUp() async throws {
+        try await super.setUp()
+        newsScreen = NewsScreen(app: app)
+    }
+
+    enum SwipeDirection {
+        case up, down, left, right
+    }
+
+    func validateNewsStoriesCount() {
+        let numNewsStories = app.collectionViews
+            .cells.matching(identifier: AccessibilityIdentifiers.FirefoxHomepage.Pocket.itemCell)
+            .staticTexts.count
+        XCTAssertTrue(numNewsStories > 1, "Expected at least 2 stories.")
+    }
+
+    func toggleStories(shouldEnable: Bool) {
+        navigator.performAction(shouldEnable ? Action.ToggleStoriesInNewTab : Action.ToggleStoriesInNewTab)
+        navigator.goto(NewTabScreen)
+    }
+
+    /// Asserts #35618 still reproduces - no stories on the homepage, no Stories row in settings -
+    /// then skips, so the run is not reported as a pass that never exercised stories.
+    /// https://github.com/mozilla-mobile/firefox-ios/issues/35618
+    private func skipBecauseStoriesAreUnavailable(includingCategories: Bool = false) throws {
+        TopSitesScreen(app: app).assertVisible()
+        newsScreen.scrollToNewsSection()
+        var reproduces = newsScreen.assertNewsSectionIsAbsent()
+        reproduces = newsScreen.assertNoStoryCellsExist() && reproduces
+        if includingCategories {
+            reproduces = newsScreen.assertNoCategoryButtonsExist() && reproduces
+        }
+        navigator.goto(HomeSettings)
+        reproduces = settingsHomepageScreen.assertStoriesSwitchIsAbsent() && reproduces
+
+        // The asserts above already failed the test if the bug is fixed, so only skip while it is not.
+        guard reproduces else { return }
+        throw XCTSkip("Stories are unavailable below iOS 17, see issue #35618")
+    }
+
+    func scrollToElement(_ element: XCUIElement, direction: SwipeDirection, maxSwipes: Int = 5) {
+        var swipeCount = 0
+        while !element.exists && swipeCount < maxSwipes {
+            switch direction {
+            case .up:
+                app.swipeUp()
+            case .down:
+                app.swipeDown()
+            case .left:
+                app.swipeLeft()
+            case .right:
+                app.swipeRight()
+            }
+            swipeCount += 1
+        }
+        XCTAssertTrue(element.exists, "Element \(element) not found after \(maxSwipes) swipes.")
+    }
+
+    // https://mozilla.testrail.io/index.php?/cases/view/2306924
+    func testNewsStoriesEnabledByDefault() throws {
+        app.launch()
+
+        navigator.goto(NewTabScreen)
+        if isStoriesBrokenByLocaleBug {
+            try skipBecauseStoriesAreUnavailable()
+            return
+        }
+        app.partialSwipeUp(distance: 0.2)
+        mozWaitForElementToExist(app.otherElements["News"])
+
+        validateNewsStoriesCount()
+
+        // Disable Stories
+        toggleStories(shouldEnable: false)
+        mozWaitForElementToNotExist(app.staticTexts[AccessibilityIdentifiers.FirefoxHomepage.SectionTitles.merino])
+
+        // Enable it again
+        toggleStories(shouldEnable: true)
+        app.partialSwipeUp(distance: 0.2)
+        mozWaitForElementToExist(app.otherElements["News"])
+
+        // Tap on the first News element
+        app.collectionViews
+            .cells.matching(identifier: AccessibilityIdentifiers.FirefoxHomepage.Pocket.itemCell)
+            .staticTexts.firstMatch.tap()
+        waitUntilPageLoad()
+        // The url textField is not empty
+        let url = app.textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]
+        XCTAssertNotEqual(url.value as? String, "", "The url textField is empty")
+    }
+
+    // https://mozilla.testrail.io/index.php?/cases/view/2855360
+    func testValidateNewsContextMenu() throws {
+        app.launch()
+
+        navigator.goto(NewTabScreen)
+        if isStoriesBrokenByLocaleBug {
+            try skipBecauseStoriesAreUnavailable()
+            return
+        }
+        app.partialSwipeUp(distance: 0.2)
+        mozWaitForElementToExist(app.otherElements["News"])
+        // Long tap on one of the stories
+        let newsCell = AccessibilityIdentifiers.FirefoxHomepage.Pocket.itemCell
+        app.collectionViews.cells.matching(identifier: newsCell).staticTexts.firstMatch.press(forDuration: 1.5)
+        // Validate Context menu
+        let contextMenuTable = app.tables["Context Menu"]
+        waitForElementsToExist(
+            [
+                contextMenuTable.otherElements.staticTexts.firstMatch,
+                contextMenuTable.cells.buttons[StandardImageIdentifiers.Large.plus],
+                contextMenuTable.cells.buttons[StandardImageIdentifiers.Large.privateMode],
+                contextMenuTable.cells.buttons[StandardImageIdentifiers.Large.bookmark],
+                contextMenuTable.cells.buttons[StandardImageIdentifiers.Large.shareApple]
+            ]
+        )
+    }
+
+    // https://mozilla.testrail.io/index.php?/cases/view/XXXXXXX
+    func testNewsStoryCategoriesFilterStories() throws {
+        if !isFennec {
+            throw XCTSkip("Skipping testNewsStoryCategoriesFilterStories on Firefox or FirefoxBeta schemas")
+        }
+        addLaunchArgument(jsonFileName: "homepageStoryCategoriesOn", featureName: "homepage-redesign-feature")
+        app.launch()
+
+        if isStoriesBrokenByLocaleBug {
+            try skipBecauseStoriesAreUnavailable(includingCategories: true)
+            return
+        }
+        newsScreen.scrollToNewsSection()
+        newsScreen.assertNewsSectionExists()
+        newsScreen.assertAllCategoryButtonExists()
+        newsScreen.assertCategoryCount(minimum: 2)
+
+        newsScreen.tapCategoryButton(at: 0)
+        newsScreen.assertFirstStoryCellExists()
+        newsScreen.tapCategoryButton(at: 1)
+        newsScreen.assertFirstStoryCellExists()
+        newsScreen.tapAllCategoryButton()
+        newsScreen.assertFirstStoryCellExists()
+    }
+}

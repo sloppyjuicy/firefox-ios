@@ -1,0 +1,30 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "Ícono de la aplicación";
+
+/* (No Comment) */
+"New Private Tab" = "Nueva pestaña privada";
+
+/* (No Comment) */
+"New Tab" = "Nueva pestaña";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox puede usar tu cámara para escanear códigos QR, tomar fotos o grabar videos.";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "Firefox requiere Face ID - reconocimiento facial-para acceder a tus contraseñas guardadas y métodos de pago.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "Los sitios web que visites pueden solicitar tu ubicación.";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "Firefox usa tu micrófono para grabar y subir audio.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "Esto permite que guardes tus fotos.";
+
+/* Privacy - Speech Recognition Usage Description */
+"NSSpeechRecognitionUsageDescription" = "Esto autoriza a Firefox a transcribir tu audio.";
+
+/* (No Comment) */
+"Scan QR Code" = "Escanear código QR";
+

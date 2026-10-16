@@ -1,0 +1,237 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+@testable import ToolbarKit
+
+@MainActor
+final class ToolbarButtonTests: XCTestCase {
+    private var button: ToolbarButton!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        button = ToolbarButton()
+    }
+
+    override func tearDown() async throws {
+        button = nil
+        try await super.tearDown()
+    }
+
+    // MARK: - Configuration Caching Tests
+    func testConfigureWithSameElement_SkipsReconfiguration() {
+        let element = createToolbarElement(iconName: "icon1", a11yLabel: "Test")
+
+        button.configure(element: element)
+        // Modify button state to track if reconfiguration happens.
+        button.accessibilityLabel = "Modified"
+        button.configure(element: element)
+
+        // The configuration should be skipped, leaving the modified state.
+        XCTAssertEqual(button.accessibilityLabel, "Modified", "Configuration should be skipped when element hasn't changed.")
+    }
+
+    func testConfigureWithDifferentEnabled_ReconfiguresButton() {
+        let enabledElement = createToolbarElement(iconName: "icon1", isEnabled: true, a11yLabel: "Test")
+        let disabledElement = createToolbarElement(iconName: "icon1", isEnabled: false, a11yLabel: "Test")
+
+        button.configure(element: enabledElement)
+        let firstEnabledState = button.isEnabled
+        button.configure(element: disabledElement)
+        let secondEnabledState = button.isEnabled
+
+        XCTAssertTrue(firstEnabledState)
+        XCTAssertFalse(secondEnabledState)
+    }
+
+    func testConfigureWithDifferentSelected_ReconfiguresButton() {
+        let unselectedElement = createToolbarElement(iconName: "icon1", isSelected: false, a11yLabel: "Test")
+        let selectedElement = createToolbarElement(iconName: "icon1", isSelected: true, a11yLabel: "Test")
+
+        button.configure(element: unselectedElement)
+        let firstSelectedState = button.isSelected
+        button.configure(element: selectedElement)
+        let secondSelectedState = button.isSelected
+
+        XCTAssertFalse(firstSelectedState)
+        XCTAssertTrue(secondSelectedState)
+    }
+
+    func testConfigureWithDifferentTitle_ReconfiguresButton() {
+        let element1 = createToolbarElement(iconName: "icon1", title: "Title1", a11yLabel: "Test")
+        let element2 = createToolbarElement(iconName: "icon1", title: "Title2", a11yLabel: "Test")
+
+        button.configure(element: element1)
+        let firstTitle = button.configuration?.title
+        button.configure(element: element2)
+        let secondTitle = button.configuration?.title
+
+        XCTAssertEqual(firstTitle, "Title1")
+        XCTAssertEqual(secondTitle, "Title2")
+    }
+
+    func testConfigureMultipleTimes_WithSameElement_OnlyConfiguresOnce() {
+        let element = createToolbarElement(iconName: "icon1", a11yLabel: "Test")
+
+        button.configure(element: element)
+        // Modify button state to track if reconfiguration happens.
+        button.accessibilityLabel = "Modified"
+        button.configure(element: element)
+        button.configure(element: element)
+        button.configure(element: element)
+
+        // The label should remain modified (proving no reconfiguration).
+        XCTAssertEqual(button.accessibilityLabel, "Modified", "Multiple configurations with same element should be skipped.")
+    }
+
+    func testConfigureWithLoadingState_ReconfiguresWhenLoadingChanges() {
+        let loadingConfig1 = LoadingConfig(isLoading: false, a11yLabel: "Not Loading")
+        let loadingConfig2 = LoadingConfig(isLoading: true, a11yLabel: "Loading")
+
+        let element1 = createToolbarElement(iconName: "icon1", loadingConfig: loadingConfig1, a11yLabel: "Test")
+        let element2 = createToolbarElement(iconName: "icon1", loadingConfig: loadingConfig2, a11yLabel: "Test")
+
+        button.configure(element: element1)
+        button.configure(element: element2)
+
+        // The button should be reconfigured (we can verify by checking subviews for spinner).
+        let hasSpinner = button.subviews.contains { $0 is UIActivityIndicatorView }
+        XCTAssertTrue(hasSpinner, "Loading state change should trigger reconfiguration.")
+    }
+
+    func testConfigure_withBottomBadgeImage_setsImage() {
+        let element = createToolbarElement(bottomBadgeImage: UIImage(), a11yLabel: "")
+
+        button.configuration?.image = UIImage()
+        button.configure(element: element)
+
+        XCTAssertEqual(button.imageView?.subviews.count, 1)
+        XCTAssertTrue(button.imageView?.subviews.first is UIImageView)
+    }
+
+    func testConfigure_removesBottomBadgeImage_whenReconfiguredWithNone() {
+        let element1 = createToolbarElement(bottomBadgeImage: UIImage(), a11yLabel: "")
+        let element2 = createToolbarElement(a11yLabel: "")
+
+        button.configuration?.image = UIImage()
+        button.configure(element: element1)
+        button.configure(element: element2)
+
+        XCTAssertEqual(button.imageView?.subviews.count, 0)
+    }
+
+    func testConfigure_withMenuElements_configuresMenuAsPrimaryAction() {
+        let menuElements = [
+            ToolbarMenuElement(
+                title: "First",
+                imageName: nil,
+                a11yIdentifier: "firstAction",
+                onSelected: { _ in }
+            ),
+            ToolbarMenuElement(
+                title: "Second",
+                imageName: nil,
+                a11yIdentifier: "secondAction"
+            )
+        ]
+        let element = createToolbarElement(a11yLabel: "Test", menuElements: menuElements)
+
+        button.configure(element: element)
+
+        XCTAssertTrue(button.showsMenuAsPrimaryAction)
+        XCTAssertEqual(button.menu?.children.count, 2)
+        let firstAction = button.menu?.children.first as? UIAction
+        XCTAssertEqual(firstAction?.title, "First")
+        XCTAssertEqual(firstAction?.accessibilityIdentifier, "firstAction")
+    }
+
+    func testConfigure_withoutMenuElements_clearsExistingMenu() {
+        let menuElement = ToolbarMenuElement(title: "First", a11yIdentifier: "firstAction")
+        let elementWithMenu = createToolbarElement(a11yLabel: "Test", menuElements: [menuElement])
+        let elementWithoutMenu = createToolbarElement(iconName: "icon2", a11yLabel: "Test")
+
+        button.configure(element: elementWithMenu)
+        button.configure(element: elementWithoutMenu)
+
+        XCTAssertFalse(button.showsMenuAsPrimaryAction)
+        XCTAssertNil(button.menu)
+    }
+
+    func testConfigure_withMenuLongPressBehavior_configuresLongPressMenu() throws {
+        let element = createToolbarElement(
+            a11yLabel: "Test",
+            longPressBehavior: .menu {
+                UIMenu(children: [UIAction(title: "Action") { _ in }])
+            }
+        )
+
+        button.configure(element: element)
+        let interaction = try XCTUnwrap(button.contextMenuInteraction)
+
+        XCTAssertFalse(button.showsMenuAsPrimaryAction)
+        XCTAssertNil(button.menu)
+        XCTAssertTrue(button.isContextMenuInteractionEnabled)
+        XCTAssertNotNil(button.contextMenuInteraction(interaction, configurationForMenuAtLocation: .zero))
+    }
+
+    func testConfigure_withUnavailableLongPressMenu_returnsNoConfiguration() throws {
+        let element = createToolbarElement(
+            a11yLabel: "Test",
+            longPressBehavior: .menu { nil }
+        )
+        button.configure(element: element)
+        let interaction = try XCTUnwrap(button.contextMenuInteraction)
+
+        XCTAssertNil(button.contextMenuInteraction(interaction, configurationForMenuAtLocation: .zero))
+    }
+
+    func testConfigure_withMenuElements_returnsPrimaryActionMenuConfiguration() throws {
+        let menuElement = ToolbarMenuElement(title: "First", a11yIdentifier: "firstAction")
+        let element = createToolbarElement(a11yLabel: "Test", menuElements: [menuElement])
+
+        button.configure(element: element)
+        let interaction = try XCTUnwrap(button.contextMenuInteraction)
+
+        XCTAssertNotNil(button.contextMenuInteraction(interaction, configurationForMenuAtLocation: .zero))
+    }
+
+    // MARK: - Helper Methods
+    private func createToolbarElement(
+        iconName: String? = nil,
+        title: String? = nil,
+        badgeImageName: String? = nil,
+        maskImageName: String? = nil,
+        bottomBadgeImage: UIImage? = nil,
+        loadingConfig: LoadingConfig? = nil,
+        numberOfTabs: Int? = nil,
+        isEnabled: Bool = true,
+        isSelected: Bool = false,
+        hasCustomColor: Bool = false,
+        a11yLabel: String,
+        a11yHint: String? = nil,
+        a11yId: String = "testId",
+        longPressBehavior: ToolbarLongPressBehavior = .none,
+        onSelected: ((UIButton) -> Void)? = nil,
+        menuElements: [ToolbarMenuElement] = []
+    ) -> ToolbarElement {
+        return ToolbarElement(
+            iconName: iconName,
+            title: title,
+            badgeImageName: badgeImageName,
+            bottomBadgeImage: bottomBadgeImage,
+            maskImageName: maskImageName,
+            loadingConfig: loadingConfig,
+            numberOfTabs: numberOfTabs,
+            isEnabled: isEnabled,
+            isSelected: isSelected,
+            hasCustomColor: hasCustomColor,
+            a11yLabel: a11yLabel,
+            a11yHint: a11yHint,
+            a11yId: a11yId,
+            longPressBehavior: longPressBehavior,
+            onSelected: onSelected,
+            menuElements: menuElements
+        )
+    }
+}

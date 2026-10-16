@@ -1,0 +1,32 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import MozillaAppServices
+import XCTest
+
+@testable import Sync
+
+class RustSyncManagerAPITests: XCTestCase {
+    var rustSyncManagerApi: RustSyncManagerAPI!
+
+    func testReportSyncTelemetry() {
+        self.rustSyncManagerApi = RustSyncManagerAPI()
+        let expectation = expectation(description: "Completed telemetry reporting")
+        let expected = "The operation couldn’t be completed. (MozillaAppServices.TelemetryJSONError error 0.)"
+        let invalidSyncResult = SyncResult(status: ServiceStatus.ok,
+                                           successful: [],
+                                           failures: [:],
+                                           persistedState: "",
+                                           declined: nil,
+                                           nextSyncAllowedAt: nil,
+                                           telemetryJson: "{\"version\": \"invalidVersion\"}")
+        self.rustSyncManagerApi
+            .reportSyncTelemetry(syncResult: invalidSyncResult) { description in
+                XCTAssertEqual(description, expected)
+                expectation.fulfill()
+            }
+
+        wait(for: [expectation], timeout: 5)
+    }
+}

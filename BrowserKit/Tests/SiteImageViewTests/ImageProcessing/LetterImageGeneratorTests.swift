@@ -1,0 +1,311 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+import TestKit
+@testable import Common
+@testable import SiteImageView
+
+@MainActor
+final class LetterImageGeneratorTests: XCTestCase {
+    override func setUp() async throws {
+        try await super.setUp()
+        AppContainer.shared.register(service: DefaultThemeManager(sharedContainerIdentifier: "") as ThemeManager)
+    }
+
+    override func tearDown() async throws {
+        AppContainer.shared.reset()
+        try await super.tearDown()
+    }
+
+    func testEmptyDomain_throws() async {
+        let subject = createSubject()
+        let siteString = ""
+
+        do {
+            _ = try await subject.generateLetterImage(siteString: siteString)
+            XCTFail("Call should have thrown")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, SiteImageError.noLetterImage.localizedDescription)
+        }
+    }
+
+    func testGenerateLetter_fromEmptyString_throws() async {
+        let subject = createSubject()
+        let siteString = ""
+
+        do {
+            _ = try subject.generateLetter(fromSiteString: siteString)
+            XCTFail("Call should have thrown")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, SiteImageError.noLetterImage.localizedDescription)
+        }
+    }
+
+    func testGenerateLetter_fromString_returnsCapitalizedLetter() async throws {
+        let subject = createSubject()
+        let siteString = "mozilla.org"
+        let expectedLetter = "M"
+
+        let letter = try subject.generateLetter(fromSiteString: siteString)
+        XCTAssertEqual(letter, expectedLetter)
+    }
+
+    func testGenerateLetter_fromNonAlphanumericString_returnsFirstCharacter() async throws {
+        let subject = createSubject()
+        let siteString = "?$!@"
+        let expectedLetter = "?"
+
+        let letter = try subject.generateLetter(fromSiteString: siteString)
+        XCTAssertEqual(letter, expectedLetter)
+    }
+
+    func testGenerateImageFromLetter_returnsNonEmptyImage() async {
+        let subject = createSubject()
+
+        let image = subject.generateImage(fromLetter: "H", color: .red)
+        XCTAssertNotEqual(image, UIImage())
+    }
+
+    func testGenerateImageFromLetter_returnsImageWithCorrectBackgroundColor() async {
+        let subject = createSubject()
+        let letter = "H"
+        let backgroundColor = UIColor.red
+        let pixelSamplePoint = CGPoint(x: 5, y: 5)
+
+        let image = subject.generateImage(fromLetter: letter, color: backgroundColor)
+        XCTAssertEqual(try? image.cgImage?.getPixelColor(pixelSamplePoint), backgroundColor)
+    }
+
+    func testGenerateLetterImage_returnsImageWithCorrectBackgroundColor_forM() async throws {
+        let subject = createSubject()
+        let siteString = "mozilla.com"
+        let expectedBackgroundColor = UIColor(red: 0.584, green: 0.803, blue: 1.0, alpha: 1.0)
+        let pixelSamplePoint = CGPoint(x: 5, y: 5)
+
+        let image = try await subject.generateLetterImage(siteString: siteString)
+        let capturedColor = try XCTUnwrap(try? image.cgImage?.getPixelColor(pixelSamplePoint))
+
+        testColor(capturedColor: capturedColor, expectedColor: expectedBackgroundColor)
+    }
+
+    func testGenerateLetterImage_returnsImageWithCorrectBackgroundColor_forF() async throws {
+        let subject = createSubject()
+        let siteString = "firefox.com"
+        let expectedBackgroundColor = UIColor(red: 0.035, green: 0.588, blue: 0.973, alpha: 1.0)
+        let pixelSamplePoint = CGPoint(x: 5, y: 5)
+
+        let image = try await subject.generateLetterImage(siteString: siteString)
+        let capturedColor = try XCTUnwrap(try? image.cgImage?.getPixelColor(pixelSamplePoint))
+
+        testColor(capturedColor: capturedColor, expectedColor: expectedBackgroundColor)
+    }
+
+    // "," is chosen because it hashes to index 41 — the last palette bucket,
+    // which was previously unreachable due to an off-by-one in the color index.
+    func testGenerateBackgroundColor_lastPaletteColorIsReachable() {
+        let subject = createSubject()
+        let expectedLastPaletteColor = UIColor(red: 1.0, green: 0.655, blue: 0.702, alpha: 1.0)
+
+        let color = subject.generateBackgroundColor(forSite: ",", colorSet: StandardFaviconColorSet())
+
+        testColor(capturedColor: color, expectedColor: expectedLastPaletteColor)
+    }
+
+    func testGenerateLetterImage_returnsImageWithCorrectBackgroundColor_forNonAlphaCharacter() async throws {
+        let subject = createSubject()
+        let siteString = "?$%^"
+        let expectedBackgroundColor = UIColor(red: 1.0, green: 0.655, blue: 0.573, alpha: 1.0)
+        let pixelSamplePoint = CGPoint(x: 5, y: 5)
+
+        let image = try await subject.generateLetterImage(siteString: siteString)
+        let capturedColor = try XCTUnwrap(try? image.cgImage?.getPixelColor(pixelSamplePoint))
+
+        testColor(capturedColor: capturedColor, expectedColor: expectedBackgroundColor)
+    }
+
+    func testGenerateBackgroundColor_withNovaPalette_usesNovaColor() {
+        let subject = createSubject()
+        let novaColorSet = NovaFaviconColorSet()
+        let siteString = "mozilla.com"
+        let index = subject.colorIndex(forSite: siteString, colorSet: novaColorSet)
+
+        let color = subject.generateBackgroundColor(forSite: siteString, colorSet: novaColorSet)
+
+        XCTAssertEqual(color, novaColorSet.backgroundColors[index])
+        XCTAssertNotEqual(color, StandardFaviconColorSet().backgroundColors[index])
+    }
+
+    func testGenerateLetterImage_withNovaPalette_returnsImageWithNovaBackgroundColor() async throws {
+        let subject = createSubject(
+            themeManager: DefaultThemeManager(sharedContainerIdentifier: "", isNovaDesignOnClosure: { true })
+        )
+        let novaColorSet = NovaFaviconColorSet()
+        let siteString = "mozilla.com"
+        let index = subject.colorIndex(forSite: siteString, colorSet: novaColorSet)
+        let expectedBackgroundColor = novaColorSet.backgroundColors[index]
+        let pixelSamplePoint = CGPoint(x: 5, y: 5)
+
+        let image = try await subject.generateLetterImage(siteString: siteString)
+        let capturedColor = try XCTUnwrap(try? image.cgImage?.getPixelColor(pixelSamplePoint))
+
+        testColor(capturedColor: capturedColor, expectedColor: expectedBackgroundColor)
+    }
+}
+
+private extension LetterImageGeneratorTests {
+    func createSubject(themeManager: ThemeManager? = nil) -> DefaultLetterImageGenerator {
+        let subject = if let themeManager {
+            DefaultLetterImageGenerator(themeManager: themeManager)
+        } else {
+            DefaultLetterImageGenerator()
+        }
+        trackForMemoryLeaks(subject)
+        return subject
+    }
+
+    /// Performs `XCTAssertEqual` color comparison on hex values accurate to the 0.001 place. We can't precisely compare
+    /// floating point values.
+    func testColor(capturedColor: UIColor,
+                   expectedColor: UIColor,
+                   file: StaticString = #filePath,
+                   line: UInt = #line) {
+        var capturedRed: CGFloat = 0
+        var capturedGreen: CGFloat = 0
+        var capturedBlue: CGFloat = 0
+        var capturedAlpha: CGFloat = 0
+        capturedColor.getRed(&capturedRed,
+                             green: &capturedGreen,
+                             blue: &capturedBlue,
+                             alpha: &capturedAlpha)
+
+        var resultRed: CGFloat = 0
+        var resultGreen: CGFloat = 0
+        var resultBlue: CGFloat = 0
+        var resultAlpha: CGFloat = 0
+        expectedColor.getRed(&resultRed,
+                             green: &resultGreen,
+                             blue: &resultBlue,
+                             alpha: &resultAlpha)
+
+        XCTAssertEqual(resultRed, capturedRed, accuracy: 0.001, file: file, line: line)
+        XCTAssertEqual(resultGreen, capturedGreen, accuracy: 0.001, file: file, line: line)
+        XCTAssertEqual(resultBlue, capturedBlue, accuracy: 0.001, file: file, line: line)
+        XCTAssertEqual(resultAlpha, capturedAlpha, accuracy: 0.001, file: file, line: line)
+    }
+}
+
+// MARK: - Helper Methods
+enum ImageError: Error {
+    case BadData
+    case BadChannelCount
+    case IncorrectByteSize
+}
+
+extension UIImage {
+    /// Tests for UIImage equality by comparing the underlying data
+    /// - Parameter inputImage: The image to compare against.
+    /// - Returns: Returns true if the images contain underlying equal PNG data.
+    func isSameData(asImage inputImage: UIImage) -> Bool {
+        return self.pngData() == inputImage.pngData()
+    }
+}
+
+// `CGBitmapInfo` and `CGImage` helper logic adapted from:
+// https://stackoverflow.com/a/49087310
+// https://stackoverflow.com/a/36236716
+extension CGBitmapInfo {
+    enum ComponentLayout {
+        case bgra, abgr, argb, rgba, bgr, rgb
+
+        var count: Int {
+            switch self {
+            case .bgr, .rgb: return 3
+            default: return 4
+            }
+        }
+    }
+
+    var componentLayout: ComponentLayout? {
+        guard let alphaInfo = CGImageAlphaInfo(rawValue: rawValue & Self.alphaInfoMask.rawValue) else { return nil }
+        let isLittleEndian = contains(.byteOrder32Little)
+
+        if alphaInfo == .none {
+            return isLittleEndian ? .bgr : .rgb
+        }
+        let alphaIsFirst = alphaInfo == .premultipliedFirst || alphaInfo == .first || alphaInfo == .noneSkipFirst
+
+        if isLittleEndian {
+            return alphaIsFirst ? .bgra : .abgr
+        } else {
+            return alphaIsFirst ? .argb : .rgba
+        }
+    }
+
+    var isAlphaPremultiplied: Bool {
+        let alphaInfo = CGImageAlphaInfo(rawValue: rawValue & Self.alphaInfoMask.rawValue)
+        return alphaInfo == .premultipliedFirst || alphaInfo == .premultipliedLast
+    }
+}
+
+extension CGImage {
+    /// Gets the color of a pixel in a 4-channel image
+    /// - Parameter point: The pixel to sample
+    /// - Returns: The UIColor at the pixel. Throws an error if the image does not have 4 channels (RGB and alpha).
+    func getPixelColor(_ point: CGPoint) throws -> UIColor {
+        let x = Int(point.x)
+        let y = Int(point.y)
+        let width = self.width
+        let index = width * y + x
+
+        guard let pixelData = self.dataProvider?.data,
+              let layout = bitmapInfo.componentLayout,
+              let data = CFDataGetBytePtr(pixelData) else {
+            throw ImageError.BadData
+        }
+
+        let isAlphaPremultiplied = bitmapInfo.isAlphaPremultiplied
+        let numComponents = layout.count
+
+        switch numComponents {
+        case 3:
+            let c0 = CGFloat((data[3*index])) / 255
+            let c1 = CGFloat((data[3*index+1])) / 255
+            let c2 = CGFloat((data[3*index+2])) / 255
+            if layout == .bgr {
+                return UIColor(red: c2, green: c1, blue: c0, alpha: 1.0)
+            }
+            return UIColor(red: c0, green: c1, blue: c2, alpha: 1.0)
+        case 4:
+            let c0 = CGFloat((data[4*index])) / 255
+            let c1 = CGFloat((data[4*index+1])) / 255
+            let c2 = CGFloat((data[4*index+2])) / 255
+            let c3 = CGFloat((data[4*index+3])) / 255
+            var r: CGFloat = 0
+            var g: CGFloat = 0
+            var b: CGFloat = 0
+            var a: CGFloat = 0
+            switch layout {
+            case .abgr:
+                a = c0; b = c1; g = c2; r = c3
+            case .argb:
+                a = c0; r = c1; g = c2; b = c3
+            case .bgra:
+                b = c0; g = c1; r = c2; a = c3
+            case .rgba:
+                r = c0; g = c1; b = c2; a = c3
+            default:
+                break
+            }
+            if isAlphaPremultiplied && a > 0 {
+                r = r / a
+                g = g / a
+                b = b / a
+            }
+            return UIColor(red: r, green: g, blue: b, alpha: a)
+        default:
+            throw ImageError.BadChannelCount
+        }
+    }
+}

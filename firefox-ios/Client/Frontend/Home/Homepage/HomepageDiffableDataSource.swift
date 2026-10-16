@@ -1,0 +1,265 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import UIKit
+
+typealias HomepageSection = HomepageDiffableDataSource.HomeSection
+typealias HomepageItem = HomepageDiffableDataSource.HomeItem
+
+/// Holds the data source configuration for the new homepage as part of the rebuild project
+final class HomepageDiffableDataSource: UICollectionViewDiffableDataSource<HomepageSection, HomepageItem> {
+    typealias TextColor = UIColor
+    typealias NumberOfTilesPerRow = Int
+    typealias ShouldShowSectionHeader = Bool
+    typealias ShowiPadSetup = Bool
+
+    private struct TopSitesSnapshotData {
+        let items: [HomeItem]
+        let numberOfTilesPerRow: NumberOfTilesPerRow
+        let shouldShowSectionHeader: ShouldShowSectionHeader
+    }
+
+    enum HomeSection: Hashable {
+        case privacyNotice
+        case header
+        case messageCard
+        case topSites(TextColor?, NumberOfTilesPerRow, ShouldShowSectionHeader)
+        case notificationCard
+        case searchBar
+        case jumpBackIn(TextColor?, JumpBackInSectionLayoutConfiguration)
+        case trackerBlockerModule
+        case bookmarks(TextColor?)
+        case pocket(TextColor?)
+        case spacer
+
+        var canHandleLongPress: Bool {
+            switch self {
+            case .topSites, .jumpBackIn, .bookmarks, .pocket:
+                return true
+            default:
+                return false
+            }
+        }
+    }
+
+    enum HomeItem: Hashable, Sendable {
+        case header(HeaderState, TextColor?, ShowiPadSetup)
+        case privacyNotice
+        case notificationCard
+        case messageCard(MessageCardConfiguration)
+        case topSite(TopSiteConfiguration, TextColor?)
+        case addShortcutTile(TextColor?)
+        case topSiteEmpty
+        case searchBar
+        case jumpBackIn(JumpBackInTabConfiguration)
+        case jumpBackInSyncedTab(JumpBackInSyncedTabConfiguration)
+        case trackerBlockerModule(Int)
+        case bookmark(BookmarkConfiguration)
+        /// FXIOS-15423: Include the selected category in the item's identity so category transitions are treated as
+        /// a presentation-context change. Without the category context, diffable treats the same story in
+        /// a filtered feed and in the full "All" feed as one continuous item, which causes it to preserve
+        /// that story's on-screen position as stories are inserted above it.
+        case merino(MerinoStoryConfiguration, String?)
+        case spacer
+
+        static var cellTypes: [ReusableCell.Type] {
+            return [
+                HomepageHeaderCell.self,
+                PrivacyNoticeCell.self,
+                NotificationCardCell.self,
+                HomepageMessageCardCell.self,
+                TopSiteCell.self,
+                EmptyTopSiteCell.self,
+                SearchBarCell.self,
+                JumpBackInCell.self,
+                SyncedTabCell.self,
+                TrackerBlockerModuleCell.self,
+                BookmarksCell.self,
+                StoryCell.self,
+                HomepageSpacerCell.self
+            ]
+        }
+
+        var telemetryItemType: HomepageTelemetry.ItemType? {
+            switch self {
+            case .header(let headerState, _, _):
+                return headerState.showQuickAnswersButton ? .quickAnswersEntryPoint : nil
+            case .topSite:
+                return .topSite
+            case .jumpBackIn:
+                return .jumpBackInTab
+            case .jumpBackInSyncedTab:
+                return .jumpBackInSyncedTab
+            case .bookmark:
+                return .bookmark
+            case .merino:
+                return .story
+            default:
+                return nil
+            }
+        }
+
+        var canHandleLongPress: Bool {
+            switch self {
+            case .addShortcutTile:
+                return false
+            default:
+                return true
+            }
+        }
+    }
+
+    func updateSnapshot(
+        state: HomepageState,
+        selectedNewsfeedCategoryID: String? = nil,
+        jumpBackInDisplayConfig: JumpBackInSectionLayoutConfiguration,
+        showiPadSetup: ShowiPadSetup = false,
+        animatingDifferences: Bool = true,
+        completion: (() -> Void)? = nil
+    ) {
+        var snapshot = NSDiffableDataSourceSnapshot<HomeSection, HomeItem>()
+
+        let textColor = state.wallpaperState.wallpaperConfiguration.textColor
+        let headerItem = HomeItem.header(state.headerState,
+                                         state.wallpaperState.wallpaperConfiguration.logoTextColor,
+                                         showiPadSetup)
+
+        snapshot.appendSections([.header])
+        snapshot.appendItems([headerItem], toSection: .header)
+
+        if state.privacyNoticeState.shouldShowPrivacyNotice {
+            snapshot.appendSections([.privacyNotice])
+            snapshot.appendItems([.privacyNotice], toSection: .privacyNotice)
+        }
+
+        if let configuration = state.messageState.messageCardConfiguration {
+            snapshot.appendSections([.messageCard])
+            snapshot.appendItems([.messageCard(configuration)], toSection: .messageCard)
+        }
+
+        if state.searchBarState.shouldShowSearchBar {
+            snapshot.appendSections([.searchBar])
+            snapshot.appendItems([.searchBar], toSection: .searchBar)
+        }
+
+        if let topSitesSnapshotData = getTopSites(with: state.topSitesState, and: textColor) {
+            let topSitesSection = HomeSection.topSites(
+                textColor,
+                topSitesSnapshotData.numberOfTilesPerRow,
+                topSitesSnapshotData.shouldShowSectionHeader
+            )
+            snapshot.appendSections([topSitesSection])
+            snapshot.appendItems(topSitesSnapshotData.items, toSection: topSitesSection)
+        }
+
+        // While the onboarding notification card is shown we hide the tracker blocker
+        if state.notificationCardState.shouldShowCard {
+            snapshot.appendSections([.notificationCard])
+            snapshot.appendItems([.notificationCard], toSection: .notificationCard)
+        } else if state.trackerBlockerModuleState.shouldShowSection {
+            snapshot.appendSections([.trackerBlockerModule])
+            snapshot.appendItems(
+                [.trackerBlockerModule(state.trackerBlockerModuleState.blockedTrackerCount)],
+                toSection: .trackerBlockerModule
+            )
+        }
+
+        if let (tabs, configuration) = getJumpBackInTabs(with: state.jumpBackInState, and: jumpBackInDisplayConfig) {
+            snapshot.appendSections([.jumpBackIn(textColor, configuration)])
+            snapshot.appendItems(tabs, toSection: .jumpBackIn(textColor, configuration))
+        }
+
+        if let bookmarks = getBookmarks(with: state.bookmarkState) {
+            snapshot.appendSections([.bookmarks(textColor)])
+            snapshot.appendItems(bookmarks, toSection: .bookmarks(textColor))
+        }
+
+        snapshot.appendSections([.spacer])
+        snapshot.appendItems([.spacer], toSection: .spacer)
+
+        if let stories = getMerinoStories(with: state.merinoState, selectedNewsfeedCategoryID: selectedNewsfeedCategoryID) {
+            let pocketSection = HomeSection.pocket(textColor)
+            snapshot.appendSections([pocketSection])
+            snapshot.appendItems(stories, toSection: pocketSection)
+        }
+
+        apply(snapshot, animatingDifferences: animatingDifferences, completion: completion)
+    }
+
+    /// Gets the proper amount of top sites based on layout configuration
+    /// which is determined by the number of rows and number of tiles per row
+    /// - Parameters:
+    ///   - topSiteState: state object for top site section
+    ///   - textColor: text color from wallpaper configuration
+    private func getTopSites(
+        with topSitesState: TopSitesSectionState,
+        and textColor: TextColor?
+    ) -> TopSitesSnapshotData? {
+        guard topSitesState.shouldShowSection else { return nil }
+        let maxVisibleItemCount = topSitesState.numberOfRows * topSitesState.numberOfTilesPerRow
+        guard maxVisibleItemCount > 0 else { return nil }
+
+        let topSitesItems: [HomeItem] = topSitesState.topSitesData.prefix(
+            maxVisibleItemCount
+        ).compactMap {
+            .topSite($0, textColor)
+        }
+        let allItems = topSitesState.shouldShowAddShortcutTile
+            ? topSitesItems + [.addShortcutTile(textColor)]
+            : topSitesItems
+        let visibleItems = Array(allItems.prefix(maxVisibleItemCount))
+        guard !visibleItems.isEmpty else { return nil }
+
+        return TopSitesSnapshotData(
+            items: visibleItems,
+            numberOfTilesPerRow: topSitesState.numberOfTilesPerRow,
+            shouldShowSectionHeader: topSitesState.shouldShowSectionHeader
+        )
+    }
+
+    private func getJumpBackInTabs(
+        with state: JumpBackInSectionState,
+        and config: JumpBackInSectionLayoutConfiguration
+    ) -> ([HomepageDiffableDataSource.HomeItem], JumpBackInSectionLayoutConfiguration)? {
+        guard state.shouldShowSection else { return nil }
+        var updatedConfig = config
+        updatedConfig.hasSyncedTab = state.mostRecentSyncedTab != nil
+
+        var tabs: [HomeItem] = state.jumpBackInTabs
+            .prefix(updatedConfig.getMaxNumberOfLocalTabsLayout)
+            .compactMap { .jumpBackIn($0) }
+
+        // Determines if remote tab should appear first depending on device size
+        if let mostRecentSyncedTab = state.mostRecentSyncedTab {
+            if updatedConfig.layoutType == .compact {
+                tabs.append(.jumpBackInSyncedTab(mostRecentSyncedTab))
+            } else {
+                tabs.insert(.jumpBackInSyncedTab(mostRecentSyncedTab), at: 0)
+            }
+        }
+        guard !tabs.isEmpty else { return nil }
+        return (tabs, updatedConfig)
+    }
+
+    private func getBookmarks(
+        with state: BookmarksSectionState
+    ) -> [HomepageDiffableDataSource.HomeItem]? {
+        guard state.shouldShowSection, !state.bookmarks.isEmpty else { return nil }
+        return state.bookmarks.compactMap { .bookmark($0) }
+    }
+
+    private func getMerinoStories(
+        with merinoState: MerinoState,
+        selectedNewsfeedCategoryID: String?
+    ) -> [HomepageDiffableDataSource.HomeItem]? {
+        let stories: [HomeItem] = merinoState.visibleStories(selectedNewsfeedCategoryID: selectedNewsfeedCategoryID).map {
+            .merino($0, selectedNewsfeedCategoryID)
+        }
+        guard merinoState.shouldShowSection, !stories.isEmpty else { return nil }
+        return stories
+    }
+}
+
+class HomepageSpacerCell: UICollectionViewCell, ReusableCell { }

@@ -1,0 +1,30 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "Қолданба таңбашасы";
+
+/* (No Comment) */
+"New Private Tab" = "Жаңа жекелік беті";
+
+/* (No Comment) */
+"New Tab" = "Жаңа бет";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox сіздің камераңызды QR кодтарын сканерлеу немесе фотосуреттер мен видеоларды түсіру үшін пайдалана алады.";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "Сақталған парольдер мен төлем әдістеріне қол жеткізу үшін Firefox Face ID қажет етеді.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "Сіз ашатын веб-сайттар сізден орналасуыңызды сұрауы мүмкін.";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "Бұл арқылы видеоларды түсіріп, жүктеуге болады.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "Бұл көмегімен фотоларды сақтауға болады.";
+
+/* Privacy - Speech Recognition Usage Description */
+"NSSpeechRecognitionUsageDescription" = "Бұл Firefox-қа аудиоңызды транскрипциялауға мүмкіндік береді.";
+
+/* (No Comment) */
+"Scan QR Code" = "QR кодын сканерлеу";
+

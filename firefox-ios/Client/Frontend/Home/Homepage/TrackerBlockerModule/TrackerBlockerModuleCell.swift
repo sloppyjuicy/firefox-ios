@@ -1,0 +1,138 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import ComponentLibrary
+import UIKit
+
+final class TrackerBlockerModuleCell: UICollectionViewCell, ReusableCell, ThemeApplicable {
+    private struct UX {
+        static let cornerRadius: CGFloat = 8
+        static let horizontalPadding: CGFloat = 16
+        static let verticalPadding: CGFloat = 8
+        static let spacing: CGFloat = 8
+        static let iconSize: CGFloat = 20
+    }
+
+    // MARK: - UI
+
+    private lazy var containerPillView: CapsuleView = .build { view in
+        view.clipsToBounds = true
+        view.isAccessibilityElement = true
+        view.accessibilityIdentifier = AccessibilityIdentifiers.FirefoxHomepage.TrackerBlockerModule.containerPill
+    }
+
+    private var onTap: (() -> Void)?
+
+    private lazy var shieldIcon: UIImageView = .build { icon in
+        icon.contentMode = .scaleAspectFit
+        icon.adjustsImageSizeForAccessibilityContentSizeCategory = true
+        icon.image = UIImage(named: StandardImageIdentifiers.Large.shieldCheckmark)?
+            .withRenderingMode(.alwaysTemplate)
+        icon.accessibilityIdentifier = AccessibilityIdentifiers.FirefoxHomepage.TrackerBlockerModule.shieldIcon
+    }
+
+    /// Resolved on each use so they keep up with Dynamic Type.
+    private static var titleFont: UIFont { FXFontStyles.Regular.footnote.scaledFont() }
+    private static var boldTitleFont: UIFont { FXFontStyles.Bold.footnote.scaledFont() }
+
+    private lazy var titleLabel: UILabel = .build { label in
+        label.font = TrackerBlockerModuleCell.boldTitleFont
+        label.numberOfLines = 0
+        label.adjustsFontForContentSizeCategory = true
+        label.accessibilityIdentifier = AccessibilityIdentifiers.FirefoxHomepage.TrackerBlockerModule.titleLabel
+        label.text = .FirefoxHomepage.TrackerBlocker.NoTrackersBlocked
+    }
+
+    // MARK: - Init
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupLayout()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupLayout() {
+        containerPillView.addSubview(shieldIcon)
+        containerPillView.addSubview(titleLabel)
+        contentView.addSubview(containerPillView)
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        containerPillView.addGestureRecognizer(tapGesture)
+
+        NSLayoutConstraint.activate([
+            shieldIcon.widthAnchor.constraint(equalToConstant: UX.iconSize),
+            shieldIcon.heightAnchor.constraint(equalToConstant: UX.iconSize),
+
+            shieldIcon.leadingAnchor.constraint(equalTo: containerPillView.leadingAnchor, constant: UX.horizontalPadding),
+            shieldIcon.centerYAnchor.constraint(equalTo: containerPillView.centerYAnchor),
+
+            titleLabel.leadingAnchor.constraint(equalTo: shieldIcon.trailingAnchor, constant: UX.spacing),
+            titleLabel.centerYAnchor.constraint(equalTo: shieldIcon.centerYAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: containerPillView.trailingAnchor, constant: -UX.horizontalPadding),
+            titleLabel.topAnchor.constraint(equalTo: containerPillView.topAnchor, constant: UX.verticalPadding),
+            titleLabel.bottomAnchor.constraint(equalTo: containerPillView.bottomAnchor, constant: -UX.verticalPadding),
+
+            containerPillView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            containerPillView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+
+            containerPillView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor,
+                                                       constant: UX.horizontalPadding),
+            containerPillView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor,
+                                                        constant: -UX.horizontalPadding),
+            containerPillView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor),
+            containerPillView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+        ])
+    }
+
+    // MARK: - Configuration
+
+    func configure(count: Int, theme: Theme, onTap: (() -> Void)?) {
+        self.onTap = onTap
+        containerPillView.accessibilityTraits = onTap != nil ? .button : .staticText
+        updateTrackerNumber(to: count)
+        applyTheme(theme: theme)
+    }
+
+    @objc
+    private func handleTap() {
+        onTap?()
+    }
+
+    // MARK: - ThemeApplicable
+
+    func applyTheme(theme: Theme) {
+        containerPillView.backgroundColor = theme.colors.layer2
+        titleLabel.textColor = theme.colors.textPrimary
+        shieldIcon.tintColor = theme.colors.iconAccentViolet
+    }
+
+    // MARK: - Update Tracker number
+
+    /// The fonts are resolved from `FXFontStyles` rather than read back from `titleLabel.font`, which reports the
+    /// attributed string's first font once it has been set, and so would carry the bold count's font into the
+    /// surrounding copy when a reused cell is configured again.
+    private func updateTrackerNumber(to count: Int) {
+        guard count > 0 else {
+            titleLabel.attributedText = nil
+            titleLabel.font = Self.boldTitleFont
+            titleLabel.text = .FirefoxHomepage.TrackerBlocker.NoTrackersBlocked
+            containerPillView.accessibilityLabel = .FirefoxHomepage.TrackerBlocker.NoTrackersBlocked
+            return
+        }
+
+        let numberText = count.formatted(.number.notation(.compactName))
+        // TODO: FXIOS-16382 - use correct string post v155
+        let fullText = String(format: .FirefoxHomepage.TrackerBlocker.TrackersBlockedTemp, numberText)
+        titleLabel.attributedText = fullText.attributedText(
+            boldString: numberText,
+            font: Self.titleFont,
+            boldFont: Self.boldTitleFont
+        )
+        containerPillView.accessibilityLabel = fullText
+    }
+}

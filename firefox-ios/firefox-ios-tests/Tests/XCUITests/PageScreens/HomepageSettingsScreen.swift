@@ -1,0 +1,101 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import XCTest
+
+@MainActor
+final class HomepageSettingsScreen {
+    private let app: XCUIApplication
+    private let sel: HomepageSettingsSelectorSet
+
+    init(app: XCUIApplication, selectors: HomepageSettingsSelectorSet = HomepageSettingsSelectors()) {
+        self.app = app
+        self.sel = selectors
+    }
+
+    // helper to centralize the duplicated lookup
+    private var bookmarkSwitch: XCUIElement {
+        let settingTable = sel.HOMEPAGE_SETTINGS_TABLE.element(in: app)
+        let toggle = sel.BOOKMARK_TOGGLE.value
+        return settingTable.cells.switches[toggle]
+    }
+
+    private var jumpBackInSwitch: XCUIElement {
+        let settingTable = sel.HOMEPAGE_SETTINGS_TABLE.element(in: app)
+        let toggle = sel.JUMP_BACK_IN_TOGGLE.value
+        return settingTable.cells.switches[toggle]
+    }
+
+    private var customURLTextField: XCUIElement { sel.CUSTOM_URL_TEXT_FIELD.element(in: app) }
+
+    private var shortcutsSettingsCell: XCUIElement { sel.SHORTCUTS_SETTINGS_CELL.element(in: app) }
+
+    func typeCustomHomepageURL(_ url: String) {
+        customURLTextField.tapAndTypeText(url)
+        XCTAssertEqual(customURLTextField.value as? String,
+                       url,
+                       "The webpage typed does not match with the one saved")
+    }
+
+    func assertCustomHomepageURLContains(_ url: String) {
+        BaseTestCase().mozWaitForValueContains(customURLTextField, value: url)
+    }
+
+    func assertBookmarkToggleExists(timeout: TimeInterval = TIMEOUT) {
+        BaseTestCase().mozWaitForElementToExist(bookmarkSwitch)
+    }
+
+    func assertJumpBackInToggleExists(timeout: TimeInterval = TIMEOUT) {
+        BaseTestCase().mozWaitForElementToExist(jumpBackInSwitch)
+    }
+
+    func disableBookmarkToggle() {
+        let switchElement = bookmarkSwitch
+        if switchElement.value as? String == "1" {
+            switchElement.waitAndTap()
+        }
+    }
+
+    func enableBookmarkToggle() {
+        let switchElement = bookmarkSwitch
+        if switchElement.value as? String == "0" {
+            switchElement.waitAndTap()
+        }
+    }
+
+    func disableJumpBackInToggle() {
+        let switchElement = jumpBackInSwitch
+        if switchElement.value as? String == "1" {
+            switchElement.waitAndTap()
+        }
+    }
+
+    func enableJumpBackInToggle() {
+        let switchElement = jumpBackInSwitch
+        if switchElement.value as? String == "0" {
+            switchElement.waitAndTap()
+        }
+    }
+
+    func assertBookmarkToggleIsEnabled() {
+        let switchElement = bookmarkSwitch
+        XCTAssertEqual(switchElement.value as? String, "1", "Bookmark toggle is not enabled")
+    }
+
+    func assertBookmarkToggleIsDisabled() {
+        let switchElement = bookmarkSwitch
+        XCTAssertEqual(switchElement.value as? String, "0", "Bookmark toggle is not disabled")
+    }
+
+    func assertJumpBackInToggleIsDisabled() {
+        let switchElement = jumpBackInSwitch
+        XCTAssertEqual(switchElement.value as? String, "0", "Jump Back In toggle is not disabled")
+    }
+
+    func assertShortcutsSettingIsOn() {
+        BaseTestCase().mozWaitForElementToExist(
+            shortcutsSettingsCell.staticTexts[sel.SHORTCUTS_STATUS_ON.value]
+        )
+    }
+}

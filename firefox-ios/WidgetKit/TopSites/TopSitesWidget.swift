@@ -1,0 +1,121 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import SwiftUI
+import WidgetKit
+import Combine
+import Common
+
+struct TopSitesWidget: Widget {
+    private let kind = "Top Sites"
+
+     var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TopSitesProvider()) { entry in
+            TopSitesView(entry: entry)
+                .widgetTheme()
+        }
+        .supportedFamilies([.systemMedium])
+        .configurationDisplayName(String.TopSitesGalleryTitleV2)
+        .description(String.TopSitesGalleryDescription)
+        .contentMarginsDisabled()
+    }
+}
+
+struct TopSitesView: View {
+    private struct UX {
+        static let itemCornerRadius: CGFloat = 5.0
+        static let iconScale: CGFloat = 1.0
+        static let minimumRowSpacing: CGFloat = 12.0
+    }
+
+    let entry: TopSitesEntry
+
+    @Environment(\.theme) private var theme
+
+    var body: some View {
+        VStack {
+            // Make a grid with 4 columns
+            GeometryReader { provider in
+                // There are 2 rows and the height of them is half of the widget height
+                // So they occupy the whole available space
+                let rowSize = provider.size.height / 2
+                let itemSize = calculateIconSize(provider: provider, rowSize: rowSize)
+                LazyVGrid(columns: (0..<4).map { _ in GridItem(.flexible(minimum: 0, maximum: .infinity)) },
+                          spacing: 0,
+                          content: {
+                    ForEach(0..<8) { index in
+                        if let site = entry.sites[safe: index] {
+                            topSitesItem(site,
+                                         iconSize: itemSize,
+                                         emptyColor: Color(uiColor: theme.colors.layer3).opacity(0.3))
+                                .frame(height: rowSize)
+                        } else {
+                            Rectangle()
+                                .fill(Color.clear)
+                                .frame(height: rowSize)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: UX.itemCornerRadius)
+                                        .fill(Color(uiColor: theme.colors.layer3))
+                                        .frame(width: itemSize, height: itemSize)
+                                }
+                        }
+                    }
+                })
+            }
+            .padding(.all)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetBackground(Color(uiColor: theme.colors.layer1))
+    }
+
+    @ViewBuilder
+    private func topSitesItem(_ site: WidgetTopSite, iconSize: CGFloat, emptyColor: Color) -> some View {
+        let destination = linkToContainingApp("?url=\(site.url)", query: "widget-medium-topsites-open-url")
+        let rectangleShape = Rectangle().fill(emptyColor)
+        Group {
+            if let image = entry.favicons[site.faviconImageCacheKey] {
+                if #available(iOSApplicationExtension 18.0, *) {
+                    image
+                        .resizable()
+                        .widgetAccentedRenderingMode(.accentedDesaturated)
+                        .scaledToFit()
+                } else {
+                    image
+                        .resizable()
+                        .scaledToFit()
+                }
+            } else {
+                rectangleShape
+            }
+        }
+        .frame(width: iconSize, height: iconSize)
+        /// Fixes https://mozilla-hub.atlassian.net/browse/FXIOS-15052
+        /// iOS bug: `widgetAccentedRenderingMode` inside a `Link` breaks the link destination,
+        /// causing taps to open the app without navigating to the URL.
+        /// Workaround: overlay a `Link` as the tap target instead. See
+        /// https://developer.apple.com/forums/thread/795408
+        .overlay {
+            Link(destination: destination) { rectangleShape }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: UX.itemCornerRadius))
+    }
+
+    private func calculateIconSize(provider: GeometryProxy, rowSize: CGFloat) -> CGFloat {
+        let dynamicIconScale = UIFontMetrics.default.scaledValue(for: UX.iconScale)
+        // since the widget has 2 rows and the height of each row is half of the widget size.
+        // it is set that the icon height is 4 times smaller then widget height.
+        // That is the standard size for the icon and can be adjust modifyng UX.iconScale.
+        // it adapts also to dynamic font scale by scaling the UX.iconScale value
+        let iconHeight = (provider.size.height / 4) * dynamicIconScale
+        if iconHeight > (rowSize - UX.minimumRowSpacing) {
+            return rowSize - UX.minimumRowSpacing
+        }
+        return iconHeight
+    }
+
+    private func linkToContainingApp(_ urlSuffix: String = "", query: String) -> URL {
+        let urlString = "\(scheme)://\(query)\(urlSuffix)"
+        return URL(string: urlString)!
+    }
+}

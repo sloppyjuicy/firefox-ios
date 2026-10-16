@@ -1,0 +1,106 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+
+/// This struct defines all the non-standard image identifiers of icons and images used in the app.
+/// Please see `StandardImageIdentifiers` for the standard ones.
+/// When adding new identifiers, please respect alphabetical order.
+/// Sing the song if you must.
+struct ImageIdentifiers {
+    public static let badgeMask = "badge-mask"
+    public static let firefoxFavicon = "faviconFox"
+    public static let foxConfirmation = "foxConfirmation"
+    public static let foxDefaultBrowser = "foxDefaultBrowser"
+    public static let foxWithStars = "foxWithStars"
+    public static let homeHeaderLogoBall = "fxHomeHeaderLogoBall"
+    public static let homeHeaderLogoText = "fxHomeHeaderLogoText"
+    public static let homepagePocket = "homepage-pocket"
+    public static let logo = "splash"
+    public static let logoAmex = "logo_amex"
+    public static let logoDiners = "logo_diners"
+    public static let logoDiscover = "logo_discover"
+    public static let logoJcb = "logo_jcb"
+    public static let logoMastercard = "logo_mastercard"
+    public static let logoMir = "logo_mir"
+    public static let logoUnionpay = "logo_unionpay"
+    public static let logoVisa = "logo_visa"
+    public static let menuBadge = "menuBadge"
+    public static let menuWarningMask = "warning-mask"
+    public static let noBookmarksInFolder = "noBookmarksInFolder"
+    public static let noBookmarksInRoot = "noBookmarksInRoot"
+    public static let qrCodeScanBorder = "qrcode-scanBorder"
+    public static let qrCodeScanLine = "qrcode-scanLine"
+    public static let signinSync = "signin-sync"
+    public static let syncOpenTab = "sync_open_tab"
+    public static let radioButtonNotSelected = "radioButtonNotSelected"
+    public static let radioButtonSelected = "radioButtonSelected"
+    public static let radioButtonNotSelectedNova = "radioButtonNotSelectedNova"
+    public static let radioButtonSelectedNova = "radioButtonSelectedNova"
+
+    public struct Appearance {
+        public static let automaticBrowserThemeGradient = "automaticBrowserThemeGradient"
+        public static let lightBrowserThemeGradient = "lightBrowserThemeGradient"
+        public static let darkBrowserThemeGradient = "darkBrowserThemeGradient"
+    }
+
+    public struct AddressBar {
+        public static let addressBarIllustrationBottom = "addressBarIllustrationBottom"
+        public static let addressBarIllustrationTop = "addressBarIllustrationTop"
+    }
+
+    public struct Onboarding {
+        public struct HeaderImages {
+            public static let welcomev106 = "onboardingWelcome"
+            public static let syncv106 = "onboardingSync"
+            public static let notification = "onboardingNotification"
+            public static let searchWidget = "onboardingSearchWidget"
+            public static let setDefaultSteps = "onboardingSetDefaultSteps"
+            public static let setToDock = "onboardingDock"
+            public static let theming = "onboardingThemeing"
+            public static let toolbar = "onboardingToolbar"
+            public static let customizeFirefox = "onboardingFoxyWindow"
+            public static let syncWithIcons = "onboardingSyncWithIcons"
+            public static let trackers = "onboardingTrackers"
+            public static let syncWithIconsJapan = "onboardingSyncWithIconsJapan"
+            public static let trackersJapan = "onboardingTrackersJapan"
+            public static let syncWithIconsBrandRefresh = "onboardingSyncWithIconsBrandRefresh"
+            public static let trackersBrandRefresh = "onboardingTrackersBrandRefresh"
+        }
+
+        public struct MultipleChoiceButtonImages {
+            public static let themeSystem = "onboardingThemeSystem"
+            public static let themeDark = "onboardingThemeDark"
+            public static let themeLight = "onboardingThemeLight"
+            public static let toolbarTop = "onboardingToolbarIconTop"
+            public static let toolbarBottom = "onboardingToolbarIconBottom"
+            public static let themeSystemJapan = "onboardingThemeSystemJapan"
+            public static let themeDarkJapan = "onboardingThemeDarkJapan"
+            public static let themeLightJapan = "onboardingThemeLightJapan"
+            public static let toolbarTopJapan = "onboardingToolbarIconTopJapan"
+            public static let toolbarBottomJapan = "onboardingToolbarIconBottomJapan"
+        }
+
+        public struct ContinuousOnboarding {
+            public static let notification = "kitOnboardingNotifications"
+            public static let notificationCard = "kitCircle"
+            public static let sync = "kitOnboardingSync"
+        }
+    }
+
+    public struct NativeErrorPage {
+        public static let noInternetConnection = "noInternetConnection"
+        public static let securityError = "securityError"
+    }
+
+    public struct TrackingProtection {
+        public static let protectionAlert = "protectionPanelAlert"
+        public static let protectionOff = "protectionPanelOff"
+        public static let protectionOn = "protectionPanelOn"
+    }
+
+    public struct Translations {
+        public static let translationActive = "translateActive"
+    }
+}

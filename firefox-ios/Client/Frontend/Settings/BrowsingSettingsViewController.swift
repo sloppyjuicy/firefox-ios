@@ -1,0 +1,129 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Shared
+
+/// Child settings pages browsing actions
+protocol BrowsingSettingsDelegate: AnyObject, SupportSettingsDelegate {
+    @MainActor
+    func pressedMailApp()
+
+    @MainActor
+    func pressedAutoPlay()
+}
+
+final class BrowsingSettingsViewController: SettingsTableViewController, FeatureFlaggable {
+    weak var parentCoordinator: BrowsingSettingsDelegate?
+
+    /// Keep the private theme override just for Settings, since this is also presented from the Site Menu.
+    private let _shouldUsePrivateOverride: Bool
+    override var shouldUsePrivateOverride: Bool { return _shouldUsePrivateOverride }
+    override var shouldBeInPrivateTheme: Bool { return false }
+
+    init(profile: Profile,
+         windowUUID: WindowUUID,
+         shouldUsePrivateOverride: Bool = true) {
+        self._shouldUsePrivateOverride = shouldUsePrivateOverride
+        super.init(style: .grouped, windowUUID: windowUUID)
+        self.profile = profile
+        self.title = .Settings.Browsing.Title
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.register(cellType: ThemedLearnMoreTableViewCell.self)
+    }
+
+    private func getDefaultBrowserSetting() -> [SettingSection] {
+        let footerTitle = NSAttributedString(
+            string: String.FirefoxHomepage.HomeTabBanner.EvergreenMessage.HomeTabBannerDescription)
+
+        return [SettingSection(footerTitle: footerTitle,
+                               children: [DefaultBrowserSetting(theme: currentTheme())])]
+    }
+
+    override func generateSettings() -> [SettingSection] {
+        var settings = [SettingSection]()
+
+        var linksSettings: [Setting] = [OpenWithSetting(settings: self, settingsDelegate: parentCoordinator)]
+        var contentSection = [Setting]()
+        if let profile {
+            let theme = currentTheme()
+            let offerToOpenCopiedLinksSettings = BoolSetting(
+                prefs: profile.prefs,
+                theme: theme,
+                prefKey: PrefsKeys.ShowClipboardBar,
+                defaultValue: false,
+                titleText: .SettingsOfferClipboardBarTitle,
+                statusText: String(format: .SettingsOfferClipboardBarStatus, AppName.shortName.rawValue)
+            )
+
+            let showLinksPreviewSettings = BoolSetting(
+                prefs: profile.prefs,
+                theme: theme,
+                prefKey: PrefsKeys.ContextMenuShowLinkPreviews,
+                defaultValue: true,
+                titleText: .SettingsShowLinkPreviewsTitle,
+                statusText: .SettingsShowLinkPreviewsStatus
+            )
+
+            linksSettings += [offerToOpenCopiedLinksSettings,
+                              showLinksPreviewSettings]
+
+            let blockOpeningExternalAppsSettings = BoolSetting(
+                prefs: profile.prefs,
+                theme: theme,
+                prefKey: PrefsKeys.BlockOpeningExternalApps,
+                defaultValue: false,
+                titleText: .SettingsBlockOpeningExternalAppsTitle
+            )
+
+            let autoplaySetting = AutoplaySetting(theme: theme,
+                                                  prefs: profile.prefs,
+                                                  settingsDelegate: parentCoordinator)
+
+            contentSection.append(autoplaySetting)
+            if featureFlagsProvider.isEnabled(.adBlocker) {
+                contentSection.append(AdBlockerSetting(
+                    prefs: profile.prefs,
+                    supportDelegate: parentCoordinator,
+                    settingDidChange: { isEnabled in
+                        if isEnabled {
+                            Task {
+                                await ContentBlocker.shared.reloadAdBlockerList()
+                                ContentBlocker.shared.prefsChanged()
+                            }
+                        } else {
+                            ContentBlocker.shared.prefsChanged()
+                        }
+                    }
+                ))
+            }
+            if featureFlagsProvider.isEnabled(.backgroundAudio) {
+                contentSection.append(BackgroundAudioSetting(prefs: profile.prefs))
+            }
+            contentSection += [
+                BlockPopupSetting(prefs: profile.prefs),
+                NoImageModeSetting(profile: profile),
+                blockOpeningExternalAppsSettings
+            ]
+        }
+
+        let contentSectionTitle = featureFlagsProvider.isEnabled(.adBlocker)
+            ? String.Settings.Browsing.Content
+            : String.Settings.Browsing.Media
+
+        settings += [SettingSection(title: NSAttributedString(string: .Settings.Browsing.Links),
+                                    children: linksSettings),
+                     SettingSection(title: NSAttributedString(string: contentSectionTitle),
+                                    children: contentSection)]
+
+        return settings
+    }
+}

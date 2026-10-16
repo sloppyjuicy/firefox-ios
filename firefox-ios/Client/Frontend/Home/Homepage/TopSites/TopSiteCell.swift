@@ -1,0 +1,316 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Common
+import Foundation
+import Shared
+import SiteImageView
+import UIKit
+
+/// The TopSite cell that appears for the homepage rebuild project.
+class TopSiteCell: UICollectionViewCell, ReusableCell {
+    // MARK: - Variables
+
+    private var homeTopSite: TopSiteConfiguration?
+
+    struct UX {
+        static let imageBackgroundSize = CGSize(width: 60, height: 60)
+        static let addShortcutIconSize = CGSize(width: 24, height: 24)
+        static let pinIconSize = CGSize(width: 8, height: 8)
+        static let textSafeSpace: CGFloat = 6
+        static let faviconCornerRadius: CGFloat = 16
+        static let faviconTransparentBackgroundInset: CGFloat = 8
+        static let transparencyThreshold: CGFloat = 15
+    }
+
+    private var rootContainer: UIView = .build { view in
+        view.backgroundColor = .clear
+        view.layer.cornerRadius = UX.faviconCornerRadius
+    }
+
+    private lazy var imageView: FaviconImageView = {
+        let imageView = FaviconImageView { [weak self] in
+            self?.configureFaviconWithTransparency()
+        }
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
+    private lazy var addShortcutImageView: UIImageView = .build { imageView in
+        imageView.image = UIImage.templateImageNamed(StandardImageIdentifiers.Large.plus)
+        imageView.isHidden = true
+    }
+
+    private lazy var descriptionWrapper: UIStackView = .build { stackView in
+        stackView.backgroundColor = .clear
+        stackView.axis = .vertical
+        stackView.alignment = .center
+        stackView.distribution = .fillProportionally
+    }
+
+    private lazy var pinImageView: UIImageView = .build { imageView in
+        imageView.image = UIImage(named: StandardImageIdentifiers.ExtraSmall.pin)?.withRenderingMode(.alwaysTemplate)
+        imageView.isHidden = true
+    }
+
+    private lazy var titleLabel: UILabel = .build { titleLabel in
+        titleLabel.textAlignment = .center
+        titleLabel.font = FXFontStyles.Bold.caption1.scaledFont()
+        titleLabel.adjustsFontForContentSizeCategory = true
+        titleLabel.preferredMaxLayoutWidth = UX.imageBackgroundSize.width + HomepageUX.shadowRadius
+        titleLabel.backgroundColor = .clear
+        titleLabel.setContentHuggingPriority(UILayoutPriority(1000), for: .vertical)
+    }
+
+    private lazy var sponsoredLabel: UILabel = .build { sponsoredLabel in
+        sponsoredLabel.textAlignment = .center
+        sponsoredLabel.font = FXFontStyles.Regular.caption1.scaledFont()
+        sponsoredLabel.adjustsFontForContentSizeCategory = true
+        sponsoredLabel.preferredMaxLayoutWidth = UX.imageBackgroundSize.width + HomepageUX.shadowRadius
+    }
+
+    private lazy var selectedOverlay: UIView = .build { selectedOverlay in
+        selectedOverlay.isHidden = true
+        selectedOverlay.layer.cornerRadius = HomepageUX.generalCornerRadius
+    }
+
+    override var isSelected: Bool {
+        didSet {
+            selectedOverlay.isHidden = !isSelected
+        }
+    }
+
+    override var isHighlighted: Bool {
+        didSet {
+            selectedOverlay.isHidden = !isHighlighted
+        }
+    }
+
+    private var textColor: UIColor?
+    private var imageViewConstraints: [NSLayoutConstraint] = []
+    private var theme: Theme?
+
+    // MARK: - Inits
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isAccessibilityElement = true
+        accessibilityIdentifier = AccessibilityIdentifiers.FirefoxHomepage.TopSites.itemCell
+
+        setupLayout()
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+
+        titleLabel.text = nil
+        sponsoredLabel.text = nil
+        pinImageView.isHidden = true
+        imageView.isHidden = true
+        addShortcutImageView.isHidden = true
+        imageViewConstraints.forEach { $0.constant = 0 }
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesEnded(touches, with: event)
+        selectedOverlay.isHidden = true
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        rootContainer.setNeedsLayout()
+        rootContainer.layoutIfNeeded()
+        rootContainer.layer.shadowPath = UIBezierPath(roundedRect: rootContainer.bounds,
+                                                      cornerRadius: UX.faviconCornerRadius).cgPath
+    }
+
+    // MARK: - Public methods
+
+    func configure(_ topSite: TopSiteConfiguration,
+                   position: Int,
+                   theme: Theme,
+                   textColor: UIColor?) {
+        self.theme = theme
+        homeTopSite = topSite
+        titleLabel.text = topSite.title
+        imageView.isHidden = false
+        addShortcutImageView.isHidden = true
+        selectedOverlay.isHidden = true
+        accessibilityLabel = topSite.accessibilityLabel
+        accessibilityTraits = .link
+
+        let siteURLString = topSite.site.url
+        var imageResource: SiteResource?
+
+        switch topSite.type {
+        case .sponsoredSite(let siteInfo):
+            if let url = URL(string: siteInfo.imageURL) {
+                imageResource = .remoteURL(url: url)
+            }
+        case .pinnedSite, .suggestedSite:
+            imageResource = topSite.site.faviconResource
+        default:
+            break
+        }
+
+        if imageResource == nil,
+           let siteURL = URL(string: siteURLString),
+           let domainNoTLD = siteURL.baseDomain?.split(separator: ".").first,
+           domainNoTLD == "google" {
+            // Exception for Google top sites, which all return blurry low quality favicons that on the home screen.
+            // Return our bundled G icon for all of the Google Suite.
+            // Parse example: "https://drive.google.com/drive/home" > "drive.google.com" > "google"
+            imageResource = GoogleTopSiteManager.Constants.faviconResource
+        }
+
+        let viewModel = FaviconImageViewModel(siteURLString: siteURLString,
+                                              siteResource: imageResource,
+                                              faviconCornerRadius: UX.faviconCornerRadius)
+        imageView.setFavicon(viewModel)
+        self.textColor = textColor
+
+        configurePinnedSite(topSite)
+        configureSponsoredSite(topSite)
+        configureFaviconWithTransparency()
+
+        applyTheme(theme: theme)
+    }
+
+    func configureAddShortcutTile(theme: Theme, textColor: UIColor?) {
+        self.theme = theme
+        self.textColor = textColor
+        homeTopSite = nil
+        titleLabel.text = .FirefoxHomepage.Shortcuts.AddShortcut.TileTitle
+        sponsoredLabel.text = nil
+        pinImageView.isHidden = true
+        imageView.isHidden = true
+        addShortcutImageView.isHidden = false
+        selectedOverlay.isHidden = true
+        accessibilityLabel = .FirefoxHomepage.Shortcuts.AddShortcut.TileTitle
+        accessibilityTraits = .button
+
+        applyTheme(theme: theme)
+    }
+
+    // MARK: - Setup Helper methods
+
+    private func setupLayout() {
+        descriptionWrapper.addArrangedSubview(titleLabel)
+        descriptionWrapper.addArrangedSubview(sponsoredLabel)
+
+        rootContainer.addSubview(imageView)
+        rootContainer.addSubview(addShortcutImageView)
+        rootContainer.addSubview(selectedOverlay)
+        rootContainer.addSubview(pinImageView)
+        contentView.addSubview(rootContainer)
+        contentView.addSubview(descriptionWrapper)
+
+        NSLayoutConstraint.activate([
+            rootContainer.topAnchor.constraint(equalTo: contentView.topAnchor),
+            rootContainer.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            rootContainer.widthAnchor.constraint(equalToConstant: UX.imageBackgroundSize.width),
+            rootContainer.heightAnchor.constraint(equalToConstant: UX.imageBackgroundSize.height),
+
+            descriptionWrapper.topAnchor.constraint(equalTo: rootContainer.bottomAnchor, constant: UX.textSafeSpace),
+            descriptionWrapper.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            descriptionWrapper.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            descriptionWrapper.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+            selectedOverlay.topAnchor.constraint(equalTo: rootContainer.topAnchor),
+            selectedOverlay.leadingAnchor.constraint(equalTo: rootContainer.leadingAnchor),
+            selectedOverlay.trailingAnchor.constraint(equalTo: rootContainer.trailingAnchor),
+            selectedOverlay.bottomAnchor.constraint(equalTo: rootContainer.bottomAnchor),
+
+            addShortcutImageView.centerXAnchor.constraint(equalTo: rootContainer.centerXAnchor),
+            addShortcutImageView.centerYAnchor.constraint(equalTo: rootContainer.centerYAnchor),
+            addShortcutImageView.widthAnchor.constraint(equalToConstant: UX.addShortcutIconSize.width),
+            addShortcutImageView.heightAnchor.constraint(equalToConstant: UX.addShortcutIconSize.height),
+
+            pinImageView.topAnchor.constraint(equalTo: rootContainer.topAnchor),
+            pinImageView.leadingAnchor.constraint(equalTo: rootContainer.leadingAnchor),
+            pinImageView.widthAnchor.constraint(equalToConstant: UX.pinIconSize.width),
+            pinImageView.heightAnchor.constraint(equalToConstant: UX.pinIconSize.height),
+        ])
+
+        imageViewConstraints = [
+            imageView.topAnchor.constraint(equalTo: rootContainer.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: rootContainer.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: rootContainer.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: rootContainer.bottomAnchor),
+        ]
+        NSLayoutConstraint.activate(imageViewConstraints)
+    }
+
+    private func configurePinnedSite(_ topSite: TopSiteConfiguration) {
+        guard topSite.isPinned else { return }
+
+        pinImageView.isHidden = false
+    }
+
+    private func configureSponsoredSite(_ topSite: TopSiteConfiguration) {
+        guard topSite.isSponsored else { return }
+
+        sponsoredLabel.text = topSite.sponsoredText
+    }
+
+    // Add insets to favicons with transparent backgrounds
+    private func configureFaviconWithTransparency() {
+        guard let image = imageView.image,
+              let percentTransparent = image.percentTransparent,
+              percentTransparent > UX.transparencyThreshold else { return }
+
+        self.imageViewConstraints.forEach { constraint in
+            if constraint.firstAttribute == .trailing || constraint.firstAttribute == .bottom {
+                constraint.constant = -UX.faviconTransparentBackgroundInset
+            } else {
+                constraint.constant = UX.faviconTransparentBackgroundInset
+            }
+            // Inner corner radius = outer corner radius - inset
+            self.imageView.layer.cornerRadius = UX.faviconCornerRadius - UX.faviconTransparentBackgroundInset
+        }
+    }
+
+    private func setupShadow(theme: Theme) {
+        rootContainer.layer.cornerRadius = UX.faviconCornerRadius
+        rootContainer.layer.shadowPath = UIBezierPath(roundedRect: rootContainer.bounds,
+                                                      cornerRadius: UX.faviconCornerRadius).cgPath
+        rootContainer.layer.shadowColor = theme.colors.shadowStrong.cgColor
+        rootContainer.layer.shadowOpacity = HomepageUX.shadowOpacity
+        rootContainer.layer.shadowOffset = HomepageUX.shadowOffset
+        rootContainer.layer.shadowRadius = HomepageUX.shadowRadius
+    }
+}
+
+// MARK: ThemeApplicable
+extension TopSiteCell: ThemeApplicable {
+    func applyTheme(theme: Theme) {
+        titleLabel.textColor = textColor ?? theme.colors.textPrimary
+        sponsoredLabel.textColor = textColor ?? theme.colors.textPrimary
+        selectedOverlay.backgroundColor = theme.colors.layer5Hover.withAlphaComponent(0.25)
+        pinImageView.tintColor = theme.colors.iconSecondary
+        addShortcutImageView.tintColor = theme.colors.iconPrimary
+
+        adjustBlur(theme: theme)
+    }
+}
+
+// MARK: - Blurrable
+extension TopSiteCell: Blurrable {
+    func adjustBlur(theme: Theme) {
+        if shouldApplyWallpaperBlur {
+            rootContainer.layoutIfNeeded()
+            rootContainer.addBlurEffect(using: .systemThickMaterial)
+        } else {
+            // If blur is disabled set background color
+            rootContainer.removeVisualEffectView()
+            rootContainer.backgroundColor = theme.colors.layer5
+            setupShadow(theme: theme)
+        }
+    }
+}

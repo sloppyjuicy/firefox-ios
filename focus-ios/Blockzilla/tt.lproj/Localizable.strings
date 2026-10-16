@@ -1,0 +1,693 @@
+/* Button on About screen */
+"About.learnMoreButton" = "Күбрәк белү";
+
+/* Label on About screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"About.missionLabel" = "%@ Mozilla тарафыннан җитештерелә. Безнең миссиябез — сәламәт һәм ачык Интернетны үстерү.";
+
+/* Label on About screen */
+"About.privateBullet1" = "Турыдан-туры кушымта эчендә эзләү һәм \"пәрәвез\"дә гизү";
+
+/* Label on About screen */
+"About.privateBullet2" = "Күзәтүчеләрне блоклау (яисә, көйләүләрне үзгәртеп, аларны рөхсәт итү)";
+
+/* Label on About screen */
+"About.privateBullet3" = "Кукиларны, эзләү һәм гизү тарихларын чистарту";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "Аны хосусый браузер буларак кулланыгыз:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "Ярдәм";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Хосусыйлык аңлатмасы";
+
+/* Label for row in About screen */
+"About.rowRights" = "Хокукларыгыз";
+
+/* Label for row in About screen */
+"About.rowTerms" = "Куллану шартлары";
+
+/* Label on About screen */
+"About.safariBullet1" = "Хосусыйлыкны арттыру өчен күзәтүчеләрне блоклау";
+
+/* Label on About screen */
+"About.safariBullet2" = "Сәхифләрнең зурлыгын киметү өчен веб-шрифтларны блоклау";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Аны Safari киңәйтүе рәвешендә кулланыгыз:";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Title displayed in the settings screen that, when tapped, takes the user to a page with information about the product. Also displayed as a header for the About page. */
+"About.title" = "%@ турында";
+
+/* Label on About screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"About.topLabel" = "%@ идарәне Сезгә тапшыра";
+
+/* Title for action sheet item to open the current page in another application. %@ is the name of the application to open the current page. */
+"actionSheet.openIn" = "%@ белән ачу";
+
+/* Button to dismiss the 'Add Pass Failed' alert. */
+"AddPass.Error.Dismiss" = "Ярар";
+
+/* Message of the 'Add Pass Failed' alert. */
+"AddPass.Error.Message" = "Серсъзне Wallet-ка өстәгәндә хата килеп чыкты. Зинһар соңрак тырышып карагыз.";
+
+/* Title of the 'Add Pass Failed' alert. */
+"AddPass.Error.Title" = "Серсүзне өстәп булмады";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Prompt shown to ask the user to use Touch ID, Face ID, or passcode to continue browsing after returning to the app. */
+"Authentication.reason" = "%@ кушымтасына кире кайту өчен аутентификация";
+
+/* Label for button to add a custom URL */
+"Autocomplete.addCustomUrl" = "Үзгә URL өстәү";
+
+/* Label for error state when entering an invalid URL */
+"Autocomplete.addCustomUrlError" = "Кертелгән URL-ны тагын бер кат тикшерегез.";
+
+/* A label displaying an example URL */
+"Autocomplete.addCustomUrlExample" = "Мәсәлән: example.com";
+
+/* Label for the input to add a custom URL */
+"Autocomplete.addCustomUrlLabel" = "Өстәләчәк URL";
+
+/* Placeholder for the input field to add a custom URL */
+"Autocomplete.addCustomUrlPlaceholder" = "URL-ны ябыштырыгыз яки языгыз";
+
+/* Label for button to add a custom URL with the + prefix */
+"Autocomplete.addCustomUrlWithPlus" = "+ Үзгә URL өстәү";
+
+/* Label for toast alerting a custom URL has been added */
+"Autocomplete.customUrlAdded" = "Яңа үзгә URL өстәлде.";
+
+/* Description for enabling or disabling the default list. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Autocomplete.defaultDescriptoin" = "450-дән артык мәшһүр сайт өчен %@ программасының адрес юлында автотөгәлләүне кабызу.";
+
+/* label describing URL Autocomplete as disabled */
+"Autocomplete.disabled" = "Cүндерелгән";
+
+/* Label for toast alerting that the custom URL being added is a duplicate */
+"Autocomplete.duplicateUrl" = "URL бар инде";
+
+/* Label for button to add a custom URL */
+"Autocomplete.emptyState" = "Күрсәтү өчен үзгә URL-лар юк";
+
+/* label describing URL Autocomplete as enabled */
+"Autocomplete.enabled" = "Кабызылган";
+
+/* Label for button taking you to your custom Autocomplete URL list */
+"Autocomplete.manageSites" = "Сайтлар белән идарә итү";
+
+/* Label for enabling or disabling autocomplete */
+"Autocomplete.mySites" = "Минем сайтларым";
+
+/* Description for adding and managing custom autocomplete URLs. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Autocomplete.mySitesDesc" = "%@ программасында Сез еш кулланган адреслар өчен автотөгәлләүне кабызу.";
+
+/* Label for enabling or disabling top sites */
+"Autocomplete.topSites" = "Төп сайтлар";
+
+/* Title for the action button shown on the Splash Screen which gives the user the ability to log in with biometrics. */
+"BiometricAuthentication.UnlockButton.Title" = "Ачу";
+
+/* Create a new session after failing a biometric check */
+"BiometricPrompt.newSession" = "Яңа утырыш";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "Кире";
+
+/* Toast displayed after a URL has been copied to the clipboard */
+"browser.copyAddressToast" = "URL алмашу буферына күчереп алынды";
+
+/* Copy URL button in URL long press menu */
+"Browser.copyMenuLabel" = "Күчереп алу";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "Алга";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "Яңарту";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "Көйләүләр";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "Туктату";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "Адрес юлын сайлау";
+
+/* Label on button to complete edits */
+"Done" = "Әзер";
+
+/* Label on button to allow edits */
+"Edit" = "Үзгәртү";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "Янәдән тырышып карау";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Баш тарту";
+
+/* Dialog title used for opening an external app from Focus. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ExternalAppLink.messageTitle" = "%@ башка бер кушымтаны ачарга тели";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Ачу";
+
+/* Dialog title used for opening an external app from Focus. %1$@ is the app name (for example “Firefox Focus” or ”Firefox Klar”), %2$@ is the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "%1$@ %2$@ кушымтасын ачарга тели";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "Баш тарту";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "Эл. почта";
+
+/* Accessibility label for done button in Find in Page Toolbar. */
+"FindInPage.Done" = "Биттән эзләү тәмамланды";
+
+/* Accessibility label for next result button in Find in Page Toolbar. */
+"FindInPage.NextResult" = "Киләсе очракны табу";
+
+/* Accessibility label for previous result button in Find in Page Toolbar. */
+"FindInPage.PreviousResult" = "Үткән очракны табу";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.lastSlide.buttonLabel" = "Яхшы, аңладым!";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "Интернетта башкалар күзәтеп тора дип борчылмыйча гизегез.";
+
+/* Button label used to close a menu that displays as a popup. */
+"Menu.Close" = "Ябу";
+
+/* Error message shown when no internet connection is available */
+"Network.Offline.ErrorMessage" = "Интернетка бәйләнеш юк бугай.";
+
+/* Button text for retrying network connection */
+"Network.Offline.RetryButton" = "Янәдән тырышып карау";
+
+/* Text for a label that indicates the title of button from onboarding screen version 2. */
+"NewOnboarding.Button.Title.V2" = "Башлау";
+
+/* Text for a label that indicates the subtitle for the onboarding screen version 2. */
+"NewOnboarding.Subtitle.V2" = "Тиз. Хосусый. Бүлдерүләрсез.";
+
+/* Text for a label that indicates the title of button from onboarding screen */
+"Onboarding.Button.Title" = "Гизүне башлау";
+
+/* Text for a label that indicates the title of the bottom button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.BottomButtonTitle.V2" = "Калдырып тору";
+
+/* Text for a label that indicates the first subtitle for the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.FirstSubtitle.V2" = "Өстәмә хосусыйлык өчен кушымта ябылганда без тарихыгызны чистартабыз.";
+
+/* Text for a label that indicates the second subtitle for the default browser onboarding screen version 2. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.DefaultBrowser.SecondSubtitle.V2" = "Һәр сылтаманы ачканда да мәгълүматыгыз саклансын өчен %@ браузерын төп браузер итеп билгеләгез.";
+
+/* Text for a label that indicates the title for the default browser onboarding screen version 2. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.DefaultBrowser.Title.V2" = "%@ башка браузерлар кебек түгел";
+
+/* Text for a label that indicates the title of the top button from the default browser onboarding screen version 2. */
+"Onboarding.DefaultBrowser.TopButtonTitle.V2" = "Төп браузер итеп билгеләү";
+
+/* Text for a label that indicates the description of history section from onboarding screen. */
+"Onboarding.History.Description" = "Гизү тарихыгызны, серсүзләрегезне, кукиларны бетерегез һәм бер басу белән кирәкмәгән рекламаларны күзәтчелек итүдән тыегыз!";
+
+/* Text for a label that indicates the title of history section from onboarding screen. */
+"Onboarding.History.Title" = "Сезнең тарихыгыз Сезне эзәрлекләмәячәк";
+
+/* Text for a label that indicates the description of incognito section from onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.Incognito.Description" = "%@ — күзәтелүдән саклау һәм эчтәлекне блоклау мөмкинлекләре булган, хосусыйлыкны беренче урынга куючы браузер.";
+
+/* Text for a label that indicates the title of incognito section from onboarding screen. */
+"Onboarding.Incognito.Title" = "Инкогнито режимы гына түгел";
+
+/* Used as a text for the link in Onboarding.PrivacyNotice.Text. */
+"Onboarding.PrivacyNotice.LinkText" = "Хосусыйлык сәясәте";
+
+/* Text that describes Firefox's commitment to privacy. %@ is a link using Onboarding.PrivacyNotice.LinkText as text. */
+"Onboarding.PrivacyNotice.Text" = "Firefox өчен Сезнең хосусыйлыгыгыз мөһим. %@-да моның турында күбрәк белә аласыз.";
+
+/* Text for a label that indicates the description of protection section from onboarding screen. */
+"Onboarding.Protection.Description" = "Көйләүләрне үзгәртеп, никадәр мәгълүмат белән бүлешәчәгегез хакында үзезез карар бирегез.";
+
+/* Text for a label that indicates the title of protection section from onboarding screen. */
+"Onboarding.Protection.Title" = "Сезнең ихтыярыгыз буенча саклау";
+
+/* Text for a label that indicates the subtitle for onboarding screen. */
+"Onboarding.Subtitle" = "Сезнең хосусый гизү режимын киләсе дәрәҗәгә күтәрегез.";
+
+/* Label for the agreement button in the Terms of Use screen. */
+"Onboarding.TermsOfUse.ButtonText" = "Кабул итү һәм дәвам итү";
+
+/* Label for the agreement button in the Terms of Use screen. */
+"Onboarding.TermsOfUse.ButtonTextV2" = "Дәвам итү";
+
+/* Button label to dismiss the Privacy Policy and Terms of Use screen. */
+"Onboarding.TermsOfUse.Done.ButtonText" = "Әзер";
+
+/* Used as a text for the link in Onboarding.TermsOfUse.Text. */
+"Onboarding.TermsOfUse.LinkText" = "Firefox куллану шартлары";
+
+/* Subtitle for the Terms of Use screen during onboarding. */
+"Onboarding.TermsOfUse.Subtitle" = "Тиз. Хосусый. Бүлдерүләрсез.";
+
+/* Text that describes the agreement to the Firefox Terms of Use. %@ is a link using Onboarding.TermsOfUse.LinkText as text. */
+"Onboarding.TermsOfUse.Text" = "Дәвам итү %@ sшартларын кабул итү дигән сүз.";
+
+/* Title for the Terms of Use screen during onboarding. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.TermsOfUse.Title" = "%@ кушымтасына рәхим итегез";
+
+/* Text for a label that indicates the title for onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Onboarding.Title" = "Firefox %@ кушымтасына рәхим итегез!";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Safari-га басыгыз һәм эчтәлек тыючыларны сайлагыз";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Safari.instructionsEnable" = "%@-ны кабызу";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsExtentions" = "Башта Safari-ны, аннан соң Киңәйтүләрне сайлагыз";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Safari.instructionsNotEnabled" = "%@ кабызылмаган.";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "Көйләүләр кушымтасын ачу";
+
+/* Label for instructions to enable extensions in Safari, shown when enabling Safari Integration in Settings */
+"Safari.openInstruction" = "Җиһаз көйләүләрен ачу";
+
+/* Save button label */
+"Save" = "Саклау";
+
+/* Label for error state when entering an invalid search engine URL. %s is a search term in a URL. */
+"SearchEngine.addEngineError" = "Бу эшләмәде. Сорауны менә моның белән алыштырып карагыз: %s.";
+
+/* Label for disable option on search suggestions prompt */
+"SearchSuggestions.promptDisable" = "Юк";
+
+/* Label for enable option on search suggestions prompt */
+"SearchSuggestions.promptEnable" = "Әйе";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Label for search suggestions prompt message */
+"SearchSuggestions.promptMessage" = "Эзләү тәкъдимнәрен алу өчен, %@ Сез адрес юлында язганнарны эзләү системасына җибәрергә мәҗбүр.";
+
+/* Title for search suggestions prompt */
+"SearchSuggestions.promptTitle" = "Эзләү тәкъдимнәре күрсәтелсенме?";
+
+/* Title for the URL Autocomplete row */
+"Settings.autocompleteSection" = "URL-адресны автотөгәлләү";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "Башка эчтәлек күзәтүчеләрен блоклау кайбер видеоларны һәм веб-битләрне җимерергә мөмкин.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo2" = "Баш тарту";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes2" = "Эчтәлек күзәтүчеләрне блоклау";
+
+/* On the Settings screen, this is the subtitle text for a toggle which controls sending daily usage ping. */
+"Settings.DailyUsagePing.Message" = "Бу Mozilla-га актив кулланучылар санын бәяләргә ярдәм итә.";
+
+/* On the Settings screen, this is the title text for a toggle which controls automatically sending daily usage ping. */
+"Settings.DailyUsagePing.Title" = "Көндәлек куллану пингы";
+
+/* Dark theme option in settings menu */
+"Settings.darkTheme" = "Караңгы";
+
+/* Description associated with the Crash Reports toggle on settings screen */
+"Settings.detailTextCrashReports.V2" = "Бу безгә браузердагы хаталарны ачыкларга һәм төзәтергә ярдәм итә.";
+
+/* Description associated to the Search Suggestions toggle on main screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Settings.detailTextSearchSuggestion" = "%@ Сез адрес юлына язганны эзләү системагызга җибәрәчәк.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example "Firefox Focus" or "Firefox Klar"). */
+"Settings.detailTextSendUsageData" = "Mozilla, %@-ны һәркемгә дә тәкъдим итү һәм яхшырту өчен кирәкле мәгълүматларны гына җыярга тырыша.";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example "Firefox Focus" or "Firefox Klar"). */
+"Settings.detailTextSendUsageData.v2" = "Mozilla, %@-ны һәркемгә дә тәкъдим итү һәм яхшырту өчен кирәкле мәгълүматларны гына җыярга тырыша.";
+
+/* Title for section in settings menu */
+"Settings.general" = "Гомуми көйләүләр";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Күбрәк белү.";
+
+/* Lincese option in settings menu. Tapping the cell will take the user to a list of licences for the 3rd parties used in the app. */
+"Settings.licenses" = "Лицензияләр";
+
+/* Light theme option in settings menu */
+"Settings.lightTheme" = "Ачык";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Title displayed in the settings screen that, when tapped, allows the user to leave a review for the app on the app store. */
+"Settings.rate" = "%@-ны бәяләү";
+
+/* Label for Safari integration section */
+"Settings.safariTitle" = "SAFARI БЕЛӘН ИНТЕГРАЦИЯ";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "Көйләүләр";
+
+/* Text for button to add another search engine in settings */
+"Settings.Search.AddSearchEngineButton" = "Башка бер эзләү системасын өстәү";
+
+/* Title on add search engine settings screen */
+"Settings.Search.AddSearchEngineTitle" = "Эзләү системасын өстәү";
+
+/* Header for rows of installed search engines */
+"Settings.Search.InstalledSearchEngines" = "УРНАШТЫРЫЛГАН ЭЗЛӘҮ СИСТЕМАЛАРЫ";
+
+/* Label for input field for the name of the search engine to be added */
+"Settings.Search.NameToDisplay" = "Күрсәтеләчәк исем";
+
+/* Toast displayed after adding a search engine */
+"Settings.Search.NewSearchEngineAdded" = "Яңа эзләү системасы өстәлде.";
+
+/* Label for button to bring deleted default engines back */
+"Settings.Search.RestoreEngine" = "Стандарт эзләү системаларын яңадан торгызу";
+
+/* Placeholder text for input of new search engine name */
+"Settings.Search.SearchEngineName" = "Эзләү системасының исеме";
+
+/* Label for input of search engine template */
+"Settings.Search.SearchTemplate" = "Эзләнәчәк сүз я сүзтезмә";
+
+/* Text displayed as an example of the template to add a search engine. */
+"settings.Search.SearchTemplateExample" = "Мисал: searchengine.example.com/search/?q=%s";
+
+/* Placeholder text for input of new search engine template */
+"Settings.Search.SearchTemplatePlaceholder" = "Эзләнәсе сүз я сүзтезмәне ябыштырыгыз яки языгыз. Кирәк булса, эзләнәсе терминны болай язып карагыз: %s.";
+
+/* Label for the search engine in the search screen */
+"Settings.searchLabel" = "Эзләү системасы";
+
+/* Label for the Search Suggestions toggle row */
+"Settings.searchSuggestions" = "Эзләү тәкъдимнәрен алу";
+
+/* Title for the search selection screen */
+"Settings.searchTitle2" = "ЭЗЛӘҮ";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "ХОСУСЫЙЛЫК";
+
+/* Label title for set as default browser row */
+"Settings.setAsDefaultBrowser" = "Стандарт браузер итеп билгеләү";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for set as default browser option. */
+"Settings.setAsDefaultBrowserDescription" = "Вебсайтлар, эл. хатлар һәм хәбәрләрдәге сылтамалар автоматик рәвештә %@ эчендә ачылсын.";
+
+/* System value for theme section in settings menu */
+"Settings.systemTheme" = "Система темасы";
+
+/* Theme section in settings menu */
+"Settings.theme" = "Тема";
+
+/* Header for manual theme section in settings menu */
+"Settings.themePicker" = "Тема сайлагыч";
+
+/* Label for the checkbox to toggle Advertising trackers */
+"Settings.toggleBlockAds2" = "Реклама";
+
+/* Label for the checkbox to toggle Analytics trackers */
+"Settings.toggleBlockAnalytics2" = "Аналитика";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "Веб-шрифтларны блоклау";
+
+/* Label for the checkbox to toggle Other trackers */
+"Settings.toggleBlockOther2" = "Эчтәлек";
+
+/* Label for the checkbox to toggle Social trackers */
+"Settings.toggleBlockSocial2" = "Социаль";
+
+/* Label for Crash Reports toggle on settings screen */
+"Settings.toggleCrashReports" = "Ватылу турындагы хәбәрләрне автоматик рәвештә җибәрү";
+
+/* Label for toggle on settings screen */
+"Settings.toggleFaceID" = "Кушымтаны ачу өчен Face ID кулланыгыз";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for 'Enable Face ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleFaceIDDescription" = "Кушымтада бер URL инде ачылган булса, Face ID %@ кушымтасын ачып бирә ала";
+
+/* Show home screen tips toggle label on settings screen */
+"Settings.toggleHomeScreenTips" = "Өй экранында киңәшләр күрсәтү";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Куллану мәгълүматларын җибәрү";
+
+/* Label for toggle on settings screen */
+"Settings.toggleTouchID" = "Кушымтаны ачу өчен Touch ID кулланыгыз";
+
+/* %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). Description for 'Enable Touch ID' displayed under its respective toggle in the settings menu. */
+"Settings.toggleTouchIDDescription" = "Кушымтада бер URL инде ачылган булса, Touch ID %@ кушымтасын ачып бирә ала";
+
+/* Status off for tracking protection in settings screen */
+"Settings.trackingProtectionOff" = "Сүнгән";
+
+/* Status on for tracking protection in settings screen */
+"Settings.trackingProtectionOn" = "Кабынган";
+
+/* Value for theme toggle in settings menu */
+"Settings.useSystemTheme" = "Системаның ачык/караңгы режимын куллану";
+
+/* Title for settings section to enable different Siri Shortcuts. */
+"Settinsg.siriShortcutsTitle" = "SIRI КЫСКАРТЫЛМАЛАРЫ";
+
+/* Text for a share button */
+"share" = "Уртаклашу";
+
+/* Text for the share menu option when a user wants to add the site to Shortcuts */
+"ShareMenu.AddToShortcuts" = "Ярлыкларга өстәү";
+
+/* Toast displayed to the user after adding the item to the Shortcuts. */
+"ShareMenu.AddToShortcuts.Confirm" = "Ярлыкларга өстәлде";
+
+/* Text for the share menu when a user wants to copy a URL. */
+"shareMenu.copyAddress" = "Адресны күчереп алу";
+
+/* Text for the share menu option when a user wants to open the find in page menu */
+"ShareMenu.FindInPage" = "Биттән табу";
+
+/* Text for the share menu option when a user wants to remove the site from Shortcuts */
+"ShareMenu.RemoveFromShortcuts" = "Ярлыклардан бетерү";
+
+/* Toast displayed to the user after removing the item from the Shortcuts. */
+"ShareMenu.RemoveShortcut.Confirm" = "Ярлык бетерелде";
+
+/* Text for the share menu option when a user wants to reload the site as a desktop */
+"ShareMenu.RequestDesktop" = "Сайтның тулы версиясен сорау";
+
+/* Text for the share menu option when a user wants to reload the site as a mobile device */
+"ShareMenu.RequestMobile" = "Сайтның мобиль версиясен сорау";
+
+/* Text for the share menu option when a user wants to open the current website in the Chrome app. */
+"ShareMenu.ShareOpenChrome" = "Chrome-да ачу";
+
+/* Text for the share menu option when a user wants to open the current website in the default browser. */
+"ShareMenu.ShareOpenDefaultBrowser" = "Стандарт браузерда ачу";
+
+/* Text for the share menu option when a user wants to open the current website in the Firefox app. */
+"ShareMenu.ShareOpenFirefox" = "Firefox-та ачу";
+
+/* Text for the share menu option when a user wants to open the current website inside the app. */
+"ShareMenu.ShareOpenLink" = "Сылтаманы ачу";
+
+/* Text for the share menu option when a user wants to share the current website they are on through another app. */
+"ShareMenu.SharePage" = "Битне уртаклашу…";
+
+/* Text for the long press on a shortcut option in context menu. */
+"ShortcutView.RemoveFromShortcuts" = "Ярлыклардан бетерү";
+
+/* Text for the long press on a shortcut rename option in context menu. */
+"ShortcutView.Rename" = "Ярлык исемен үзгәртү";
+
+/* Text for the placeholder textfield on rename shortcut alert. */
+"ShortcutView.RenameShortcutAlertPlaceholder" = "Ярлык исеме";
+
+/* Text for the rename shortcut alert primary action. */
+"ShortcutView.RenameShortcutAlertPrimaryAction" = "Саклау";
+
+/* Text for the rename shortcut alert secondary action. */
+"ShortcutView.RenameShortcutAlertSecondaryAction" = "Баш тарту";
+
+/* This is the button text that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.ButtonText.V2" = "Әзер";
+
+/* This is the subtitle text for step one that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepOne.V2" = "Тамгалар чайкала башлаганчы Өй экранына озак итеп басып торыгыз.";
+
+/* This is the subtitle text for step three that is displayed in the Show Me How onboarding screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ShowMeHowOnboarding.SubtitleStepThree.V2" = "%@ дип эзләү. Аннан соң виджетны сайлагыз.";
+
+/* This is the subtitle text for step two that is displayed in the Show Me How Onboarding Screen */
+"ShowMeHowOnboarding.SubtitleStepTwo.V2" = "Плюс тамгасына басыгыз.";
+
+/* This is the title text that is displayed in the Show Me How Onboarding Screen. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"ShowMeHowOnboarding.Title.V2" = "%@ виджетын өстәү";
+
+/* Button to add a favorite URL to Siri. */
+"Siri.add" = "Өстәү";
+
+/* Button to add a specified shortcut option to Siri. */
+"Siri.addTo" = "Siri-гә өстәү";
+
+/* Label for button to edit the Siri phrase or delete the Siri functionality. */
+"Siri.editOpenUrl" = "Ярлыкны яңадан яздыру яки бетерү";
+
+/* Title of option in settings to set up Siri to erase */
+"Siri.erase" = "Бетерү";
+
+/* Title of option in settings to set up Siri to erase and then open the app. */
+"Siri.eraseAndOpen" = "Бетерү һәм ачу";
+
+/* Title for screen to add a favorite URL to Siri. */
+"Siri.favoriteUrl" = "Яраткан сайтны ачу";
+
+/* Title of option in settings to set up Siri to open a specified URL in Focus/Klar. */
+"Siri.openURL" = "Яраткан сайтны ачу";
+
+/* Label for input to set a favorite URL to be opened by Siri. */
+"Siri.urlToOpen" = "Ачылачак URL";
+
+/* Text for a label that indicates the title for biometric tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.Biometric.Title" = "Сайт ачык булганда %@ бикләнсен:";
+
+/* Text for a label that indicates the description for biometric Face ID tip. */
+"Tip.BiometricFaceId.Description" = "Face ID-ны кабызу";
+
+/* Text for a label that indicates the description for biometric Touch ID tip. */
+"Tip.BiometricTouchId.Description" = "Touch ID-ны кабызу";
+
+/* Text for a label that indicates the description for request desktop tip. */
+"Tip.RequestDesktop.Description" = "Бит өчен гамәлләр > Сайтның тулы версиясен сорау";
+
+/* Text for a label that indicates the title for request desktop tip. */
+"Tip.RequestDesktop.Title" = "Сайтның тулы, стационар версиясен күрәсегез киләме?";
+
+/* Text for a label that indicates the description for share trackers tip. %@ is the number of trackers blocked. Only shown when there are more than 10 trackers blocked. For locales where we would need plural support, please feel free to translate this string as `Trackers blocked so far: %@` instead. */
+"Tip.ShareTrackers.Description" = "Әлегә %@ күзәтүче блокланды";
+
+/* Text for a label that indicates the title for share trackers tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.ShareTrackers.Title" = "Сиз гизәсез. %@ блоклый.";
+
+/* Text for a label that indicates the description for shortcuts tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.Shortcuts.Description" = "%@ менюсыннан «Ярлыкларга өстәү»не сайлагыз";
+
+/* Text for a label that indicates the title for shortcuts tip. */
+"Tip.Shortcuts.Title" = "Сез иң күп караган сайтларга ярлыклар булдырыгыз:";
+
+/* Text for a label that indicates the description for siri erase tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriErase.Description" = "Siri ярлыгын өстәү";
+
+/* Text for a label that indicates the title for siri erase tip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"Tip.SiriErase.Title" = "«Siri, %@ утырышымны бетер.»";
+
+/* Text for a label that indicates the description for siri favorite tip. The shortcut in this context is the iOS Siri Shortcut, not a Focus website shortcut. */
+"Tip.SiriFavorite.Description" = "Siri ярлыгын өстәү";
+
+/* Text for a label that indicates the title for siri favorite tip. */
+"Tip.SiriFavorite.Title" = "«Siri, яраткан сайтымны ач.»";
+
+/* Text for a label that indicates the description for sites not working tip. */
+"Tip.SitesNotWorking.Description" = "Күзәтелүдән саклауны сүндереп карагыз";
+
+/* Text for a label that indicates the title for sites not working tip. */
+"Tip.SitesNotWorking.Title" = "Сайтта нидер төшеп калган яки сәер кебекме?";
+
+/* Text shown on quick action widget inviting the user to browse in the app. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"TodayWidget.SearchInApp.Instruction" = "%@ белән эзләү";
+
+/* This is the body text that is displayed for the Context Menu icon tooltip */
+"TooltipBodyText.ContextMenu" = "Аерым хосусыйлык һәм хәвефсезлек параметрлары белән идарә итү өчен көйләүләргә күчегез.";
+
+/* This is the body text that is displayed for the Privacy tooltip */
+"TooltipBodyText.Privacy" = "Бу стандарт көйләүләр көчле саклану тәэмин итә, ләкин ихтыяҗларыгызга күрә аларны үзгәртү җиңел.";
+
+/* This is the body text that is displayed for the Search Bar tooltip */
+"TooltipBodyText.SearchBar" = "Хосусый гизү сеансын башлап җибәрегез, без исә трекерларны һәм башка начар нәрсәләрне блокларбыз.";
+
+/* This is the body text that is displayed for the Shield icon tooltip. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"TooltipBodyText.ShieldIcon" = "%@ бу сайтны сезне күзәтүдән тыйды. Без блоклаган әйберләр турында мәгълүмат өчен калканга басыгыз.";
+
+/* This is the body text that is displayed for the Shield icon tooltip when we block trackers for the first time on a website */
+"TooltipBodyText.ShieldIconTrackerBlocked.V2" = "Тотылды! Без бу сайтны сезне күзәтүдән тыйдык. Ниләр блоклаганганын һәрвакыт калканга басып күреп була.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon" = "Агымдагы сеансның барлык эзләрен дә бетерү өчен теләсә кайсы вакытта чүп савытына басыгыз.";
+
+/* This is the body text that is displayed for the Trash icon tooltip */
+"TooltipBodyText.TrashIcon.V2" = "Тарих, сookie файллары, аслында һәрнәрсәне дә бетереп, яңа табта эшне яңадан башлар өчен монда басыгыз.";
+
+/* This is the title text that is displayed for the Privacy tooltip */
+"TooltipTitleText.Privacy" = "Сез саклангансыз!";
+
+/* Text for tracking protection screen showing the connection is not secure */
+"trackingProtection.connectionNotSecureLabel" = "Хәвефсез булмаган бәйләнеш";
+
+/* Text for tracking protection screen showing the connection is secure */
+"trackingProtection.connectionSecureLabel" = "Хәвефсез бәйләнеш";
+
+/* Title for the tracking settings page to change what trackers are blocked. */
+"trackingProtection.label" = "Күзәтелүдән саклау";
+
+/* Text for the status off from Tracking Protection. */
+"trackingProtection.statusOff" = "Бу утырыш өчен саклау СҮНГӘН";
+
+/* Text for the status on from Tracking Protection. */
+"trackingProtection.statusOn" = "Бу утырыш өчен саклау КАБЫНГАН";
+
+/* Text for the toggle that enables/disables tracking protection. */
+"trackingProtection.toggleLabel2" = "Күзәтелүдән Көчәйтелгән Саклау";
+
+/* Text for tracking protection screen showing the number of trackers blocked since the app install. %@ is replaced with the install date of the application. */
+"trackingProtection.trackersBlockedLabel" = "%@ датасыннан соң блокланган күзәтүчеләр саны";
+
+/* Text for the header of trackers section from Tracking Protection. */
+"trackingProtection.trackersHeader" = "Блоклыйсы трекерлар һәм скриптлар";
+
+/* Label displayed for button used as a shortcut to add a link to the list of URLs to autocomplete. */
+"URL.addToAutocompleteLabel" = "Сылтаманы автотөгәлләнүчеләр исемлегенә өстәү";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Ябыштыру һәм күчү";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "БЕТЕРҮ";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel2" = "Гизү тарихы чистартылды";
+
+/* Label displayed for find in page button when typing in the URL Bar. %@ is any text the user has typed into the URL bar that they want to find on the current page. */
+"URL.findOnPageLabel" = "Биттән табу: %@";
+
+/* Text for a menu displayed from the bottom of the screen when a user long presses on the URL bar with clipboard contents. */
+"URL.paste" = "Ябыштыру";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "Эзләү яки адрес язу";
+
+/* Label displayed for search button when typing in the URL bar. %@ is the text type by the user. */
+"URL.searchLabel" = "%@ дип эзләү";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Күзәтүчеләр блокланды";
+
+/* Title for the action button shown on card view that will take the user to a tutorial explaining the user how to add an widget */
+"WidgetOnboardingCard.ActionButton" = "Ничек икәнен күрсәтегез";
+
+/* Subtitle shown on card view explaining the app has a widget option. %@ is the app name (for example “Firefox Focus” or ”Firefox Klar”). */
+"WidgetOnboardingCard.Subtitle" = "%@ виджетын Өй экранына куйсагыз, киләчәктә хосусый режимга тизрәк керә алачаксыз. Хәзер хосусый режм дәвам итәчәк.";
+
+/* Title shown on card view explaining the app has a widget option */
+"WidgetOnboardingCard.Title" = "Гизү тарихы бетерелде! 🎉";
+

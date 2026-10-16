@@ -1,0 +1,148 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+import Foundation
+
+/// This struct defines all the standard image identifiers of icons used in the app.
+/// When adding new identifiers, please respect alphabetical order.
+/// Sing the song if you must.
+public struct StandardImageIdentifiers {
+    // Icon size 8x8
+    public struct ExtraSmall {
+        public static let chevronDown = "chevronDownExtraSmall"
+        public static let pin = "pinExtraSmall"
+    }
+
+    // Icon size 16x16
+    public struct Small {
+        public static let externalLink = "externalLinkSmall"
+        public static let notificationDot = "notificationDotSmall"
+        public static let notificationDotFill = "notificationDotFillSmall"
+        public static let shieldCheckmarkFill = "shieldCheckmarkFillSmall"
+        public static let shieldCheckmarkFillGradient = "shieldCheckmarkFillGradientSmall"
+        public static let shieldSlashFillCritical = "shieldSlashFillCriticalSmall"
+        public static let shieldSlashFillMulticolor = "shieldSlashFillMulticolorSmall"
+    }
+
+    // Icon size 20x20
+    public struct Medium {
+        public static let adBlockerCheckmark = "adBlockerCheckmarkMedium"
+        public static let adBlockerCross = "adBlockerCrossMedium"
+        public static let arrowClockwise = "arrowClockwiseMedium"
+        public static let bookmarkBadgeFillViolet50 = "bookmarkBadgeFillMediumViolet50"
+        public static let cross = "crossMedium"
+        public static let lightning = "lightningMedium"
+        public static let logoGoogleLens = "logoGoogleLensMedium"
+        public static let privateModeCircleFillPurple = "privateModeCircleFillMediumPurple"
+        public static let privateModeCircleFillStrokeMulticolor = "privateModeCircleFillStrokeMulticolorMedium"
+        public static let readerSummarize = "readerSummarizeMedium"
+        public static let readerView = "readerViewMedium"
+        public static let shareApple = "shareAppleMedium"
+        public static let shieldCheckmarkDotFillMulticolor = "shieldCheckmarkDotFillMulticolorMedium"
+        public static let sun = "sunMedium"
+        public static let sunFill = "sunFillMedium"
+        public static let translate = "translateMedium"
+    }
+
+    // Icon size 24x24
+    public struct Large {
+        public static let appendDownLeft = "appendDownLeftLarge"
+        public static let appendUpLeft = "appendUpLeftLarge"
+        public static let arrowClockwise = "arrowClockwiseLarge"
+        public static let arrowTrending = "arrowTrendingLarge"
+        public static let audioWave = "audioWaveLarge"
+        public static let avatarCircle = "avatarCircleLarge"
+        public static let avatarWarningCircleFillMulticolorDark = "avatarWarningCircleFillMulticolorLargeDark"
+        public static let avatarWarningCircleFillMulticolorLight = "avatarWarningCircleFillMulticolorLargeLight"
+        public static let bookmark = "bookmarkLarge"
+        public static let bookmarkFill = "bookmarkFillLarge"
+        public static let bookmarkSlash = "bookmarkSlashLarge"
+        public static let bookmarkTray = "bookmarkTrayLarge"
+        public static let bookmarkTrayFill = "bookmarkTrayFillLarge"
+        public static let checkmark = "checkmarkLarge"
+        public static let chevronDown = "chevronDownLarge"
+        public static let chevronLeft = "chevronLeftLarge"
+        public static let chevronRight = "chevronRightLarge"
+        public static let chevronUp = "chevronUpLarge"
+        public static let clipboard = "clipboardLarge"
+        public static let cloud = "cloudLarge"
+        public static let cookies = "cookiesLarge"
+        public static let creditCard = "creditCardLarge"
+        public static let cross = "crossLarge"
+        public static let crossCircleFill = "crossCircleFillLarge"
+        public static let delete = "deleteLarge"
+        public static let deviceDesktop = "deviceDesktopLarge"
+        public static let deviceDesktopSend = "deviceDesktopSendLarge"
+        public static let deviceMobile = "deviceMobileLarge"
+        public static let deviceTablet = "deviceTabletLarge"
+        public static let download = "downloadLarge"
+        public static let edit = "editLarge"
+        public static let ellipsis = "ellipsisLarge"
+        public static let emailMask = "emailMaskLarge"
+        public static let fingerprinter = "fingerprinterLarge"
+        public static let folder = "folderLarge"
+        public static let globe = "globeLarge"
+        public static let helpCircle = "helpCircleLarge"
+        public static let history = "historyLarge"
+        public static let home = "homeLarge"
+        public static let image = "imageLarge"
+        public static let information = "informationLarge"
+        public static let lightbulb = "lightbulbLarge"
+        public static let lightning = "lightningLarge"
+        public static let lightningFill = "lightningFillLarge"
+        public static let link = "linkLarge"
+        public static let location = "locationLarge"
+        public static let lock = "lockLarge"
+        public static let lockSlash = "lockSlashLarge"
+        public static let login = "loginLarge"
+        public static let logoFirefox = "logoFirefoxLarge"
+        public static let logoGoogleLens = "logoGoogleLensLarge"
+        public static let moreHorizontalRound = "moreHorizontalRoundLarge"
+        public static let newFolder = "newFolderLarge"
+        public static let newsfeed = "newsfeedLarge"
+        public static let notificationDot = "notificationDotLarge"
+        public static let notificationDotFill = "notificationDotFillLarge"
+        public static let pin = "pinLarge"
+        public static let pinFill = "pinFillLarge"
+        public static let pinSlash = "pinSlashLarge"
+        public static let plus = "plusLarge"
+        public static let print = "printLarge"
+        public static let privateMode = "privateModeLarge"
+        public static let qrCode = "qrCodeLarge"
+        public static let readerView = "readerViewLarge"
+        public static let readingList = "readingListLarge"
+        public static let readingListAdd = "readingListAddLarge"
+        public static let report = "reportLarge"
+        public static let saveFile = "saveFileLarge"
+        public static let screenshot = "screenshotLarge"
+        public static let search = "searchLarge"
+        public static let settings = "settingsLarge"
+        public static let shareApple = "shareAppleLarge"
+        public static let shield = "shieldLarge"
+        public static let shieldCheckmark = "shieldCheckmarkLarge"
+        public static let shieldSlash = "shieldSlashLarge"
+        public static let soccerBall = "soccerBallLarge"
+        public static let socialMedia = "socialMediaLarge"
+        public static let sparkle = "sparkleLarge"
+        public static let subtract = "subtractLarge"
+        public static let summarizer = "summarizerLarge"
+        public static let sync = "syncLarge"
+        public static let syncTabs = "syncTabsLarge"
+        public static let tab = "tabLarge"
+        public static let tabTray = "tabTrayLarge"
+        public static let translateActiveAltMulticolor = "translateActiveAltMulticolorLarge"
+        public static let warning = "warningLarge"
+        public static let warningFill = "warningFillLarge"
+    }
+
+    // Icon size 30x30
+    public struct ExtraLarge {
+        public static let crossCircleFill = "crossCircleFillExtraLarge"
+    }
+
+    // Icon size 72x72
+    public struct ExtraExtraExtraLarge {
+        public static let privateModeCircleFillMulticolor = "privateModeCircleFillMulticolorExtraExtraExtraLarge"
+    }
+}

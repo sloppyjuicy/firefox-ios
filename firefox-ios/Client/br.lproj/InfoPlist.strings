@@ -1,0 +1,27 @@
+/* iOS Home screen shortcut menu: Option to launch the app to the app icon customization screen */
+"App Icon" = "Arlun an arload";
+
+/* (No Comment) */
+"New Private Tab" = "Ivinell prevez nevez";
+
+/* (No Comment) */
+"New Tab" = "Ivinell nevez";
+
+/* Privacy - Camera Usage Description */
+"NSCameraUsageDescription" = "Firefox a c’hall implijout ho kamera evit c’hwilerviñ kodoù QR pe tapout fotoioù ha videoioù.";
+
+/* Privacy - Face ID Usage Description */
+"NSFaceIDUsageDescription" = "Face ID a zo rekis evit ma c’hallfe kaout Firefox ho kerioù-tremen enrollet hag ho toareoù paeañ.";
+
+/* Privacy - Location When In Use Usage Description */
+"NSLocationWhenInUseUsageDescription" = "Lec’hiennoù web a weladennit a c’hall azgoulenn ho lec’hiadur.";
+
+/* Privacy - Microphone Usage Description */
+"NSMicrophoneUsageDescription" = "Gant se e c’hallit kemer ha pellgas videoioù.";
+
+/* Privacy - Photo Library Additions Usage Description */
+"NSPhotoLibraryAddUsageDescription" = "Reiñ a ra tro deoc’h da enrollañ skeudennoù.";
+
+/* (No Comment) */
+"Scan QR Code" = "C’hwilerviñ ur boneg QR";
+

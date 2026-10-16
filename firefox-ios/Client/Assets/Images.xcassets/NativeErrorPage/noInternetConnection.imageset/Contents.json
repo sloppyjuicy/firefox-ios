@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "kit-error-plug.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
